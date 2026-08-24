@@ -31,12 +31,17 @@
   exactly two variants and that the component list's expected order is updated —
   the catalogue is a contract, so the count assertion must be extended rather
   than loosened.
-- [ ] 3.2 Record the asymmetry from design decision D2 — a masked row hides its
+- [ ] 3.2 Update `docs/adr/0003-transaction-row-layout.md` with the masked form:
+  the row has no Figma source, so a masked variant is a *new designed variant* and
+  belongs in the ADR that decided the row's design, not only in the change log.
+  Record what is masked, what is not, and why the mask is neutral-coloured. Verify:
+  ADR 0003 has a revision-history entry and the masked form is described there.
+- [ ] 3.3 Record the asymmetry from design decision D2 — a masked row hides its
   direction while the masked card keeps its income and expense labels — in
   `docs/design-system/figma-map.md` under recorded deviations, and note that the
   row's masked form has no Figma source. Verify: the deviation table has the new
   row and names the reason.
-- [ ] 3.3 Run the full gate and confirm both masked forms on a simulator
+- [ ] 3.4 Run the full gate and confirm both masked forms on a simulator
   screenshot of the gallery route. Verify:
   `bash tool/verify.sh --change design-system-corrections` passes, and the reply
   states whether the two masks read as one system or look like two different

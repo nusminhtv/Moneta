@@ -50,6 +50,13 @@ spanning exactly one month.
 because the end bound is exclusive and "until 1 Sep" would be a date outside the
 period the figure describes.
 
+It is a **local** day, and the distinction is not cosmetic. The period end is held
+in UTC, so for UTC+7 the current month ends at 31 Aug 17:00 UTC. Subtracting a day
+from that UTC instant and then converting to local gives 31 August, which is right;
+computing the day in UTC gives 30 August, which is wrong. The test asserts this in
+a zone ahead of UTC, because in UTC itself both calculations agree and the bug is
+invisible.
+
 ### D2 — Balance excludes what has not happened yet
 
 Total balance is the net of transactions occurring **at or before now**; period
@@ -63,8 +70,18 @@ reason *"a balance that includes money not yet spent is wrong"* — so (a)
 contradicts a rationale already in the spec set, and does so invisibly today only
 because the add form is the sole write path.
 
-**Chosen: (b).** `TransactionQuery.build(end: clock.nowUtc())` for the balance
-read. It costs one bound and removes a disagreement between two capabilities.
+**Chosen: (b).** But `TransactionQuery`'s `end` is **exclusive**
+(`transaction_query.dart:82`, `!utc.isBefore(end)`), so `end: clock.nowUtc()`
+would drop a transaction occurring at exactly now — and that instant is reachable,
+because `AddTransactionSheet` stamps occurrence from the same clock. Under a fixed
+clock a just-recorded transaction would vanish from the balance, which would break
+the refresh-on-record requirement for a reason the spec calls correct.
+
+So the bound is `clock.nowUtc()` plus one millisecond, which is the smallest unit
+the store represents (`occurred_at` is epoch milliseconds). Ugly and deliberate:
+the alternative is teaching `TransactionQuery` an inclusive-end mode, which is a
+change to the transactions capability for one caller's convenience. The reason is
+written at the call site so nobody "simplifies" it back.
 
 The tempting shortcut — showing the period's net as the balance — is wrong in a
 way that looks right: in the first month of use the two agree exactly, so it
@@ -159,6 +176,24 @@ signal the derivation drifted out of `features/home/domain`.
 
 ### D10 — Shared providers move to `lib/data/app_providers.dart`
 
+**Coverage consequence, found by audit.** `tool/coverage_critical.txt` contains the
+bare substring `/data/` and `tool/check_coverage.dart:57` matches with
+`entry.key.contains`, so `lib/data/app_providers.dart` lands under the **85%**
+threshold. Today's `lcov.info` shows `appDatabaseProvider`'s body at zero hits —
+nothing constructs it, because every widget test overrides
+`transactionRepositoryProvider` wholesale. Split as planned, the new file would be
+8 lines with 3 hit: **37.5%**, and the full gate would fail.
+
+The file is legal today only because of where it sits, which is not a property
+worth preserving. So the move comes with a test that constructs
+`appDatabaseProvider` and asserts its `onDispose` closes the connection — the
+behaviour the provider exists for and that nothing currently checks. Task 1.1 is
+therefore **not** import-lines-only, and it no longer claims to be.
+
+The escape hatches were considered and rejected: editing `coverage_critical.txt` or
+adding a coverage-ignore comment are both weakenings under CLAUDE.md rule 5, and
+D10's own options already ruled out `lib/core` and `lib/app` as homes.
+
 `clockProvider`, `idGeneratorProvider`, `walletCurrencyProvider` and
 `appDatabaseProvider` move out of `features/transactions/presentation`.
 
@@ -205,15 +240,35 @@ that a new screen is where it most likely fires. Concretely:
 - A `validation` failure from `TransactionQuery.build` → a defect in Home, since
   Home constructs those queries itself. Asserted unreachable by test, not
   rendered.
-- A summary whose currency is not the wallet currency → a `validation` failure
-  raised by Home before any arithmetic, so a mismatch cannot reach
-  `Money.operator -` and throw. This is a guard against the archived summary bug,
-  not a fix for it.
+- A summary whose currency is not the wallet currency → a **`storage`** failure,
+  rendering the error state. Storage, not validation: the bad data came from the
+  store, not from a caller, so it is the same situation as an unreadable row.
+  Classifying it as validation would collide with the rule above that a validation
+  failure is unreachable by definition — the audit caught exactly that
+  contradiction in the first draft.
+
+  **One owner: the assembler in `lib/app`.** It checks every figure's currency
+  against the wallet currency *before* constructing a `HomeSnapshot`. That ordering
+  is what lets `HomeSnapshot` keep an ordinary constructor: its inputs are
+  same-currency by construction, so its derivations cannot reach
+  `Money.operator -`'s throw. A value type that may fail to construct would be a
+  design decision, and this avoids needing one.
+
+  This is a guard against the archived summary bug, not a fix for it.
 
 ## Risks / trade-offs
 
-- **`lib/app` gains logic-shaped code.** A mapper and an assembler. Watched: if
-  either branches on anything, the derivation belongs in `features/home/domain`.
+- **`lib/app` gains logic-shaped code, and it is not all translation.** The
+  mapper translates. The assembler also *decides*: it bounds the balance query at
+  now, applies the recent limit, and refuses a mismatched currency. Those are
+  decisions, and `lib/app` matches nothing in `tool/coverage_critical.txt`, so they
+  sit under the 70% floor rather than the 85% one.
+
+  This is stated plainly because the first version of ADR 0004 got caught claiming
+  more than it delivered. Option F puts the month bounds and the safe-to-spend
+  floor behind the 85% gate; it does **not** put all derivation there. The
+  mitigation is that `home_assembler_test` covers each of those three decisions
+  explicitly rather than relying on a threshold to notice.
 - **Three reads per load.** All aggregate or indexed. Accepted because they are
   the existing reusable reads; a single fused query would live in the assembler,
   which ADR 0004 wants thin.
@@ -234,26 +289,28 @@ that a new screen is where it most likely fires. Concretely:
 | December rolls to January | `home_period_test` |
 | DST month spans exactly the month | `home_period_test` — transition months, no hour gained or lost |
 | Bounds converted to UTC | `home_period_test` |
-| `lastDayInclusive` is inside the period | `home_period_test` |
-| Occurrence, not entry, positions a transaction | `home_snapshot_test`, `home_assembler_test` — a backdated transaction |
-| Balance excludes future-dated transactions | `test/app/home_assembler_test.dart` |
+| `lastDayInclusive` is the last **local** day | `home_period_test` — asserted in a zone ahead of UTC, where a UTC-day calculation gives the previous day |
+| Occurrence, not entry, positions a transaction | `home_assembler_test` — a backdated transaction. Not `home_snapshot_test`: the snapshot receives figures already computed and cannot observe which instant produced them |
+| Balance excludes strictly-future transactions | `test/app/home_assembler_test.dart` |
+| Balance includes a transaction occurring at exactly now | `home_assembler_test` — the instant the add form actually produces under a fixed clock |
 | Balance and period net differ in sign | `home_assembler_test` |
 | First run shows formatted zeros | `home_controller_test`, `home_screen_test` |
-| Very large totals exact or refused | `home_snapshot_test` |
+| Very large totals are exact and stable across reads | `home_assembler_test` — a trillion minor units, read twice |
 | Safe-to-spend definition and zero floor | `home_snapshot_test` — income >, =, < expenses |
 | Five most recent, by occurrence | `home_assembler_test` |
 | Recent list not period-bounded | `home_assembler_test` |
-| `RecentEntry` carries only shared types | `dart run tool/check_architecture.dart` + compile |
+| `RecentEntry` carries only shared types | `dart run tool/check_architecture.dart` + the fact that it compiles. There is no runtime assertion — `dart:mirrors` is unavailable in Flutter tests, so a test claiming to inspect field types would be theatre |
 | Masking hides every amount, hero and list | `test/features/home/presentation/home_screen_test.dart` — no digit belonging to an amount in the render tree |
 | Non-amount content stays visible when masked | `home_screen_test` |
 | Mask preference durable | `test/data/preferences_store_test.dart` + `home_controller_test` |
 | Absent preference means revealed | `home_controller_test` |
 | Failed preference read still renders, revealed | `home_controller_test` |
+| An unopenable database is one failure, reported by the read that needed data | `home_controller_test` |
 | Failed preference write follows the user, surfaces | `home_controller_test` |
 | Error state vs empty state; partial failure is failure | `home_screen_test` |
 | Retry succeeds; retry fails again | `home_screen_test` |
 | Validation failure is unreachable | `home_controller_test` |
-| Currency mismatch refused, not added | `home_assembler_test` |
+| Currency mismatch refused as a storage failure, before construction | `home_assembler_test` |
 | Negative magnitudes cannot occur | `home_snapshot_test` — asserted, not guarded |
 | New transaction appears without manual refresh | `test/app/router_test.dart` |
 | Composed from existing components, both variants | `home_screen_test` |
@@ -264,9 +321,12 @@ that a new screen is where it most likely fires. Concretely:
 | Rows survive a migration on a populated database | `test/data/migrations_test.dart` |
 | A failed migration on populated data | `test/data/database_test.dart` |
 
+| `appDatabaseProvider` disposal closes the connection | `test/data/app_providers_test.dart` — new, and the reason task 1.1 is not import-lines-only |
+
 Plus the standing gates: format, analyze `--fatal-infos`, architecture,
 design-tokens, hooks, tests, coverage (≥85% on `features/home/domain`,
-`lib/data/preferences`).
+`lib/data/preferences` **and `lib/data/app_providers.dart`**, which the `/data/`
+substring in `coverage_critical.txt` also matches).
 
 ## Open questions
 

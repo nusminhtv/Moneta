@@ -104,11 +104,18 @@ database, not a requirement. That test is task 1.1.
   providers), `lib/features/home` (new), `lib/app` (assembler, mapper, route),
   and — correcting an earlier claim in this proposal —
   **`lib/features/transactions/presentation` is modified**, because the shared
-  providers move out of it, along with every test that overrides them.
+  providers move out of it, along with every test that overrides them. Riverpod
+  binds overrides by object identity rather than by library, so those overrides
+  keep working with only their imports changed — verified against the three call
+  sites.
 - **Dependencies:** none added. `intl` is already present for date formatting.
 - **Schema migration:** yes, v2, applied to a database that may hold user data.
-- **Gates affected:** `features/home/domain` and `lib/data/preferences` come under
-  the 85% coverage threshold. `HomeScreen` is the first new screen layout since
+- **Gates affected:** `features/home/domain`, `lib/data/preferences` **and
+  `lib/data/app_providers.dart`** come under the 85% coverage threshold — the last
+  of those because `coverage_critical.txt` matches the bare substring `/data/`, so
+  simply moving a provider into `lib/data` subjects it to a threshold it does not
+  currently meet. Measured at 37.5% from the committed `lcov.info`, which is why
+  the move ships with a test rather than only with import edits. `HomeScreen` is the first new screen layout since
   the token checker became load-bearing, so `EdgeInsets`/`BorderRadius` literals
   are the likeliest gate failure; `design.md` says how that is avoided.
 - **Figma nodes consumed:** `40:161` (`BalanceCard`, already implemented, both
@@ -116,6 +123,14 @@ database, not a requirement. That test is task 1.1.
   is a recorded decision.
 
 ## Audit history
+
+Two `spec-auditor` passes, both `NOT READY`, recorded in
+`docs/ai-workflow/audits/`. The second narrowed from eleven findings to four and
+confirmed the structural work — the architecture problem solved rather than
+asserted away, the duplication removed, ADR 0004's argument made honest. What it
+caught the second time was subtler and worth naming: three of the four product
+decisions were stated correctly in prose while the *requirement* still let two
+implementations disagree, and one task could not pass its own coverage gate.
 
 The first version of these artifacts was reviewed by the `spec-auditor` agent and
 returned `NOT READY`

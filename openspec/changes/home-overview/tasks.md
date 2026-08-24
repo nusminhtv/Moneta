@@ -1,6 +1,7 @@
-Blocked on `design-system-corrections` (see the proposal's Prerequisite section).
-Tasks 4.2 onward cannot be completed until it lands; tasks 1–3 are independent of
-it and can proceed.
+Blocked on `design-system-corrections` (see the proposal's Prerequisite section),
+whose artifacts are written and validated. Only **task 4.3** needs it — that is the
+task that renders `BalanceCard` and the masked row. Tasks 1 through 4.2 touch no
+design-system component and can proceed.
 
 ## 1. Data-layer groundwork
 
@@ -8,21 +9,33 @@ it and can proceed.
   and `appDatabaseProvider` from
   `features/transactions/presentation/transaction_providers.dart` to
   `lib/data/app_providers.dart`, leaving `transactionRepositoryProvider` behind.
-  Update every import and test override. Verify: the full existing suite passes
-  unchanged in behaviour, and `dart run tool/check_architecture.dart` passes.
-  This task changes no behaviour — if a test needs editing beyond its import
-  lines, stop and say why.
-- [ ] 1.2 Add migration `v2` creating `settings(key TEXT PRIMARY KEY, value TEXT
+  Riverpod overrides bind by object identity rather than by library, so the three
+  existing `overrideWithValue` call sites keep working with only their imports
+  changed. Verify: `dart run tool/check_architecture.dart` passes and every
+  existing test passes with no assertion edited.
+- [ ] 1.2 Add `test/data/app_providers_test.dart` asserting that
+  `appDatabaseProvider` opens a database and that disposing the container closes
+  it. Verify: `bash tool/verify.sh` (the **full** gate, not `--fast`) passes.
+
+  This task exists because task 1.1 changes what the coverage gate demands of that
+  code. `coverage_critical.txt` contains the bare substring `/data/` and
+  `check_coverage.dart` matches with `contains`, so `lib/data/app_providers.dart`
+  falls under the **85%** threshold — while `appDatabaseProvider`'s body currently
+  has zero hits, because every widget test overrides
+  `transactionRepositoryProvider` wholesale. Measured from the committed
+  `lcov.info`: 8 lines, 3 hit, **37.5%**. `--fast` skips coverage, so this fails
+  only at the full gate; run the full one here.
+- [ ] 1.3 Add migration `v2` creating `settings(key TEXT PRIMARY KEY, value TEXT
   NOT NULL)`. Verify: `test/data/migrations_test.dart` gains a case that writes
   transaction rows under v1, reopens the same file declaring v2, and asserts every
   v1 row is present and unchanged, the new table exists and is empty, and the
   stored version advanced.
-- [ ] 1.3 Add the populated-database failure case to
+- [ ] 1.4 Add the populated-database failure case to
   `test/data/database_test.dart`: rows written under v1, a v2 migration that
   throws, and assertions that a storage failure is reported, the version did not
   advance, and the v1 rows are still readable. Verify: that test fails if the
   runner is changed to advance the version before the migration completes.
-- [ ] 1.4 Implement `lib/data/preferences/preferences_store.dart`: a declared
+- [ ] 1.5 Implement `lib/data/preferences/preferences_store.dart`: a declared
   `PreferenceKey` enum, typed read/write returning `Result`, absence reported
   distinguishably, booleans stored as the literal `true`/`false` and any other
   text reported as a storage failure naming the key. Verify:
@@ -41,18 +54,25 @@ it and can proceed.
   themselves (not the expression that produced them), that December's period ends
   in January of the next year, that a month containing a DST transition spans
   exactly that month with no hour gained or lost, that bounds are UTC, and that
-  `lastDayInclusive` falls inside the period.
+  `lastDayInclusive` is the last **local** day — asserted in a zone ahead of UTC,
+  where computing the day from the UTC end instant yields the previous day and
+  therefore fails. "Falls inside the period" is not a sufficient assertion: the
+  wrong answer is also inside the period.
 - [ ] 2.2 Implement `recent_entry.dart` — id, display title, `Money` amount,
   `TransactionDirection`, `SpendCategory`, occurrence instant, all shared types.
-  Verify: `dart run tool/check_architecture.dart` passes, and a test asserts the
-  type exposes no field whose type comes from another feature.
+  Verify: `dart run tool/check_architecture.dart` passes and the file compiles —
+  that pair *is* the signal. There is deliberately no runtime test inspecting
+  field types: `dart:mirrors` is unavailable in Flutter tests, so such a test
+  would assert a hand-written list against itself.
 - [ ] 2.3 Implement `home_snapshot.dart` with `safeToSpend` derived and floored at
   zero, and `recentLimit`. Verify:
   `test/features/home/domain/home_snapshot_test.dart` covers income greater than,
   equal to and less than expenses; asserts safe-to-spend is never negative;
-  asserts balance and period net can differ in sign; covers the empty snapshot;
-  asserts a currency mismatch between inputs is reported rather than thrown; and
-  asserts a very large total is exact.
+  asserts balance and period net can differ in sign; and covers the empty snapshot.
+  The currency guard is **not** here — the assembler checks currencies before
+  constructing a snapshot, so the snapshot's inputs are same-currency by
+  construction and its constructor stays ordinary. Assert that invariant with a
+  comment, not a guard.
 
 ## 3. Assembling the snapshot
 
@@ -64,8 +84,10 @@ it and can proceed.
 - [ ] 3.2 Implement the assembling provider in `lib/app`: balance from a summary
   bounded at now, period figures from a summary bounded to the month, and the
   recent list limited and unbounded by range. Verify:
-  `test/app/home_assembler_test.dart` asserts balance excludes a future-dated
-  transaction, that balance and period net can differ in sign, that a backdated
+  `test/app/home_assembler_test.dart` asserts balance excludes a **strictly**
+  future-dated transaction, that it **includes** one occurring at exactly now —
+  the instant the add form produces under a fixed clock, and the case a naive
+  exclusive `end: now` bound would silently drop — that balance and period net can differ in sign, that a backdated
   transaction lands in its own month, that exactly `recentLimit` entries are
   returned when more exist and they are the most recent by occurrence, that a
   transaction older than the period still appears in the list, that any one
@@ -96,20 +118,26 @@ it and can proceed.
 
 ## 5. Wiring and close-out
 
-- [ ] 5.1 Replace Home's placeholder route with `HomeScreen`, override the
-  assembling provider in the composition root, and refresh Home when the add sheet
-  closes. Verify: `test/app/router_test.dart` asserts `/` renders `HomeScreen`
-  with the Home tab active, that recording a transaction from the add action while
-  on Home updates the figures and the list without further user action, and that a
-  failed record leaves Home unchanged.
-- [ ] 5.2 Update the docs: `docs/design-system/figma-map.md` gains the Home
+- [ ] 5.1 Replace Home's placeholder route with `HomeScreen` and override the
+  assembling provider in the composition root. Verify:
+  `test/app/router_test.dart` asserts `/` renders `HomeScreen` with the Home tab
+  active, and that the existing router assertions still pass.
+- [ ] 5.2 Implement refresh-on-record: Home reloads when the add sheet closes.
+  Verify: `test/app/router_test.dart` asserts that recording a transaction from the
+  add action while on Home updates both the figures and the recent list without
+  further user action, and that a failed record leaves Home unchanged. Its own
+  task because it is a whole requirement with a decided mechanism
+  (`design.md` D11), not a wiring detail.
+- [ ] 5.3 Update the docs: `docs/design-system/figma-map.md` gains the Home
   composition and `recentLimit` as designed-not-transcribed entries, and
   `docs/ai-workflow/evidence-log.md` gains this change's section. Verify: the map
   lists every component Home uses, and the evidence log's checkpoint rows match
   `git log`.
-- [ ] 5.3 Run the full gate and verify on a simulator: record a transaction, see
-  it on Home with correct figures, hide the amounts, relaunch, confirm they are
-  still hidden. Commit the screenshot. Verify:
-  `bash tool/verify.sh --change home-overview` passes, and the reply states
-  whether `recentLimit = 5` was the right guess against that screenshot — if it
-  was not, that is a spec change, not a silent constant edit.
+- [ ] 5.4 Run the full gate. Verify:
+  `bash tool/verify.sh --change home-overview` passes with all seven gates green.
+- [ ] 5.5 Verify on a simulator: record a transaction, see it on Home with correct
+  figures, hide the amounts, relaunch, confirm they are still hidden. Commit the
+  screenshot. Verify: the screenshot shows the figures matching the recorded
+  amounts, and the reply states whether `recentLimit = 5` was the right guess
+  against it — if it was not, that is a spec change, not a silent constant edit,
+  so stop and reopen task 2.3 rather than editing the constant.

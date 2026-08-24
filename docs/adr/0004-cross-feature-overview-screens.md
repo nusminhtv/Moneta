@@ -96,16 +96,18 @@ that provider's value, not on an abstraction.
 - Cost: the controller's test overrides a provider that returns a `HomeSnapshot`
   rather than injecting a fake port. Functionally the same substitution, one fewer
   type to maintain.
-- Benefit: identical coverage properties to Option D — the derivation being tested
-  is in `features/home/domain` either way — with no interface that has exactly one
-  implementation.
+- Benefit: **the same** coverage properties as Option D, not better ones — the
+  month bounds and the safe-to-spend floor sit in `features/home/domain` under
+  either option, and under either option the balance's upper bound, the recent
+  limit and the currency refusal sit in `lib/app` under the 70% floor. F simply
+  achieves that without an interface that has exactly one implementation.
 
 ## Decision criteria
 
 | Criterion | Weight | Why |
 | --- | --- | --- |
 | Keeps the architecture rule meaningful | high | It is the only machine check on coupling |
-| Derivation logic sits where the 85% gate reaches it | high | Month bounds and safe-to-spend are where an off-by-one hides |
+| The *pure* derivations sit where the 85% gate reaches them | high | Month bounds and safe-to-spend are where an off-by-one hides. Note this criterion does **not** separate D from F — it separates both from A |
 | Home is testable without a database | high | Otherwise every UI test needs SQLite |
 | Abstractions earn their keep | medium | An interface with one implementation is a liability, not a seam |
 | Scales to the next overview surface | medium | Budgets and goals are queued behind this |
@@ -188,6 +190,12 @@ should be read as such.
 ## Revision history
 
 - **v1, 2026-08-24** — chose Option D (port + adapter), citing the coverage gate.
+- **v2.1, 2026-08-24** — a second audit pass found the criteria table still
+  overstating: it weighted "derivation behind the 85% gate" as a high criterion
+  while three of Home's derivations stay in `lib/app` under either option. Since
+  v2 spends a section dissecting exactly that error, leaving it in the table was
+  the one place the rewrite still argued backwards from its conclusion. Corrected
+  above.
 - **v2, 2026-08-24** — `spec-auditor` returned `NOT READY`; the coverage argument
   did not survive it and Option F was missing entirely. Rewritten with six
   options, Option F chosen, and the original error kept above rather than deleted.

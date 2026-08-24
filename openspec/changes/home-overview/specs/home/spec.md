@@ -55,15 +55,23 @@ never by when it was recorded.
 ### Requirement: Total balance is the net of everything that has already happened
 
 Home SHALL show total balance as the net of all transactions whose occurrence is
-at or before now, and SHALL exclude any transaction occurring later than now.
+at or before now, and SHALL exclude any transaction occurring strictly later than
+now. A transaction occurring at exactly the current instant SHALL be included.
 
 #### Scenario: Balance ignores the displayed period
 - **WHEN** transactions exist both inside and outside the displayed period
 - **THEN** total balance includes all of them, subject to the rule below
 - **AND** period income and expenses include only those inside the period
 
+#### Scenario: A transaction occurring at exactly this instant is included
+- **WHEN** a transaction's occurrence equals the current instant
+- **THEN** it contributes to total balance
+- **AND** this instant is reachable in practice: the add form stamps occurrence
+  from the same clock, so under a fixed clock a just-recorded transaction occurs
+  at exactly now
+
 #### Scenario: A future-dated transaction is excluded
-- **WHEN** a transaction occurs later than now
+- **WHEN** a transaction occurs strictly later than now
 - **THEN** it does not contribute to total balance
 - **AND** this matches the `transactions` capability's stated reason for
   rejecting future-dated entries — a balance that includes money not yet spent is
@@ -80,10 +88,11 @@ at or before now, and SHALL exclude any transaction occurring later than now.
 - **THEN** total balance, period income and period expenses are each a formatted
   zero in the wallet currency, not blank and not a placeholder
 
-#### Scenario: Very large totals
-- **WHEN** the summed amounts approach the largest value the store can hold
-- **THEN** the totals are exact, or a failure is reported — a silently wrapped
-  total is never shown
+#### Scenario: Very large totals are exact
+- **WHEN** the summed amounts reach a trillion minor units
+- **THEN** the total is exact to the minor unit
+- **AND** the same figure read twice returns the same value, so nothing has
+  wrapped between reads
 
 ### Requirement: Safe-to-spend is period income minus period expenses, floored at zero
 
@@ -115,8 +124,12 @@ date SHALL be the last day *within* the period, not the exclusive end bound.
 
 #### Scenario: The displayed date
 - **WHEN** the period ends at the first instant of the next month
-- **THEN** the date shown is the final day of the current month
+- **THEN** the date shown is the final day of the current month **in the device's
+  local time zone**
 - **AND** it is not the first day of the next month, which is outside the period
+- **AND** it is not the final UTC day of the period, which in a zone ahead of UTC
+  is a day earlier — for UTC+7 the period ends at 31 Aug 17:00 UTC, so a
+  UTC-based calculation yields 30 August and is wrong
 
 #### Scenario: The card receives a date, not a string
 - **WHEN** the balance card is given the period end
@@ -194,6 +207,15 @@ four amounts **and** every amount in the recent list.
 - **AND** the failure does not produce an error state, because a display
   preference is not worth failing a screen over
 
+#### Scenario: The preference store itself is unavailable
+- **WHEN** the database cannot be opened at all, so the preference store cannot be
+  constructed
+- **THEN** the figures are shown and Home renders whatever the snapshot read
+  produced
+- **AND** if that same unavailability also failed the snapshot read, the error
+  state comes from the snapshot — an unopenable database is one failure, not two,
+  and it is reported by the read that actually needed data
+
 #### Scenario: The preference cannot be written
 - **WHEN** the user toggles the mask and storing the choice fails
 - **THEN** the on-screen state follows the user's action for this session
@@ -233,14 +255,20 @@ Home SHALL NOT display a figure derived from amounts in differing currencies.
 #### Scenario: The store reports a summary in an unexpected currency
 - **WHEN** a figure read from the store is denominated in a currency other than
   the wallet's
-- **THEN** a failure is reported and the error state is shown
+- **THEN** a **storage** failure is reported and the error state is shown
 - **AND** no total is displayed, because adding unlike currencies produces a
   number that is wrong without looking wrong
+- **AND** the kind is storage rather than validation because the input came from
+  the store, not from a caller — Home asked for the right thing and got data it
+  cannot trust, which is the same situation as an unreadable row
 
-#### Scenario: Deriving safe-to-spend cannot crash the screen
-- **WHEN** safe-to-spend is derived
-- **THEN** a currency mismatch between its inputs is reported as a failure rather
-  than raised as an exception
+#### Scenario: The mismatch is caught before any arithmetic
+- **WHEN** figures are read from the store
+- **THEN** their currencies are checked against the wallet currency before a
+  snapshot is constructed
+- **AND** because that check precedes construction, the snapshot's own figures are
+  same-currency by construction and its derivations cannot raise a currency
+  exception
 
 #### Scenario: Negative stored amounts
 - **WHEN** the store is read
