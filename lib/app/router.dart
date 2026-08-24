@@ -6,12 +6,24 @@ import 'package:moneta/design_system/organisms/bottom_nav.dart';
 import 'package:moneta/features/transactions/presentation/add_transaction_sheet.dart';
 import 'package:moneta/features/transactions/presentation/transactions_screen.dart';
 
+/// Route the app opens on.
+///
+/// Overridable at build time with
+/// `--dart-define=MONETA_INITIAL_ROUTE=/transactions`. This exists so a
+/// verification run can launch straight into a screen on a simulator, which has
+/// no way to script a tap; it defaults to `/` and has no effect on a normal
+/// build.
+const String defaultInitialRoute = String.fromEnvironment(
+  'MONETA_INITIAL_ROUTE',
+  defaultValue: '/',
+);
+
 /// Builds the application's routes.
 ///
 /// The four destinations live inside a shell so the bottom navigation persists
 /// across them and its active tab is derived from the current location rather
 /// than tracked separately.
-GoRouter buildRouter({String initialLocation = '/'}) {
+GoRouter buildRouter({String initialLocation = defaultInitialRoute}) {
   return GoRouter(
     initialLocation: initialLocation,
     routes: [

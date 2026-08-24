@@ -87,7 +87,7 @@
   `test/app/router_test.dart` asserts each destination reaches its route and that
   the active tab matches the current route — Figma calls a mismatch "a real
   defect, not a nitpick".
-- [ ] 6.2 Run the full gate, update `docs/ai-workflow/evidence-log.md` and
+- [x] 6.2 Run the full gate, update `docs/ai-workflow/evidence-log.md` and
   `docs/design-system/figma-map.md`, and confirm the running app stores and
   reloads a transaction. Verify:
   `bash tool/verify.sh --change transactions-local-store` passes, and a

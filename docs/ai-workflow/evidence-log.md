@@ -73,3 +73,56 @@ fire and lint findings survive to the gate. Two consequences, both real:
   could not.
 - `tool/verify.sh --fast` should be run before any checkpoint even when the hook
   has been quiet, because silence from the hook is not evidence.
+
+## transactions-local-store
+
+| Date | Kind | What | Ref | Evidence |
+| --- | --- | --- | --- | --- |
+| 2026-08-24 | plan | 4 artifacts + ADR 0003; 3 capabilities (2 new, 1 modified); `validate --strict` clean | `openspec/changes/transactions-local-store/` | — |
+| 2026-08-24 | checkpoint | 1.1–1.3 IdGenerator, migrations, AppDatabase | `98d68a1^` | `verify-runs/2026-08-24T05-08-03Z_*.md` |
+| 2026-08-24 | checkpoint | 2.1–3.2 domain + data layers | `98d68a1` | `verify-runs/2026-08-24T05-15-56Z_*.md` |
+| 2026-08-24 | checkpoint | 4.1 TransactionRow, AmountSlot; TransactionDirection moved to core | `d56455a` | `verify-runs/2026-08-24T05-19-48Z_*.md` |
+| 2026-08-24 | checkpoint | 5.1–5.2 day grouping, list controller | `4b15ace` | `verify-runs/2026-08-24T05-29-07Z_*.md` |
+| 2026-08-24 | checkpoint | 5.3–5.4 screen, add form | `ce45838` | `verify-runs/2026-08-24T05-33-44Z_*.md` |
+| 2026-08-24 | checkpoint | 6.1 shell + routing | — | `verify-runs/2026-08-24T05-35-35Z_*.md` |
+| 2026-08-24 | verify | Close-out: 485 tests, coverage met, verified on an iOS simulator | — | `verify-runs/2026-08-24T05-42-25Z_*.md` |
+
+### The gate caught real defects again
+
+- **BudgetCard's overflow returned in TransactionRow.** A money figure has no
+  natural upper bound inside a `Row`. Rather than fixing it twice it became
+  `AmountSlot`, and BudgetCard was refactored onto it. Its doc comment records
+  the three failed attempts, including that `TextAlign.end` makes a
+  `RenderParagraph` claim the full available width and silently defeats the cap.
+- **An architecture violation before a line of UI was written.**
+  `TransactionRow` needed `TransactionDirection`, and `design_system` may not
+  import `features`. The enum moved to `lib/core`. The checker made that a
+  design decision instead of an accident.
+
+### Two Riverpod 3 behaviours that cost real time
+
+Both are now comments in the tests rather than silent workarounds:
+
+- An override written `async => repo` makes the notifier rebuild mid-load;
+  Riverpod disposes the in-flight build and the error that surfaces is the
+  disposal, not the failure under test.
+- An unlistened provider whose build throws is disposed the same way, so failure
+  tests must subscribe and inspect `AsyncValue` rather than await `.future`.
+
+### Verified beyond the test suite
+
+The suite runs against `sqflite_common_ffi` on the Dart VM. That is the same
+SQLite but not the same binding, so the close-out ran the real app on an
+iPhone 16 Pro simulator: rows were written directly into the app's own database
+file, the process was killed, and the app was relaunched. It read them back,
+grouped them by local day, and computed the day net correctly
+(`+31.635.000 ₫ = 32.000.000 − 320.000 − 45.000`). Screenshot in
+`docs/design-system/screenshots/transactions-ios.png`.
+
+The Claude Code iOS Simulator integration reported an `xcode-select` problem that
+`xcode-select -p` contradicts, so the simulator was driven with `flutter build`
+and `xcrun simctl` directly rather than through the panel. Recorded rather than
+worked around silently.
+
+`--dart-define=MONETA_INITIAL_ROUTE` was added for that run, because `simctl`
+cannot script a tap. It defaults to `/` and has no effect on a normal build.

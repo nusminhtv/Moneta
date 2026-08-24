@@ -91,3 +91,21 @@ screenshot showed the icons missing. They were not missing — `SvgPicture` load
 asynchronously and the screenshot was taken before the assets resolved. The
 second screenshot showed all of them. Checking before "fixing" avoided a change
 that would have made the code worse.
+
+## Verified on device
+
+`docs/design-system/screenshots/transactions-ios.png` — the transactions list on
+an iPhone 16 Pro simulator (iOS 18.6), reading rows written directly into the
+app's own SQLite file, after the process was killed and relaunched.
+
+What that screenshot confirms beyond what the test suite can:
+
+- The real `sqflite` platform plugin opens the database and applies migration v1
+  (the test suite runs against `sqflite_common_ffi` on the Dart VM — same SQLite,
+  different binding).
+- Day grouping and per-day nets are right against real data:
+  `+31.635.000 ₫` for Mon 24 Aug is `32.000.000 − 320.000 − 45.000`.
+- Category discs match their Figma chart slots on a real display — transport
+  sky, food amber, salary mint, shopping violet.
+- The note fallback works: the salary row has no note and shows `Salary`.
+- Times render in the device's local zone while storage is UTC.
