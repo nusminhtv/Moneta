@@ -6,8 +6,14 @@ built design-system-first from Figma.
 This repository is also a worked example of an AI-assisted development workflow:
 every behavioural change goes through [OpenSpec](https://github.com/Fission-AI/OpenSpec)
 (spec → design → tasks → implement) and is gated by `tool/verify.sh` before it
-can be archived. See [CLAUDE.md](CLAUDE.md) for the rules and
-[docs/ai-workflow/](docs/ai-workflow/) for the artifacts each change leaves behind.
+can be archived.
+
+- [CLAUDE.md](CLAUDE.md) — the rules the workflow enforces
+- [docs/ai-workflow/level-4-evidence.md](docs/ai-workflow/level-4-evidence.md) —
+  what each artifact demonstrates, and where the evidence is thin
+- [docs/ai-workflow/evidence-log.md](docs/ai-workflow/evidence-log.md) —
+  append-only record of every checkpoint, including the failed ones
+- [docs/adr/](docs/adr/) — decisions, with the options that lost
 
 ## Getting started
 
@@ -45,5 +51,5 @@ npx -y @fission-ai/openspec@latest list      # active changes
 | `tool/` | Verification gate and custom checkers |
 | `openspec/` | Change proposals, specs, designs, tasks |
 | `docs/adr/` | Architecture decision records |
-| `docs/ai-workflow/` | Verify-run evidence and the evidence log |
+| `docs/ai-workflow/` | Verify-run evidence, the evidence log, and the Level-4 report |
 | `docs/design-system/figma-map.md` | Figma node → widget mapping |
