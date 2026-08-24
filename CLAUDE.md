@@ -117,6 +117,14 @@ Boundaries are machine-enforced by `tool/check_architecture.dart`:
 - A test that asserts the implementation back to itself does not count as coverage.
   The one sanctioned exception is the token layer: those tests are *transcription*
   checks against Figma values, and transcription is exactly what can go wrong there.
+- **The gate pins `TZ=Asia/Ho_Chi_Minh`** (`tool/verify.sh`, enforced by
+  `tool/check_timezone.dart`). Local-time assertions cannot fail under UTC — a
+  function that forgets `.toLocal()` returns the identical answer, and a
+  "last local day" calculation done in UTC coincides with the correct one. So any
+  test about local time must be written to discriminate, and it only can because
+  the zone is ahead of UTC. Do not remove the `TZ` export: CI runs UTC by default,
+  so losing it turns those tests green for broken code in the gate that guards
+  merges.
 - **`flutter test` renders with a metrics-only placeholder font** in which every
   glyph is exactly `fontSize` wide. Any assertion about how wide a *string* is
   measures that font, not the design — so assert font-independent structure

@@ -170,11 +170,26 @@ void main() {
       );
     });
 
-    test('converts UTC to local exactly once', () {
+    test('converts UTC to local, and the assertion can tell', () {
+      // The old form of this test compared formatTimeOfDay(instant) with
+      // formatTimeOfDay(instant.toLocal()) — identical strings under UTC, so it
+      // passed for an implementation that never converted. tool/verify.sh now
+      // pins TZ to a zone ahead of UTC (see tool/check_timezone.dart), which is
+      // what makes the two branches below actually differ.
       final instant = DateTime.utc(2026, 8, 24, 22, 30);
+      final local = instant.toLocal();
+
+      expect(local.hour, isNot(instant.hour), reason: 'zone must be non-UTC');
       expect(
         TransactionRow.formatTimeOfDay(instant),
-        TransactionRow.formatTimeOfDay(instant.toLocal()),
+        '${local.hour.toString().padLeft(2, '0')}:'
+        '${local.minute.toString().padLeft(2, '0')}',
+      );
+      expect(
+        TransactionRow.formatTimeOfDay(instant),
+        isNot('22:30'),
+        reason:
+            'rendering the UTC time of day would mean no conversion happened',
       );
     });
 

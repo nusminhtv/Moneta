@@ -28,6 +28,19 @@ done
 
 cd "$(dirname "$0")/.." || exit 2
 
+# Pin the process time zone.
+#
+# Any assertion about local-time behaviour is decorative under UTC: a function
+# that forgets .toLocal() returns the identical answer, so the test passes for a
+# broken implementation. This machine happens to run +07 and CI runs UTC, so a
+# test that discriminates here would have gone green in the gate that guards
+# merges — the dangerous direction.
+#
+# Asia/Ho_Chi_Minh is the app's target locale and is ahead of UTC, so local-day
+# and local-time bugs are observable. The "timezone" gate below fails if this
+# ever stops taking effect.
+export TZ=Asia/Ho_Chi_Minh
+
 STAMP="$(date -u +%Y-%m-%dT%H-%M-%SZ)"
 LOG_DIR="docs/ai-workflow/verify-runs"
 LOG_FILE="$LOG_DIR/${STAMP}_${CHANGE}.md"
@@ -55,6 +68,7 @@ step() {
 
 echo "Moneta verify — change: $CHANGE — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
+step "timezone"     dart run tool/check_timezone.dart
 step "format"       dart format --set-exit-if-changed --output=none lib test tool
 step "analyze"      dart analyze --fatal-infos --fatal-warnings
 step "architecture" dart run tool/check_architecture.dart
