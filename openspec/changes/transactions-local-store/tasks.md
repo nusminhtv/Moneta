@@ -1,17 +1,17 @@
 ## 1. Database foundation
 
-- [ ] 1.1 Add `IdGenerator` to `lib/core` (`SystemIdGenerator`, `FixedIdGenerator`),
+- [x] 1.1 Add `IdGenerator` to `lib/core` (`SystemIdGenerator`, `FixedIdGenerator`),
   beside `Clock` and for the same reason. Verify:
   `test/core/id_generator_test.dart` asserts ids are unique across 10k draws,
   sort roughly by creation time, and that `FixedIdGenerator` is deterministic;
   `dart run tool/check_architecture.dart` passes.
-- [ ] 1.2 Implement `lib/data/database/migrations.dart` — a `Migration` record
+- [x] 1.2 Implement `lib/data/database/migrations.dart` — a `Migration` record
   and the ordered list, with `v1` creating the `transactions` table and its two
   indexes exactly as in `design.md` D1. Verify:
   `test/data/migrations_test.dart` asserts the set is contiguous 1..schemaVersion
   with no duplicates, and that a fresh database ends up with the **same schema**
   as one upgraded step by step.
-- [ ] 1.3 Implement `lib/data/database/app_database.dart` — lazy single
+- [x] 1.3 Implement `lib/data/database/app_database.dart` — lazy single
   connection, migration runner in a transaction, refusal to open when the stored
   version exceeds the declared one, and deterministic close. Verify:
   `test/data/database_test.dart` asserts durability across a close/reopen,
