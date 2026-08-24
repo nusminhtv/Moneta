@@ -166,15 +166,15 @@ void main() {
 
   group('lerp', () {
     test('reaches the target at t=1', () {
-      final target = MonetaTypography(
-        amountXl: const TextStyle(fontSize: 10),
-        amountMd: const TextStyle(fontSize: 10),
-        headingH1: const TextStyle(fontSize: 10),
-        titleMd: const TextStyle(fontSize: 10),
-        bodyMd: const TextStyle(fontSize: 10),
-        labelMd: const TextStyle(fontSize: 10),
-        labelSm: const TextStyle(fontSize: 10),
-        captionMd: const TextStyle(fontSize: 10),
+      const target = MonetaTypography(
+        amountXl: TextStyle(fontSize: 10),
+        amountMd: TextStyle(fontSize: 10),
+        headingH1: TextStyle(fontSize: 10),
+        titleMd: TextStyle(fontSize: 10),
+        bodyMd: TextStyle(fontSize: 10),
+        labelMd: TextStyle(fontSize: 10),
+        labelSm: TextStyle(fontSize: 10),
+        captionMd: TextStyle(fontSize: 10),
       );
       final result = type.lerp(target, 1);
       for (final style in result.all) {

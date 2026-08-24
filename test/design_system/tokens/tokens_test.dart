@@ -100,7 +100,7 @@ void main() {
 
     test('the content column fits inside the frame with room for padding', () {
       expect(MonetaLayout.contentWidth, lessThan(MonetaLayout.frameWidth));
-      final sideMargin =
+      const sideMargin =
           (MonetaLayout.frameWidth - MonetaLayout.contentWidth) / 2;
       expect(sideMargin, 20);
     });
