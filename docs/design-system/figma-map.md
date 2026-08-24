@@ -6,16 +6,48 @@ Source of truth: Figma file `kEYXQUyhXLZITkNxAHRVlf`
 **Check this table before implementing anything from Figma.** If a node already
 has a widget, extend it; do not create a second implementation.
 
-## What the Figma file contains
+## ⚠️ This map describes only the part of the file we can see
+
+The file's own Cover page (node `123:36`) states:
+
+> "Personal finance, mobile only. A complete dark-first design system and **74
+> screens** — with twelve deliberate mistakes hidden in them."
+>
+> 74 screens · 37 variant sets · 239 variants · 119 variables · 48 icons ·
+> 12 deviations
+>
+> "Start on 📁 Screen Index. Trainers: 🔧 Utilities / Known Deviations is the
+> answer key — keep it closed."
+
+**Our Figma access lists only three pages** — Cover, Foundations/Iconography and
+Components/Organisms. `📁 Screen Index`, `🔧 Utilities / Known Deviations` and every
+screen page are not reachable. The counts do not reconcile either: the Cover claims
+37 variant sets and 48 icons; the visible pages hold 14 and 50.
+
+Two consequences, both serious:
+
+1. **"There are no screen designs in this file" — the earlier claim in this
+   document and in `CLAUDE.md` — is false.** There are 74. We cannot see them.
+   Every screen layout this project has "decided" (see ADR 0003 and ADR 0004) may
+   duplicate or contradict a design that already exists.
+2. **Twelve of the file's deviations are deliberate and there is an answer key.**
+   The deviations recorded below were found by comparing implementation against
+   the visible pages. Some may be the planted ones; others may be ours. Until the
+   full file is reachable, treat this table as observations, not as a reconciled
+   list.
+
+Resolving the access is a prerequisite for any further screen work.
+
+## What the Figma file contains *that we can reach*
 
 | Page | Node | Contents |
 | --- | --- | --- |
 | `🎨 Foundations / Iconography` | `5:7` | 50 icons (24×24, stroke weight 1.75, incl. `brand-google`, `brand-apple`) + sizing/colour/swapping rules |
 | `🧩 Components / Organisms` | `5:11` | 14 component sets, listed below |
 
-**The file contains no screen frames.** Screens are composed from this library,
-so every screen layout is a recorded decision (`design.md` or an ADR), not a
-transcription.
+**No screen frames are reachable from the three visible pages** — but the file
+contains 74 screens according to its own Cover. Screen layouts recorded as
+"decisions" in this project were decided without access to designs that exist.
 
 ## Component sets in Figma
 

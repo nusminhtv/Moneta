@@ -139,11 +139,18 @@ Boundaries are machine-enforced by `tool/check_architecture.dart`:
 
 ## Figma
 
-File key `kEYXQUyhXLZITkNxAHRVlf`. Pages: `🎨 Foundations / Iconography` (51
-icons + rules), `🧩 Components / Organisms` (14 component sets with variants).
-There are **no screen designs in the file** — screens are composed from the
-component library, and any screen layout is therefore a *decision to record*
-(ADR or `design.md`), not something read off the canvas.
+File key `kEYXQUyhXLZITkNxAHRVlf`. It is a **training file**: its Cover claims 74
+screens, 37 variant sets and **twelve deliberate mistakes**, and points at a
+`📁 Screen Index` page and a `🔧 Utilities / Known Deviations` answer key.
+
+**Our access reaches only three pages** — Cover, `🎨 Foundations / Iconography`
+(50 icons + rules) and `🧩 Components / Organisms` (14 component sets). The screen
+pages and the index are not listed by `get_metadata`.
+
+So: do **not** repeat the earlier claim that this file has no screen designs. It
+has 74 and we cannot see them. Any screen layout decided without them is
+provisional — flag it as such rather than recording it as a design decision, and
+say plainly that the design was unavailable rather than absent.
 
 Implemented nodes are tracked in `docs/design-system/figma-map.md`. Check it
 before implementing anything: the component may already exist.
