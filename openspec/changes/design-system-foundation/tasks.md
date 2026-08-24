@@ -35,11 +35,12 @@
 
 ## 3. Icons
 
-- [ ] 3.1 Export the 51 icons from Figma node `5:7` into `assets/icons/`, declare
+- [x] 3.1 Export the 50 icons from Figma node `5:7` into `assets/icons/`, declare
   the directory in `pubspec.yaml`, and implement `MonetaIcons` (name → asset) and
   `MonetaIcon` (size and colour from tokens). Verify:
-  `test/design_system/icons_test.dart` enumerates the catalogue, asserts 51
-  entries, and loads each asset from the bundle so a missing file fails in CI.
+  `test/design_system/atoms/moneta_icon_test.dart` enumerates the catalogue,
+  asserts 50 entries, loads each asset from the bundle so a missing file fails in
+  CI, and asserts stroke weight 1.75 on every stroked icon.
 
 ## 4. Molecules
 

@@ -20,7 +20,7 @@ visually identical to Figma on an iPhone-class viewport.
 - **New theme** `lib/design_system/theme/`: a `MonetaTheme` `ThemeExtension`
   carrying the tokens, plus the `ThemeData` that wires fonts and Material
   defaults. `lib/app` starts using it.
-- **New icon set**: the 51 icons on the Figma Iconography page, delivered as
+- **New icon set**: the 50 icons on the Figma Iconography page, delivered as
   committed SVG assets rendered through `flutter_svg`, exposed as a
   `MonetaIcons` catalogue. Stroke weight in the design is 1.75, which no
   off-the-shelf icon package matches, so the exported assets are the only faithful
@@ -72,8 +72,8 @@ None — this is the first behavioural change in the repository.
   `lib/core` (one new enum), `lib/app` (theme wiring + gallery route),
   `test/design_system` (new). `lib/data` and `lib/features` are untouched.
 - **Dependencies added:** `flutter_svg`.
-- **Assets added:** 51 SVG files under `assets/icons/`, declared in
-  `pubspec.yaml`.
+- **Assets added:** 50 SVG files under `assets/icons/` and 5 font files under
+  `assets/fonts/`, declared in `pubspec.yaml`.
 - **No schema migration** — this change adds no persistence.
 - **Gates affected:** `tool/check_design_tokens.dart` currently passes trivially
   because no UI exists. After this change it becomes load-bearing, and

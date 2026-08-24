@@ -110,6 +110,14 @@ Boundaries are machine-enforced by `tool/check_architecture.dart`:
 - Boundary cases are required, not optional: zero, negative, very large amounts,
   empty lists, currency mismatch, empty first-run database.
 - A test that asserts the implementation back to itself does not count as coverage.
+  The one sanctioned exception is the token layer: those tests are *transcription*
+  checks against Figma values, and transcription is exactly what can go wrong there.
+- **Never `await` real I/O inside `testWidgets`.** Its body runs in a `FakeAsync`
+  zone, so a real future — `rootBundle.loadString`, a file read, a socket — never
+  completes and the test **hangs indefinitely instead of failing**. Use plain
+  `test()` with `TestWidgetsFlutterBinding.ensureInitialized()`, or wrap the I/O in
+  `tester.runAsync(...)`. This cost a 7-minute stall during
+  `design-system-foundation`; a hang looks like a slow machine, not a bug.
 
 ## Figma
 

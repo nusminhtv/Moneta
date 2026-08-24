@@ -10,7 +10,7 @@ has a widget, extend it; do not create a second implementation.
 
 | Page | Node | Contents |
 | --- | --- | --- |
-| `🎨 Foundations / Iconography` | `5:7` | 51 icons (24×24, Feather-style, incl. `brand-google`, `brand-apple`) + sizing/colour/swapping rules |
+| `🎨 Foundations / Iconography` | `5:7` | 50 icons (24×24, stroke weight 1.75, incl. `brand-google`, `brand-apple`) + sizing/colour/swapping rules |
 | `🧩 Components / Organisms` | `5:11` | 14 component sets, listed below |
 
 **The file contains no screen frames.** Screens are composed from this library,
@@ -36,7 +36,22 @@ transcription.
 | PaginationDots | `70:223` | 1, 2, 3 | | not started |
 | OtpField | `70:263` | Empty, Partial, Complete | | not started |
 
-## Recorded deviations
+## Foundations
 
-None yet. Any intentional difference from the Figma source goes here with a
-reason and the change that introduced it.
+| Figma | Node | Implementation | Status |
+| --- | --- | --- | --- |
+| Icon set (50) | `5:7` | `assets/icons/*.svg`, `lib/design_system/atoms/moneta_icon_name.dart`, `moneta_icon.dart` | done |
+| Colour tokens | various | `lib/design_system/tokens/colors.dart` | done |
+| Type scale (8 styles) | various | `lib/design_system/tokens/typography.dart` | done |
+| Radii / elevation / spacing | various | `tokens/radii.dart`, `elevation.dart`, `spacing.dart` | done |
+| Motion | *absent from Figma* | `tokens/motion.dart` — Material-derived, marked not-Figma-derived | done |
+
+## Recorded deviations and resolved ambiguities
+
+| # | What | Resolution |
+| --- | --- | --- |
+| 1 | `display/amount-xl` and `heading/h1` report `letterSpacing: -1` in Figma's style summary, but their CSS emits `-0.4px` and `-0.28px` | The summary value is a **percentage**. Implemented as absolute −0.4 and −0.28. Details in `figma-tokens.md`. |
+| 2 | The proposal said 51 icons | The page holds **50**. Corrected in the proposal, spec and tasks rather than shipping a catalogue that quietly disagreed with the spec. |
+| 3 | `brand-google` carries four colours; every other icon is monochrome | `MonetaIconName.preservesColour` marks it, and `MonetaIcon` skips tinting for it. Tinting would flatten Google's mark into one colour. |
+| 4 | Chart *base* colours are not emitted as Figma variables | Read from each exported glyph's `stroke` and visually confirmed against a screenshot of `33:311`, since a light-mode export would have given plausible-but-wrong values. |
+| 5 | Figma has no `radius-sm`, `elevation/1`, `elevation/2` or `text-secondary` on any node read | Left unimplemented rather than invented. |

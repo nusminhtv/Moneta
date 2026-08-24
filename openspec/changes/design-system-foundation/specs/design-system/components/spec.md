@@ -163,8 +163,23 @@ addressable by name, at the sizes the design uses.
 
 #### Scenario: The icon set is complete
 - **WHEN** the icon catalogue is enumerated
-- **THEN** it contains every icon present on the Figma iconography page, and each
-  entry resolves to an asset that exists
+- **THEN** it contains every icon present on the Figma iconography page — 50 —
+  and each entry resolves to an asset that exists in the bundle
+
+#### Scenario: Every stroked icon keeps the design stroke weight
+- **WHEN** any icon drawn with strokes is inspected
+- **THEN** its stroke weight is 1.75, the weight the design is drawn at
+- **AND** a re-export at a different weight fails verification rather than
+  shipping
+
+#### Scenario: A multi-colour brand mark is not tinted
+- **WHEN** an icon that carries its own colours is rendered with a requested tint
+- **THEN** the tint is ignored and the icon's own colours are preserved
+- **AND** every other icon in the set does honour the requested tint
+
+#### Scenario: An unknown icon name is not substituted
+- **WHEN** an icon is looked up by a name that is not in the set
+- **THEN** the lookup reports absence rather than returning a placeholder icon
 
 ### Requirement: Component gallery
 
