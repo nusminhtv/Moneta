@@ -22,12 +22,12 @@
 
 ## 2. Theme and shared domain
 
-- [ ] 2.1 Implement `MonetaTheme extends ThemeExtension<MonetaTheme>` in
+- [x] 2.1 Implement `MonetaTheme extends ThemeExtension<MonetaTheme>` in
   `lib/design_system/theme/`, a `BuildContext.moneta` accessor, and the
   `ThemeData` factory; wire it into `lib/app/app.dart`. Verify:
   `test/design_system/theme/moneta_theme_test.dart` reads every token group from a
   pumped widget's context, and asserts a test-supplied override reaches the widget.
-- [ ] 2.2 Add `SpendCategory` to `lib/core` carrying a chart-slot index and an icon
+- [x] 2.2 Add `SpendCategory` to `lib/core` carrying a chart-slot index and an icon
   name (no `Color` — `lib/core` stays Flutter-free), plus the design-system
   resolver from slot to colour. Verify: `test/core/spend_category_test.dart`
   asserts every category maps to a distinct slot in range, and
