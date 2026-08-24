@@ -1,154 +1,282 @@
 ## Purpose
 
-Defines what the Home overview shows for a period, how its figures are derived,
-and how it behaves when the data behind it cannot be read.
+Defines what the Home overview shows for a period, how its derived figures are
+computed, and how it behaves when the data behind it cannot be read.
+
+Scope note: this capability deliberately does **not** restate behaviour already
+owned elsewhere in the spec set. Transaction ordering and range semantics belong
+to `transactions`; the balance card's masked rendering and the row's signed
+amounts belong to `design-system/components`; database failure reporting and
+durability belong to `storage/local-database`. Home's requirements are only the
+ones about *composing* those things.
 
 ## ADDED Requirements
 
-### Requirement: The overview covers a bounded period
+### Requirement: The period is the current local month
 
-Home SHALL show figures for an explicit period, bounded inclusive of its start
-and exclusive of its end, so adjacent periods neither overlap nor drop a
-transaction on the boundary.
+Home SHALL show period figures for the current calendar month in the device's
+local time zone. The period bounds SHALL be passed to the store as a range whose
+semantics are already defined by the `transactions` capability.
 
-#### Scenario: The default period is the current calendar month
+#### Scenario: Month bounds
 - **WHEN** Home is opened
-- **THEN** the period runs from the first instant of the current local month up
-  to, but not including, the first instant of the next month
+- **THEN** the period start is the first instant of the current local month and
+  the period end is the first instant of the next local month
 
-#### Scenario: A transaction exactly on the period start is included
-- **WHEN** a transaction's instant equals the period start
-- **THEN** it counts toward the period's income or expenses
-
-#### Scenario: A transaction exactly on the period end is excluded
-- **WHEN** a transaction's instant equals the period end
-- **THEN** it does not count toward this period
-- **AND** it counts toward the next one
-
-#### Scenario: The period is derived in local time
-- **WHEN** the device is in any time zone
-- **THEN** the month boundaries are that zone's month boundaries, converted to
-  UTC for querying
+#### Scenario: December rolls over
+- **WHEN** the current local month is December
+- **THEN** the period end is the first instant of January of the following year
 
 #### Scenario: A month containing a daylight-saving transition
-- **WHEN** the current month contains a DST transition
+- **WHEN** the current local month contains a DST transition
 - **THEN** the period still spans exactly that calendar month, with no hour
   gained or lost at either boundary
+- **AND** the bounds are computed from calendar fields, not by adding a duration
 
-### Requirement: Total balance is all-time, not the period's net
+#### Scenario: Bounds are converted for storage
+- **WHEN** the period is used to read from the store
+- **THEN** its bounds are expressed in UTC, because that is what the store
+  compares against
 
-Home SHALL show total balance as the net of every transaction ever recorded, and
-income and expenses as the totals for the displayed period only.
+### Requirement: A transaction's position in time is its occurrence, not its entry
 
-#### Scenario: Balance ignores the period
+Every Home figure and list SHALL be determined by when a transaction **occurred**,
+never by when it was recorded.
+
+#### Scenario: A backdated transaction
+- **WHEN** a transaction is recorded today but occurred in the previous month
+- **THEN** it counts toward the previous month's period, not this month's
+
+#### Scenario: The recent list
+- **WHEN** the recent list is built
+- **THEN** it is ordered by occurrence, so a transaction entered late appears at
+  its own position in time rather than at the top
+
+### Requirement: Total balance is the net of everything that has already happened
+
+Home SHALL show total balance as the net of all transactions whose occurrence is
+at or before now, and SHALL exclude any transaction occurring later than now.
+
+#### Scenario: Balance ignores the displayed period
 - **WHEN** transactions exist both inside and outside the displayed period
-- **THEN** total balance includes all of them
-- **AND** income and expenses include only those inside the period
+- **THEN** total balance includes all of them, subject to the rule below
+- **AND** period income and expenses include only those inside the period
 
-#### Scenario: A month's net is not presented as a balance
+#### Scenario: A future-dated transaction is excluded
+- **WHEN** a transaction occurs later than now
+- **THEN** it does not contribute to total balance
+- **AND** this matches the `transactions` capability's stated reason for
+  rejecting future-dated entries — a balance that includes money not yet spent is
+  wrong
+
+#### Scenario: Balance and period net can disagree in sign
 - **WHEN** the period's income exceeds its expenses but earlier months were
   negative overall
-- **THEN** total balance may still be negative, and is shown as such
+- **THEN** total balance is negative while the period net is positive, and both
+  are shown as they are
 
 #### Scenario: First run
 - **WHEN** no transactions exist
-- **THEN** total balance, income and expenses are all a formatted zero, not blank
-  and not a placeholder
+- **THEN** total balance, period income and period expenses are each a formatted
+  zero in the wallet currency, not blank and not a placeholder
 
-### Requirement: Safe-to-spend has one stated definition
+#### Scenario: Very large totals
+- **WHEN** the summed amounts approach the largest value the store can hold
+- **THEN** the totals are exact, or a failure is reported — a silently wrapped
+  total is never shown
 
-Home SHALL derive safe-to-spend as the period's income minus the period's
-expenses, floored at zero, and SHALL NOT present a negative safe-to-spend.
+### Requirement: Safe-to-spend is period income minus period expenses, floored at zero
+
+Home SHALL derive safe-to-spend from the displayed period only, and SHALL NOT
+present it as a negative amount.
 
 #### Scenario: Income exceeds expenses
 - **WHEN** the period's income is greater than its expenses
 - **THEN** safe-to-spend is the difference
 
+#### Scenario: Expenses equal income
+- **WHEN** the period's expenses equal its income
+- **THEN** safe-to-spend is zero
+
 #### Scenario: Expenses exceed income
-- **WHEN** the period's expenses are greater than or equal to its income
+- **WHEN** the period's expenses are greater than its income
+- **THEN** safe-to-spend is zero, not the negative difference — "safe to spend
+  −2,000,000 ₫" is not a meaning the phrase has
+- **AND** the overspend is not otherwise signalled here; that is a budget concern
+
+#### Scenario: An empty period
+- **WHEN** the period contains no transactions
 - **THEN** safe-to-spend is zero
-- **AND** it is not shown as a negative amount, because "safe to spend −2,000,000"
-  is not a meaning the phrase has
 
-#### Scenario: A period with no transactions
-- **WHEN** the period is empty
-- **THEN** safe-to-spend is zero
+### Requirement: Safe-to-spend is labelled with the last day of the period
 
-### Requirement: The overview lists the most recent transactions
+Home SHALL tell the user which date the safe-to-spend figure runs until, and that
+date SHALL be the last day *within* the period, not the exclusive end bound.
 
-Home SHALL show a bounded number of the most recent transactions, newest first,
-below the hero card.
+#### Scenario: The displayed date
+- **WHEN** the period ends at the first instant of the next month
+- **THEN** the date shown is the final day of the current month
+- **AND** it is not the first day of the next month, which is outside the period
 
-#### Scenario: Fewer transactions than the limit
-- **WHEN** fewer transactions exist than the limit
-- **THEN** all of them are shown
+#### Scenario: The card receives a date, not a string
+- **WHEN** the balance card is given the period end
+- **THEN** it receives a date value and formats it itself, so Home cannot
+  disagree with the rest of the application about how dates are written
 
-#### Scenario: More transactions than the limit
-- **WHEN** more exist than the limit
-- **THEN** exactly the limit is shown, and they are the most recent ones
+### Requirement: The overview lists the five most recent transactions
 
-#### Scenario: The recent list is not restricted to the period
-- **WHEN** the most recent transaction is older than the displayed period
+Home SHALL show at most five transactions, the most recent by occurrence, below
+the hero card. The list SHALL NOT be restricted to the displayed period.
+
+#### Scenario: Fewer than five exist
+- **WHEN** three transactions exist
+- **THEN** all three are shown
+
+#### Scenario: More than five exist
+- **WHEN** nine transactions exist
+- **THEN** exactly five are shown, and they are the five most recent by occurrence
+
+#### Scenario: Recency is not period-bounded
+- **WHEN** the most recent transaction occurred before the displayed period began
 - **THEN** it still appears in the recent list
-- **AND** it does not affect the period's income or expenses
+- **AND** it does not contribute to period income or expenses
 
 #### Scenario: No transactions at all
 - **WHEN** none exist
 - **THEN** the recent section shows an empty state inviting the first record
 - **AND** the hero card is still shown, with zero figures
 
-### Requirement: Hiding the figures survives a restart
+### Requirement: The recent list carries only shared types
 
-Home SHALL let the user hide every figure on the hero card, and SHALL remember
-that choice across restarts.
+The Home feature's own types SHALL NOT reference another feature's types.
+
+#### Scenario: A recent entry's shape
+- **WHEN** a recent entry is inspected
+- **THEN** it carries an identifier, a display title, a money amount, a
+  direction, a category and an occurrence instant, all of which are shared types
+
+#### Scenario: The architecture gate
+- **WHEN** the architecture check runs
+- **THEN** no file under `features/home` imports another feature
+
+### Requirement: Hiding the figures hides every amount on the screen
+
+Home SHALL let the user hide the figures, and hiding SHALL cover the hero card's
+four amounts **and** every amount in the recent list.
 
 #### Scenario: Hiding
 - **WHEN** the user activates the mask control
-- **THEN** no digit from the balance, safe-to-spend, income or expenses is
-  rendered
+- **THEN** no digit belonging to any monetary amount is rendered anywhere on the
+  screen
+- **AND** a masked hero card beside an unmasked "−1,250,000 ₫" would defeat the
+  purpose, so the list is masked too
+
+#### Scenario: Non-amount content stays visible
+- **WHEN** the figures are hidden
+- **THEN** category names, transaction titles and the layout are unchanged
 
 #### Scenario: The choice is durable
 - **WHEN** the figures are hidden and the application is closed and reopened
 - **THEN** they are still hidden, without the user acting again
 
 #### Scenario: Revealing is equally durable
-- **WHEN** the user reveals the figures and the application is closed and reopened
+- **WHEN** the user reveals the figures and the application is closed and
+  reopened
 - **THEN** they are shown
 
-#### Scenario: The preference cannot be read
-- **WHEN** reading the stored preference fails
-- **THEN** the figures are shown rather than hidden, and the screen still loads
-- **AND** the failure does not prevent the overview from rendering, because a
-  masking preference is not worth failing a screen over
+#### Scenario: The preference has never been set
+- **WHEN** Home loads and no preference is stored
+- **THEN** the figures are shown
 
-### Requirement: Failures are reported, not shown as zeros
+#### Scenario: The preference cannot be read
+- **WHEN** reading the stored preference reports a storage failure
+- **THEN** the figures are shown, and the overview still renders
+- **AND** the failure does not produce an error state, because a display
+  preference is not worth failing a screen over
+
+#### Scenario: The preference cannot be written
+- **WHEN** the user toggles the mask and storing the choice fails
+- **THEN** the on-screen state follows the user's action for this session
+- **AND** the failure is surfaced to the user rather than silently discarded
+
+### Requirement: Failures are reported, never rendered as zeros
 
 Home SHALL distinguish, on screen, having no data from having failed to read it.
 
-#### Scenario: A read failure
-- **WHEN** loading the overview fails
+#### Scenario: A storage failure while loading
+- **WHEN** any read needed for the overview reports a storage failure
 - **THEN** an error state is shown with a retry action
-- **AND** no zero-valued hero card is shown, because a balance of zero is a claim
-  about the user's money
+- **AND** no hero card with zero figures is shown, because a balance of zero is a
+  claim about the user's money
+
+#### Scenario: Partial failure is still failure
+- **WHEN** one of the reads succeeds and another fails
+- **THEN** the error state is shown rather than a partially-filled overview
 
 #### Scenario: Retry succeeds
-- **WHEN** the user retries and the read succeeds
+- **WHEN** the user retries and the reads succeed
 - **THEN** the overview replaces the error state
 
 #### Scenario: Retry fails again
 - **WHEN** the retry also fails
 - **THEN** the error state remains and no partial figures appear
 
-### Requirement: The overview does not know where its data comes from
+#### Scenario: A validation failure is a defect, not a user-facing state
+- **WHEN** constructing the period query would report a validation failure
+- **THEN** that is a programming error in Home, not a state the user can reach
+- **AND** it is caught by test rather than rendered
 
-The Home feature SHALL depend on a declared data port and SHALL NOT depend on
-any other feature.
+### Requirement: Amounts in more than one currency are refused, not added
 
-#### Scenario: Home is testable without the transactions implementation
-- **WHEN** the Home controller is exercised in a test
-- **THEN** it can be driven entirely through a substitute data source
-- **AND** the test requires no database and no transactions code
+Home SHALL NOT display a figure derived from amounts in differing currencies.
 
-#### Scenario: The architecture gate stays satisfied
-- **WHEN** the architecture check runs
-- **THEN** no file under `features/home` imports another feature
+#### Scenario: The store reports a summary in an unexpected currency
+- **WHEN** a figure read from the store is denominated in a currency other than
+  the wallet's
+- **THEN** a failure is reported and the error state is shown
+- **AND** no total is displayed, because adding unlike currencies produces a
+  number that is wrong without looking wrong
+
+#### Scenario: Deriving safe-to-spend cannot crash the screen
+- **WHEN** safe-to-spend is derived
+- **THEN** a currency mismatch between its inputs is reported as a failure rather
+  than raised as an exception
+
+#### Scenario: Negative stored amounts
+- **WHEN** the store is read
+- **THEN** no transaction can carry a negative magnitude, because the
+  `transactions` capability forbids it at construction — so Home has no such case
+  to handle, and asserts that rather than guarding it
+
+### Requirement: A newly recorded transaction appears without a manual refresh
+
+When a transaction is recorded while Home is the current screen, Home SHALL
+reflect it without the user acting again.
+
+#### Scenario: Recording from the overview
+- **WHEN** the user records a transaction from the add action while on Home
+- **THEN** the recent list and the period figures include it once the sheet closes
+
+#### Scenario: A failed record changes nothing
+- **WHEN** recording fails
+- **THEN** Home is unchanged
+
+### Requirement: The overview is composed from existing components
+
+Home SHALL be built from the existing design-system components rather than new
+one-off widgets.
+
+#### Scenario: The hero card
+- **WHEN** Home renders its hero
+- **THEN** it is the balance card from Figma node `40:161`, in its `State=Default`
+  variant when revealed and its `State=Masked` variant when hidden
+
+#### Scenario: The recent rows
+- **WHEN** Home renders a recent transaction
+- **THEN** it is the shared transaction row, in its masked or unmasked form to
+  match the hero card
+
+#### Scenario: No Figma frame exists for the screen itself
+- **WHEN** the arrangement of hero card, section heading and list is reviewed
+- **THEN** it is understood to be a decision recorded in the design docs, because
+  the Figma file contains no Home frame to transcribe

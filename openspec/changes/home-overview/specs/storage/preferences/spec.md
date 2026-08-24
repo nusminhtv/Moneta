@@ -4,27 +4,14 @@ Defines durable storage for small values that belong to no single feature — a
 display preference, a last-selected filter — and what is guaranteed about reading
 them, writing them, and asking for one that was never set.
 
+Scope note: this store lives in the database the `storage/local-database`
+capability already governs, so failure reporting, durability across restarts and
+migration behaviour are **that** capability's requirements and are not restated
+here. What follows is only what is specific to key/value preferences.
+
 ## ADDED Requirements
 
-### Requirement: A written preference is readable and durable
-
-The store SHALL return the value most recently written for a key, and that value
-SHALL survive the application closing and reopening.
-
-#### Scenario: Write then read
-- **WHEN** a value is written for a key and then read
-- **THEN** the value read equals the value written
-
-#### Scenario: Overwriting
-- **WHEN** a key is written twice
-- **THEN** reading returns the second value
-
-#### Scenario: Durability
-- **WHEN** a value is written, the database is closed, and a new connection is
-  opened against the same file
-- **THEN** the value is still present
-
-### Requirement: An absent key is absent, not false
+### Requirement: An absent key is absent, not a value
 
 Reading a key that was never written SHALL report absence, distinguishably from
 any value that key could legitimately hold.
@@ -35,34 +22,50 @@ any value that key could legitimately hold.
 - **AND** it is not reported as a stored default, because "the user has never
   chosen" and "the user chose the default" are different facts
 
-#### Scenario: A caller supplying its own default
+#### Scenario: A caller supplying its own fallback
 - **WHEN** a caller reads an absent key with a fallback
 - **THEN** it receives the fallback
-- **AND** the store still does not record anything for that key
+- **AND** nothing is written, so the key remains absent
 
-### Requirement: A stored value that cannot be interpreted is a failure
+#### Scenario: Absence survives a read
+- **WHEN** an absent key is read many times
+- **THEN** it stays absent
 
-Reading a value that does not parse as the requested type SHALL report a storage
-failure rather than a default.
+### Requirement: Booleans have exactly one stored form
 
-#### Scenario: A malformed boolean
-- **WHEN** a key holds text that is neither of the two stored boolean forms
+A boolean preference SHALL be stored as the text `true` or the text `false`, and
+no other text SHALL be accepted as either.
+
+#### Scenario: Round trip
+- **WHEN** `true` is written and read back as a boolean
+- **THEN** the value is true, and the stored text is `true`
+
+#### Scenario: A value written in another form
+- **WHEN** the stored text for a boolean key is `1`, `TRUE`, `yes` or empty
 - **THEN** reading it as a boolean reports a storage failure
-- **AND** it does not silently read as false
+- **AND** it does not read as false, because a preference that silently becomes
+  its default when the data is corrupt is how a bug becomes invisible
 
-### Requirement: Storage failures are reported, never swallowed
+#### Scenario: The failure names the key
+- **WHEN** a malformed value is read
+- **THEN** the failure message identifies which key and what was stored
 
-Every operation SHALL report failure as a storage failure carrying a message,
-and SHALL NOT report success or a default value on failure.
+### Requirement: Overwriting replaces, and the last write wins
 
-#### Scenario: A read fails
-- **WHEN** the underlying query throws
-- **THEN** the caller receives a storage failure
+Writing a key that already has a value SHALL replace it, leaving exactly one
+stored value per key.
 
-#### Scenario: A write fails
-- **WHEN** the underlying write throws
-- **THEN** the caller receives a storage failure
-- **AND** the previously stored value, if any, is unchanged
+#### Scenario: Overwriting
+- **WHEN** a key is written twice
+- **THEN** reading returns the second value
+
+#### Scenario: One row per key
+- **WHEN** a key has been written repeatedly
+- **THEN** the store holds a single entry for it
+
+#### Scenario: Writes complete in order
+- **WHEN** two writes to the same key are issued in sequence
+- **THEN** the value that remains is the one written second
 
 ### Requirement: Keys are declared, not spelled at call sites
 
@@ -72,4 +75,11 @@ second, permanently-empty setting.
 #### Scenario: Enumerating the keys
 - **WHEN** the declared keys are enumerated
 - **THEN** every key the application reads or writes is among them
-- **AND** no two declared keys share a stored name
+
+#### Scenario: Stored names are unique
+- **WHEN** the declared keys' stored names are compared
+- **THEN** no two are the same
+
+#### Scenario: There is no free-text read
+- **WHEN** a caller reads a preference
+- **THEN** it names a declared key rather than supplying a string
