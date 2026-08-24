@@ -76,7 +76,7 @@
 
 ## 6. Gallery and close-out
 
-- [ ] 6.1 Add a `/gallery` route in `lib/app` rendering every component in every
+- [x] 6.1 Add a `/gallery` route in `lib/app` rendering every component in every
   variant, labelled by Figma variant name. Verify:
   `test/app/gallery_test.dart` asserts one labelled entry per component per
   variant and that the count matches `docs/design-system/figma-map.md`.
