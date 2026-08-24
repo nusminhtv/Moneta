@@ -27,6 +27,42 @@ Columns: date (UTC) · kind · what · reference · evidence file
 | 2026-08-24 | gate-failure | The three commits above cited a FAILING verify run (analyze, 2 lint findings). Not amended — corrected in a follow-up commit so the mistake stays visible. | — | `verify-runs/2026-08-24T04-06-16Z_design-system-foundation.md` (FAIL) |
 | 2026-08-24 | verify | Token layer green: 81 tests, coverage thresholds met | — | `verify-runs/2026-08-24T04-07-22Z_design-system-foundation.md` |
 
+| 2026-08-24 | checkpoint | 2.1–2.2 MonetaTheme extension + SpendCategory in core | 7380aaf | `verify-runs/2026-08-24T04-11-01Z_*.md` |
+| 2026-08-24 | checkpoint | 3.1 50-icon set; proposal's "51" corrected to 50 | c42b302 | `verify-runs/2026-08-24T04-26-23Z_*.md` |
+| 2026-08-24 | checkpoint | 4.1–4.2 ProgressBar, CategoryIcon, BudgetStatus; token checker tightened and given its own 16 tests | 4a17a2e | `verify-runs/2026-08-24T04-31-06Z_*.md` |
+| 2026-08-24 | checkpoint | 5.1–5.3 BalanceCard, BudgetCard, BottomNav; 3 real defects caught by tests | — | `verify-runs/2026-08-24T04-45-32Z_*.md` |
+| 2026-08-24 | checkpoint | 6.1 gallery catalog + router | — | `verify-runs/2026-08-24T04-48-06Z_*.md` |
+| 2026-08-24 | checkpoint | 6.2 visual verification in a browser; figma-map deviations 1–9 recorded | — | `verify-runs/2026-08-24T04-56-20Z_*.md` |
+
+### Defects the gate caught that review would probably not have
+
+1. **BalanceCard stats row overflowed** with wide amounts — Figma marks the stats
+   `shrink-0`, which is fine for the authored copy and wrong for real data.
+2. **BudgetCard's amount column overflowed the head row by up to 96px.** The first
+   fix (a plain `Flexible`) removed the overflow but split the row evenly and
+   truncated the category name for nothing; the second fix capped the column at
+   55%. `TextAlign.end` then had to go too — it makes a `RenderParagraph` report
+   the full available width so it can align inside it, silently defeating the cap.
+3. **BottomNav's `selected` semantics flag never reached the tab's node.**
+   `Semantics` was nested *inside* the `GestureDetector`, making it a sibling
+   node, so assistive technology could not tell which tab was current. Nothing
+   visual would have shown this.
+
+### Where the tests are weaker than they look
+
+The `MonetaIcon` widget tests assert wiring — tint, size, which asset — and
+cannot assert that anything is painted, because `SvgPicture` loads
+asynchronously and `testWidgets` runs in `FakeAsync` where that load never
+completes. Closed as far as a unit test can: a separate test runs the real
+`flutter_svg` parser over all 50 committed assets and asserts each yields a
+24×24 picture. Actual painting is confirmed by the gallery in a real browser,
+recorded in `docs/design-system/figma-map.md`.
+
+Related: during that visual check the first screenshot appeared to show every
+icon missing. It was the async load, not a defect — the next screenshot showed
+them all. Verifying before "fixing" avoided a change that would have made the
+code worse.
+
 ### Workflow finding: the PostToolUse hook has a blind spot
 
 The hook runs `dart analyze` on the file path reported by Edit/Write. Files

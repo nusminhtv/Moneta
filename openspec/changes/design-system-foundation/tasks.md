@@ -80,7 +80,7 @@
   variant, labelled by Figma variant name. Verify:
   `test/app/gallery_test.dart` asserts one labelled entry per component per
   variant and that the count matches `docs/design-system/figma-map.md`.
-- [ ] 6.2 Update `docs/design-system/figma-map.md` (widget paths, status, the
+- [x] 6.2 Update `docs/design-system/figma-map.md` (widget paths, status, the
   resolved `display/amount-xl` letter-spacing ambiguity) and run the full gate.
   Verify: `bash tool/verify.sh --change design-system-foundation` passes, and the
   `change-verifier` agent returns SHIP with no unresolved blocking items.

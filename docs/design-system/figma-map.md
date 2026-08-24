@@ -60,3 +60,20 @@ transcription.
 | 6 | BalanceCard's two stats are `shrink-0` in Figma | Made flexible with single-line ellipsis. The authored copy fits, but real balances vary in width and an overflowing row is a rendering bug, not an overflow. |
 | 7 | BudgetCard's amount column is `shrink-0` in Figma, which overflows the head row once an amount is wide enough | Capped at 55% of the row width, single line, ellipsised. A plain `Flexible` would have split the row evenly and truncated the category name for nothing. |
 | 8 | BottomNav tab icons are 23px in Figma, while the icon canvas is 24px everywhere else | Kept at 23 — reproducing the file rather than tidying it. Exposed as `MonetaBottomNav.tabIconSize` and asserted, so it reads as deliberate. |
+| 9 | Figma's masked balance is `•• ••• ••• ₫` (space-separated); ours renders `••.•••.••• ₫` | Ours builds the mask by substituting digits in a **formatted** amount, so it inherits the locale's own separators (vi_VN uses `.`). Keeping Figma's literal spaces would have been wrong for any other locale. Dot count and width are fixed either way, so no magnitude leaks. |
+
+## Visual verification
+
+The gallery was run in a browser at a mobile viewport and compared against the
+Figma canvas. Confirmed rendering correctly: the brand gradient and its angle,
+`radius-xl` on the hero card, Plus Jakarta Sans at 40/44 for the balance, the
+signed income and expense figures, the eye / eye-off swap, the masked state
+hiding every digit, the amber `chart/7` category disc with its coffee glyph, the
+income-green progress fill, and `radius-lg` plus the subtle border on the budget
+card.
+
+One thing worth recording, because it nearly became a false bug report: the first
+screenshot showed the icons missing. They were not missing — `SvgPicture` loads
+asynchronously and the screenshot was taken before the assets resolved. The
+second screenshot showed all of them. Checking before "fixing" avoided a change
+that would have made the code worse.

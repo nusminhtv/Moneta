@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -72,6 +74,25 @@ void main() {
           contains('stroke-width="1.75"'),
           reason: '${icon.assetPath} is not at stroke weight 1.75',
         );
+      }
+    });
+
+    // The widget tests below assert how MonetaIcon is WIRED — the tint, the
+    // size, which asset. They cannot assert that anything is actually painted:
+    // SvgPicture loads asynchronously, and testWidgets runs in FakeAsync where
+    // that load never completes. This test closes that gap by running the real
+    // parser over every committed asset, so a corrupt or unsupported SVG fails
+    // here instead of rendering as blank space in the app.
+    test('every icon parses to a 24x24 picture', () async {
+      for (final icon in MonetaIconName.values) {
+        final raw = File(icon.assetPath).readAsStringSync();
+        final info = await vg.loadPicture(SvgStringLoader(raw), null);
+        expect(
+          info.size,
+          const Size(24, 24),
+          reason: '${icon.assetPath} did not parse to the icon canvas',
+        );
+        info.picture.dispose();
       }
     });
 
