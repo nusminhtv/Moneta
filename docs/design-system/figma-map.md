@@ -27,6 +27,8 @@ transcription.
 | BalanceCard | `40:161` | Default, Masked | | not started |
 | AccountCard | `40:209` | Bank, Cash, E-wallet, Credit | | not started |
 | BudgetCard | `40:256` | OnTrack, NearLimit, Over | | not started |
+| ProgressBar | `21:139` | Under/Near/Over × Sm/Md | `design_system/molecules/progress_bar.dart` | done |
+| CategoryIcon | `33:311` | 8 categories × Sm/Md/Lg | `design_system/molecules/category_icon.dart` | done |
 | GoalCard | `40:257` | — | | not started |
 | Dialog | `42:284` | Informational, Confirm, Destructive | | not started |
 | Snackbar | `42:305` | Success, Error, Info | | not started |

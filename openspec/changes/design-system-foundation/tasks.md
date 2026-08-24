@@ -44,11 +44,11 @@
 
 ## 4. Molecules
 
-- [ ] 4.1 Implement `ProgressBar` (fraction-driven, 3 derived colours × 2 sizes).
+- [x] 4.1 Implement `ProgressBar` (fraction-driven, 3 derived colours × 2 sizes).
   Verify: `test/design_system/molecules/progress_bar_test.dart` asserts fill width
   is proportional at 0/0.5/1.0, clamps below 0 and above 1, and never exceeds the
   track width.
-- [ ] 4.2 Implement `CategoryIcon` (8 categories × 3 sizes) using `SpendCategory`.
+- [x] 4.2 Implement `CategoryIcon` (8 categories × 3 sizes) using `SpendCategory`.
   Verify: `test/design_system/molecules/category_icon_test.dart` asserts each
   category renders its own tint and glyph, and that the same category is identical
   across all three sizes apart from geometry.
