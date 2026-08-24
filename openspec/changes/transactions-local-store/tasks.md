@@ -52,7 +52,7 @@
 
 ## 4. Design system addition
 
-- [ ] 4.1 Implement `TransactionRow` per ADR 0003, taking `Money` and a
+- [x] 4.1 Implement `TransactionRow` per ADR 0003, taking `Money` and a
   direction. Verify: `test/design_system/molecules/transaction_row_test.dart`
   asserts the sign and colour for both directions, the category disc coming from
   the shared binding, the note falling back to the category name, one-line

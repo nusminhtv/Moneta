@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:moneta/core/money.dart';
 import 'package:moneta/core/spend_category.dart';
+import 'package:moneta/design_system/molecules/amount_slot.dart';
 import 'package:moneta/design_system/molecules/budget_status.dart';
 import 'package:moneta/design_system/molecules/category_icon.dart';
 import 'package:moneta/design_system/molecules/progress_bar.dart';
@@ -43,11 +44,6 @@ class BudgetCard extends StatelessWidget {
   /// The card's derived status. Exposed so a screen can group or sort by it
   /// without re-deriving the rule.
   BudgetStatus get status => BudgetStatus.fromSpend(spent, limit);
-
-  /// Largest share of the head row the amount column may claim before it starts
-  /// truncating. Chosen so a realistic amount never truncates while a
-  /// pathological one cannot squeeze the category name to nothing.
-  static const double _amountWidthShare = 0.55;
 
   @override
   Widget build(BuildContext context) {
@@ -121,27 +117,11 @@ class BudgetCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: theme.spacing.xl),
-                      // Figma marks this column shrink-0, which overflows the row
-                      // as soon as an amount is wide enough — a real defect the
-                      // table test caught.
-                      //
-                      // A plain Flexible would fix the overflow but split the row
-                      // evenly with the name, so a short amount would leave the
-                      // title needlessly truncated. An explicit cap keeps Figma's
-                      // behaviour in the normal case — the amount takes what it
-                      // needs, the name takes the rest — and only ellipsises the
-                      // amount once it would claim more than [_amountWidthShare]
-                      // of the row. Recorded in docs/design-system/figma-map.md.
-                      //
-                      // Note: no textAlign here. TextAlign.end makes a
-                      // RenderParagraph report the full available width so it
-                      // can align inside it, which would make this column
-                      // always claim the whole cap. CrossAxisAlignment.end on
-                      // the Column right-aligns both lines already.
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: rowWidth * _amountWidthShare,
-                        ),
+                      // Figma marks this column shrink-0, which overflows the
+                      // row as soon as an amount is wide enough. AmountSlot
+                      // documents the fix and the three attempts before it.
+                      AmountSlot(
+                        rowWidth: rowWidth,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           mainAxisSize: MainAxisSize.min,

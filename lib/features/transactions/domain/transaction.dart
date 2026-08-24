@@ -2,27 +2,11 @@ import 'package:equatable/equatable.dart';
 import 'package:moneta/core/money.dart';
 import 'package:moneta/core/result.dart';
 import 'package:moneta/core/spend_category.dart';
+import 'package:moneta/core/transaction_direction.dart';
 
-/// Whether money came in or went out.
-///
-/// The sign of a transaction lives here, not in its amount. A signed amount
-/// would let the two disagree — direction `income` with a negative value — and
-/// every read would then have to decide which field wins.
-enum TransactionDirection {
-  /// Money in.
-  income,
-
-  /// Money out.
-  expense;
-
-  /// Resolves a stored name, or `null` if it is not one of ours.
-  static TransactionDirection? tryParse(String name) {
-    for (final value in values) {
-      if (value.name == name) return value;
-    }
-    return null;
-  }
-}
+// Re-exported so callers inside the feature need one import, while the enum
+// itself stays in core where the design system can reach it.
+export 'package:moneta/core/transaction_direction.dart';
 
 /// One recorded movement of money.
 final class Transaction extends Equatable {

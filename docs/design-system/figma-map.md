@@ -29,6 +29,8 @@ transcription.
 | BudgetCard | `40:256` | OnTrack, NearLimit, Over | `design_system/organisms/budget_card.dart` | done |
 | ProgressBar | `21:139` | Under/Near/Over × Sm/Md | `design_system/molecules/progress_bar.dart` | done |
 | CategoryIcon | `33:311` | 8 categories × Sm/Md/Lg | `design_system/molecules/category_icon.dart` | done |
+| TransactionRow | **none — designed** | expense / income | `design_system/molecules/transaction_row.dart` | done ([ADR 0003](../adr/0003-transaction-row-layout.md)) |
+| AmountSlot | **none — internal** | — | `design_system/molecules/amount_slot.dart` | done |
 | GoalCard | `40:257` | — | | not started |
 | Dialog | `42:284` | Informational, Confirm, Destructive | | not started |
 | Snackbar | `42:305` | Success, Error, Info | | not started |
@@ -47,6 +49,18 @@ transcription.
 | Type scale (8 styles) | various | `lib/design_system/tokens/typography.dart` | done |
 | Radii / elevation / spacing | various | `tokens/radii.dart`, `elevation.dart`, `spacing.dart` | done |
 | Motion | *absent from Figma* | `tokens/motion.dart` — Material-derived, marked not-Figma-derived | done |
+
+## Components with no Figma source
+
+Two components exist that Figma does not describe. They are listed separately so
+nobody mistakes them for transcriptions:
+
+- **`TransactionRow`** — the file has no transaction row and no screen frames.
+  Its layout is a decision, scored against three alternatives in
+  [ADR 0003](../adr/0003-transaction-row-layout.md). When Figma gains a real row,
+  this is the thing to reconcile against it.
+- **`AmountSlot`** — purely internal layout machinery, introduced after the same
+  overflow defect appeared in two components. It has no visual identity of its own.
 
 ## Recorded deviations and resolved ambiguities
 
