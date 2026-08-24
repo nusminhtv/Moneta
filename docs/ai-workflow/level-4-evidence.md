@@ -7,9 +7,9 @@ Regenerate with `/moneta:evidence`. Gaps are listed as gaps; the framework's own
 rule is that a single trial run does not raise a level, so a padded report would
 fail it on its own terms.
 
-**Snapshot:** 2 changes (both archived) · 28 tasks, all checkpointed · 25 commits
-· 32 verify runs (16 pass, 16 fail) · 485 tests · 3 ADRs · 27 requirements in the
-main spec set.
+**Snapshot:** 2 changes (both archived) · 28 tasks, all checkpointed · 27 commits
+· 35 verify runs (18 pass, 17 fail) · 485 tests · 3 ADRs · 27 requirements in the
+main spec set · 7 gates.
 
 ---
 
@@ -72,6 +72,7 @@ Smaller trade-offs live in each change's `design.md` (8 decisions in change 2,
 | `analyze` | `dart analyze --fatal-infos --fatal-warnings`, `very_good_analysis` + strict casts/inference/raw-types |
 | `architecture` | `tool/check_architecture.dart` — layer boundaries, no cross-feature imports |
 | `design-tokens` | `tool/check_design_tokens.dart` — no raw colours, text styles, insets or radii outside `tokens/` |
+| `hooks` | `tool/check_hooks.sh` — every hook parses and no-ops cleanly |
 | `test` | 485 tests |
 | `coverage` | ≥70% overall, ≥85% on `core`, `*/domain/`, `*/data/` |
 
@@ -112,9 +113,16 @@ amended away.
 | Framework config | 1 | `openspec/config.yaml` |
 | CI | 1 | `.github/workflows/verify.yml` |
 
-The automation was itself improved from experience: `post_bash_dart.sh` exists
-because the Edit/Write hook keys off `tool_input.file_path` and never saw files
-written through a shell heredoc — two lint findings reached the gate that way.
+The automation was itself improved from experience, twice:
+
+- `post_bash_dart.sh` exists because the Edit/Write hook keys off
+  `tool_input.file_path` and never saw files written through a shell heredoc —
+  two lint findings reached the gate that way.
+- `tool/check_hooks.sh` exists because `post_bash_dart.sh` then shipped with a
+  bash syntax error and **crashed on every invocation for an entire change**,
+  which is indistinguishable from a hook that found nothing. Nothing was checking
+  the thing doing the checking. It is now a gate, with a negative test proving it
+  catches that bug.
 
 ## 7. At least two recent medium-size tasks applied end-to-end
 
@@ -140,6 +148,9 @@ written through a shell heredoc — two lint findings reached the gate that way.
 4. The design-token checker's own rule was wrong, flagging
    `BorderRadius.circular(size.fillRadius)`. Tightened rather than silenced, and
    given tests.
+5. `post_bash_dart.sh` had a bash syntax error and crashed on every invocation
+   for a whole change. Nothing was checking the hooks, so it was invisible;
+   `tool/check_hooks.sh` is now a gate.
 
 ### Corrections made to the plan mid-flight
 

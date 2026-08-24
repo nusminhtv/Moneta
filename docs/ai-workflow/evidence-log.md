@@ -74,6 +74,27 @@ fire and lint findings survive to the gate. Two consequences, both real:
 - `tool/verify.sh --fast` should be run before any checkpoint even when the hook
   has been quiet, because silence from the hook is not evidence.
 
+**Correction, 2026-08-24 (later):** that last line turned out to be more
+literally true than intended. `post_bash_dart.sh`, written to close this blind
+spot, shipped with a `case` pattern `*cat\ >*` — the backslash escapes the space,
+leaving a bare `>`, which is a redirection operator inside a case pattern. bash
+refused to parse the file, so the hook **crashed on that line every time it ran**
+for the whole of `transactions-local-store` and analyzed nothing. It surfaced only
+when a later invocation printed the parse error.
+
+The first guess at the culprit was the neighbouring `*">"*` pattern. That one is
+legal; it was checked before being written down here.
+
+Consequences, and what changed:
+
+- `tool/check_hooks.sh` now parses every hook and asserts each exits 0 on a
+  payload it should ignore, and is a gate in `tool/verify.sh`. A negative test
+  confirms it catches this exact bug when reintroduced.
+- The class of failure is the point: **a hook that crashes is indistinguishable
+  from a hook with nothing to report.** Nothing in the workflow was checking the
+  thing doing the checking, so the fix is a check on the checker — the same move
+  already made for `tool/design_token_rules.dart`.
+
 ## transactions-local-store
 
 | Date | Kind | What | Ref | Evidence |

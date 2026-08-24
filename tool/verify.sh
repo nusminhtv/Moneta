@@ -59,6 +59,7 @@ step "format"       dart format --set-exit-if-changed --output=none lib test too
 step "analyze"      dart analyze --fatal-infos --fatal-warnings
 step "architecture" dart run tool/check_architecture.dart
 step "design-tokens" dart run tool/check_design_tokens.dart
+step "hooks"         bash tool/check_hooks.sh
 
 if [[ $FAST -eq 1 ]]; then
   step "test"       flutter test --reporter=failures-only

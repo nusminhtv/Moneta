@@ -19,6 +19,7 @@ except Exception:
 print(d.get("tool_input", {}).get("command", ""))
 ' 2>/dev/null)"
 
+# Cheap guard first: most commands never mention a .dart path.
 case "$CMD" in
   *.dart*) ;;
   *) exit 0 ;;
@@ -26,10 +27,19 @@ esac
 
 # Reading or running Dart is not writing it; only re-analyze when the command
 # could have changed a file.
-case "$CMD" in
-  *cat\ >*|*tee*|*sed\ -i*|*python3*|*perl*|*mv\ *|*cp\ *|*">"*) ;;
-  *) exit 0 ;;
-esac
+#
+# Matched with a regex rather than a `case` pattern list. The pattern form was
+# silently broken for the whole of change 2: it contained `*cat\ >*`, where the
+# backslash escapes the space and leaves `>` bare — and a bare `>` in a case
+# pattern is a redirection operator, so bash refused to parse the file. The hook
+# crashed on that line every time it ran instead of analyzing anything, which is
+# indistinguishable from a hook that found nothing.
+#
+# tool/check_hooks.sh now parses every hook, so this class cannot recur silently.
+WRITES_RE='(cat[[:space:]]+>|tee|sed[[:space:]]+-i|python3|perl|awk|mv[[:space:]]|cp[[:space:]]|>>?[[:space:]]*[^|&])'
+if [[ ! "$CMD" =~ $WRITES_RE ]]; then
+  exit 0
+fi
 
 cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/../..}" || exit 0
 

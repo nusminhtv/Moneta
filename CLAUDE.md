@@ -30,8 +30,8 @@ Rules that hold for every task:
    in `tasks.md`: verify, self-review the diff, tick the task, commit. Do not
    batch a whole change into one commit.
 4. **Verify means `tool/verify.sh`.** Not "tests pass". Not "it builds". The gate
-   is format + analyze + architecture + design-tokens + test + coverage, and each
-   run writes an evidence file to `docs/ai-workflow/verify-runs/`.
+   is format + analyze + architecture + design-tokens + hooks + test + coverage,
+   and each run writes an evidence file to `docs/ai-workflow/verify-runs/`.
 5. **Never weaken a gate to make it pass.** Changing a threshold, widening
    `_allowedImports`, or adding `// ignore:` to silence a real finding requires
    saying so explicitly and getting agreement first.
@@ -59,6 +59,11 @@ analyzes each file written through Edit/Write; `post_bash_dart` analyzes after a
 Bash command that wrote a `.dart` file (Edit/Write hooks cannot see heredocs);
 `stop_verify_guard` refuses to end a turn that left `lib/` or `test/` modified
 without a passing verify run.
+
+The hooks are themselves gated: `tool/check_hooks.sh` parses every one and
+asserts it exits 0 on a payload it should ignore. A hook that crashes is
+indistinguishable from a hook with nothing to report, and one of them crashed on
+every invocation for a whole change before this check existed.
 
 ## Architecture
 
