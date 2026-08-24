@@ -7,9 +7,10 @@ Regenerate with `/moneta:evidence`. Gaps are listed as gaps; the framework's own
 rule is that a single trial run does not raise a level, so a padded report would
 fail it on its own terms.
 
-**Snapshot:** 2 changes (both archived) · 28 tasks, all checkpointed · 27 commits
-· 35 verify runs (18 pass, 17 fail) · 485 tests · 3 ADRs · 27 requirements in the
-main spec set · 7 gates.
+**Snapshot:** 2 changes archived · 2 changes open and planned (`home-overview`,
+`design-system-corrections`) · 28 tasks checkpointed · 31 commits · 37 verify runs
+(20 pass, 17 fail) · 485 tests · 4 ADRs · 27 requirements archived · 7 gates ·
+2 spec audits.
 
 ---
 
@@ -31,7 +32,8 @@ boundary acceptance criteria (zero, negative, currency mismatch, empty, first
 run); `rules.design` forces at least two options per non-obvious decision;
 `rules.tasks` forces each task to name its own verification signal.
 
-**Discuss** is the weakest link and is called out as such below.
+**Discuss** was the weakest link when this report was first written. It no longer
+is — see criterion 8.
 
 ## 2. A task or refactor spanning multiple modules
 
@@ -152,6 +154,42 @@ The automation was itself improved from experience, twice:
    for a whole change. Nothing was checking the hooks, so it was invisible;
    `tool/check_hooks.sh` is now a gate.
 
+## 8. Adversarial review, and what it caught
+
+`spec-auditor` ran on `home-overview` before any code was written. Both passes
+returned `NOT READY`.
+
+| Pass | Findings | Outcome |
+| --- | --- | --- |
+| 1 | 11 | Two blocking: the proposal's central claim was false, and ADR 0004's deciding argument did not survive contact with `tool/coverage_critical.txt` |
+| 2 | 4 | A different class: three of four product decisions were correct in prose while the requirement still let two implementations disagree |
+
+Reports: `docs/ai-workflow/audits/2026-08-24-home-overview-spec-audit.md` and
+`…-audit-2.md`.
+
+Every load-bearing claim was verified against the code before being accepted —
+including writing a probe file and running the architecture checker, and reading
+`lcov.info` to confirm a coverage number. Nothing was taken on the agent's word.
+One second-pass finding was **stale** (it read the repository before a commit) and
+is recorded as such rather than acted on.
+
+What the audits caught that self-review had not:
+
+- A proposal claim that was load-bearing and false (`lib/features/transactions is
+  not modified`).
+- An ADR whose conclusion was right and whose stated reason was reverse-engineered
+  — twice, the second time in the very document that dissects the first instance.
+- A task that could not pass its own coverage gate, and would have failed only at
+  the full gate because `--fast` skips coverage.
+- A spec and a design disagreeing by one millisecond in a way that would have made
+  a just-recorded transaction vanish from the balance.
+- A test assertion that passed for both the right and the wrong answer.
+- An assertion that could not be written at all (`dart:mirrors` is unavailable in
+  Flutter tests).
+
+This is the criterion the framework calls *discuss*, and it is the one that
+produced the highest-value findings per unit of effort in the whole project.
+
 ### Corrections made to the plan mid-flight
 
 - The specs said "six named text styles"; Figma has eight. Spec updated **before**
@@ -165,12 +203,11 @@ The automation was itself improved from experience, twice:
 
 ## Gaps — stated, not padded
 
-1. **"Discuss" is the thinnest phase.** Artifacts were reviewed and revised, but
-   the `spec-auditor` and `change-verifier` agents were *written and not run* —
-   this session was configured not to spawn subagents. They are real assets and
-   the workflow calls for them, but no audit output exists in the repo. **What
-   would close it:** run `spec-auditor` on the next change before apply, and
-   `change-verifier` before archive, and commit their reports.
+1. ~~**"Discuss" is the thinnest phase.**~~ **Closed** — see criterion 8.
+   `spec-auditor` has now run twice on `home-overview`, both times returning
+   `NOT READY`, with both reports committed under
+   `docs/ai-workflow/audits/`. `change-verifier` is still unexercised, because no
+   change has reached archive since; that half of the gap stands.
 2. **No second author.** Everything here is one operator plus one agent. Level 5
    ("nhân rộng năng lực AI cho team") needs assets other people use, coaching,
    and a tech lead confirming project-level impact. None of that is evidenced.
