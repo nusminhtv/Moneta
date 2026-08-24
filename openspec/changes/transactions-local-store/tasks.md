@@ -70,12 +70,12 @@
   `test/features/transactions/presentation/list_controller_test.dart` asserts
   undo restores the original id and list position, that the window expires, and
   that a load failure is exposed as an error state rather than an empty list.
-- [ ] 5.3 Implement `TransactionsScreen` with distinct empty and error states and
+- [x] 5.3 Implement `TransactionsScreen` with distinct empty and error states and
   a retry action. Verify:
   `test/features/transactions/presentation/transactions_screen_test.dart`
   asserts empty and error render differently, retry recovers, and a newly added
   transaction appears without a manual refresh.
-- [ ] 5.4 Implement the add form with validation before any write. Verify:
+- [x] 5.4 Implement the add form with validation before any write. Verify:
   `test/features/transactions/presentation/add_transaction_test.dart` covers
   empty, zero, non-numeric and over-precision amounts, a future instant, and a
   successful record.
