@@ -113,11 +113,24 @@ app working offline, which a local-first app should.
   than shipping. This is the one place where the test asserts constants against
   constants deliberately — it is a transcription check, and transcription is
   exactly what can go wrong here.
-- **Letter-spacing discrepancy in Figma.** For `display/amount-xl`, the style
-  definition reports `letterSpacing: -1` while the emitted reference CSS says
-  `tracking-[-0.4px]`. These disagree. Resolved as `-1%` of 40px = `-0.4px`, i.e.
-  Flutter `letterSpacing: -0.4`, matching the rendered CSS. Recorded in
-  `docs/design-system/figma-map.md` as a resolved ambiguity, not silently picked.
+- **Letter-spacing units in Figma (resolved during task 1.1).** The style summary
+  reports `letterSpacing: -1` for both `display/amount-xl` and `heading/h1`, while
+  the emitted CSS says `-0.4px` (40px text) and `-0.28px` (28px text). Since
+  −0.4/40 = −0.28/28 = −1%, the summary figure is a percentage. Implemented as
+  absolute `-0.4` and `-0.28`. Recorded in `docs/design-system/figma-tokens.md`.
+- **Spec corrected during task 1.1.** The specs originally said "six named text
+  styles". Reading `39:8` and `42:329` surfaced `heading/h1` and `body/md`, making
+  it eight. The spec was updated before any typography code was written, rather
+  than the code quietly covering eight while the spec claimed six.
+- **Motion has no Figma source.** No transition or easing value appears in any node
+  read. Motion tokens are defined from Material's emphasised durations and curves
+  and are marked in code as not Figma-derived — the only such values in the token
+  layer.
+- **Chart base colours came from exported SVG strokes, not from variables.** Figma
+  does not emit `var(--chart-N)` for a glyph's stroke, and `get_variable_defs`
+  needs a live desktop selection. The strokes were read from the downloaded assets
+  and confirmed against a screenshot of `33:311`, because an export resolved in
+  light mode would have produced plausible but wrong values.
 - **Only three of fourteen component sets.** Deliberate: each remaining set
   arrives with a real caller. The risk is that a later screen needs one urgently;
   the mitigation is that `/moneta:figma-pull` makes adding one a short, repeatable

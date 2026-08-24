@@ -1,6 +1,6 @@
 ## 1. Token harvest and token layer
 
-- [ ] 1.1 Read the remaining token values out of Figma — the five unobserved
+- [x] 1.1 Read the remaining token values out of Figma — the five unobserved
   `chart-N` / `chart-N-subtle` slots, the full radius and spacing scales, and all
   elevation effects — and record every value with its source node in
   `docs/design-system/figma-tokens.md`. Verify: every colour, radius, spacing and
