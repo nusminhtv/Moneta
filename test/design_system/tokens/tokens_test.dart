@@ -92,6 +92,7 @@ void main() {
     test('match the component measurements', () {
       expect(MonetaLayout.bottomNavHeight, 64);
       expect(MonetaLayout.fabSize, 56);
+      expect(MonetaLayout.fabSlotWidth, 72);
       expect(MonetaLayout.iconSize, 24);
       expect(MonetaLayout.iconStrokeWidth, 1.75);
       expect(MonetaLayout.progressBarHeight, 10);
@@ -108,6 +109,10 @@ void main() {
     test('the FAB overlaps the nav bar rather than clearing it', () {
       expect(MonetaLayout.fabOverlap, greaterThan(0));
       expect(MonetaLayout.fabOverlap, lessThan(MonetaLayout.fabSize));
+    });
+
+    test('the FAB slot is wider than the FAB, leaving breathing room', () {
+      expect(MonetaLayout.fabSlotWidth, greaterThan(MonetaLayout.fabSize));
     });
   });
 

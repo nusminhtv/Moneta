@@ -23,10 +23,10 @@ transcription.
 | --- | --- | --- | --- | --- |
 | StatusBar | `39:2` | — | | not started |
 | AppBar | `39:112` | LargeTitle, TitleBack, TitleActions, Transparent | | not started |
-| BottomNav | `39:243` | Home, Transactions, Insights, Profile | | not started |
-| BalanceCard | `40:161` | Default, Masked | | not started |
+| BottomNav | `39:243` | Home, Transactions, Insights, Profile | `design_system/organisms/bottom_nav.dart` | done |
+| BalanceCard | `40:161` | Default, Masked | `design_system/organisms/balance_card.dart` | done |
 | AccountCard | `40:209` | Bank, Cash, E-wallet, Credit | | not started |
-| BudgetCard | `40:256` | OnTrack, NearLimit, Over | | not started |
+| BudgetCard | `40:256` | OnTrack, NearLimit, Over | `design_system/organisms/budget_card.dart` | done |
 | ProgressBar | `21:139` | Under/Near/Over × Sm/Md | `design_system/molecules/progress_bar.dart` | done |
 | CategoryIcon | `33:311` | 8 categories × Sm/Md/Lg | `design_system/molecules/category_icon.dart` | done |
 | GoalCard | `40:257` | — | | not started |
@@ -57,3 +57,6 @@ transcription.
 | 3 | `brand-google` carries four colours; every other icon is monochrome | `MonetaIconName.preservesColour` marks it, and `MonetaIcon` skips tinting for it. Tinting would flatten Google's mark into one colour. |
 | 4 | Chart *base* colours are not emitted as Figma variables | Read from each exported glyph's `stroke` and visually confirmed against a screenshot of `33:311`, since a light-mode export would have given plausible-but-wrong values. |
 | 5 | Figma has no `radius-sm`, `elevation/1`, `elevation/2` or `text-secondary` on any node read | Left unimplemented rather than invented. |
+| 6 | BalanceCard's two stats are `shrink-0` in Figma | Made flexible with single-line ellipsis. The authored copy fits, but real balances vary in width and an overflowing row is a rendering bug, not an overflow. |
+| 7 | BudgetCard's amount column is `shrink-0` in Figma, which overflows the head row once an amount is wide enough | Capped at 55% of the row width, single line, ellipsised. A plain `Flexible` would have split the row evenly and truncated the category name for nothing. |
+| 8 | BottomNav tab icons are 23px in Figma, while the icon canvas is 24px everywhere else | Kept at 23 — reproducing the file rather than tidying it. Exposed as `MonetaBottomNav.tabIconSize` and asserted, so it reads as deliberate. |

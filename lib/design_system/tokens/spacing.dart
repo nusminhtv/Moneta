@@ -119,6 +119,9 @@ abstract final class MonetaLayout {
   /// How far the floating action button rises above the nav bar.
   static const double fabOverlap = 19;
 
+  /// Width of the gap in the tab row that the floating action button sits over.
+  static const double fabSlotWidth = 72;
+
   /// Default icon canvas size.
   static const double iconSize = 24;
 

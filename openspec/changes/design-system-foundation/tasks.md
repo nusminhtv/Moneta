@@ -55,19 +55,19 @@
 
 ## 5. Organisms
 
-- [ ] 5.1 Implement `BalanceCard` (Default, Masked) on the gradient token, taking
+- [x] 5.1 Implement `BalanceCard` (Default, Masked) on the gradient token, taking
   four `Money` values and an `onToggleMask` callback. Verify:
   `test/design_system/organisms/balance_card_test.dart` asserts formatted amounts
   with signs in Default, asserts **no digit** appears anywhere in the render tree
   in Masked, asserts the eye/eye-off icon swap, and asserts a zero balance renders
   as a formatted zero.
-- [ ] 5.2 Implement `BudgetStatus.fromSpend` and `BudgetCard(spent, limit,
+- [x] 5.2 Implement `BudgetStatus.fromSpend` and `BudgetCard(spent, limit,
   category, ...)` with no `state` parameter. Verify:
   `test/design_system/organisms/budget_card_test.dart` is table-driven over 0%,
   79%, 80%, 100%, 101%, 400% and zero-limit-with-spend, asserting amount/note/bar
   colour and the expense border only above the limit; plus a long-name test
   asserting single-line ellipsis with the amount not displaced.
-- [ ] 5.3 Implement `BottomNav` (4 destinations, centre FAB, bottom safe area).
+- [x] 5.3 Implement `BottomNav` (4 destinations, centre FAB, bottom safe area).
   Verify: `test/design_system/organisms/bottom_nav_test.dart` asserts exactly one
   active destination per variant with all four colours checked, that the FAB
   reports a distinct callback and does not change the active destination, and that

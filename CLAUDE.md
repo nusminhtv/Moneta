@@ -112,6 +112,11 @@ Boundaries are machine-enforced by `tool/check_architecture.dart`:
 - A test that asserts the implementation back to itself does not count as coverage.
   The one sanctioned exception is the token layer: those tests are *transcription*
   checks against Figma values, and transcription is exactly what can go wrong there.
+- **`flutter test` renders with a metrics-only placeholder font** in which every
+  glyph is exactly `fontSize` wide. Any assertion about how wide a *string* is
+  measures that font, not the design — so assert font-independent structure
+  (a child stays inside its parent, a column respects its cap, nothing overflows)
+  and leave real type metrics to goldens run on a fixed platform.
 - **Never `await` real I/O inside `testWidgets`.** Its body runs in a `FakeAsync`
   zone, so a real future — `rootBundle.loadString`, a file read, a socket — never
   completes and the test **hangs indefinitely instead of failing**. Use plain
