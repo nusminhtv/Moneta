@@ -1,0 +1,32 @@
+# Moneta — static analysis gate.
+# Level-4 workflow note: `dart analyze --fatal-infos` is a hard gate in tool/verify.sh
+# and in the PostToolUse hook. Rules are strict on purpose: they are the machine-checkable
+# half of "kiểm chứng" (verification) for AI-authored code.
+include: package:very_good_analysis/analysis_options.10.3.0.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "build/**"
+  errors:
+    # Architecture boundaries are enforced by tool/check_architecture.dart, not the analyzer.
+    todo: warning
+    deprecated_member_use_from_same_package: warning
+
+linter:
+  rules:
+    public_member_api_docs: false
+    lines_longer_than_80_chars: false
+    # Design-token discipline: raw Color(0x..) / TextStyle() outside lib/design_system
+    # is caught by tool/check_design_tokens.dart.
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    avoid_dynamic_calls: true
+    require_trailing_commas: true
+    # Single-method abstract interfaces are our DI seams (Clock, repositories).
+    one_member_abstracts: false

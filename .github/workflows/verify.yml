@@ -1,0 +1,53 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Verification gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.4'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Same gate the agent runs locally. CI and the local loop must never
+      # disagree about what "done" means.
+      - name: Run verification gate
+        run: bash tool/verify.sh --change ci
+
+      - name: Upload verify evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-evidence
+          path: docs/ai-workflow/verify-runs/
+          if-no-files-found: warn
+
+  planning:
+    name: OpenSpec artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # A change whose planning artifacts are malformed should fail before
+      # anyone reviews the code.
+      - name: Validate OpenSpec changes and specs
+        run: npx -y @fission-ai/openspec@latest validate --all --strict

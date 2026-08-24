@@ -1,0 +1,7 @@
+# Files matching any substring below must meet the critical coverage threshold.
+# These encode money rules and persistence; a regression here is a correctness bug,
+# not a cosmetic one.
+lib/core/money.dart
+lib/core/result.dart
+/domain/
+/data/

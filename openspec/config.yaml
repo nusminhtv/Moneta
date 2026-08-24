@@ -1,0 +1,82 @@
+schema: spec-driven
+
+context: |
+  # Moneta
+
+  Local-first personal finance app for iOS and Android. No backend: the SQLite
+  database on device is the source of truth.
+
+  ## Stack
+  - "Flutter 3.44 / Dart 3.12, Material 3"
+  - "flutter_riverpod for state, go_router for navigation"
+  - "sqflite for persistence; sqflite_common_ffi for VM tests"
+  - "very_good_analysis (strict) + custom checkers in tool/"
+
+  ## Layers (machine-enforced by tool/check_architecture.dart)
+  lib/core          pure Dart (Money, Result, Clock) — imports no other layer
+  lib/data          database + migrations + shared DAO infrastructure
+  lib/design_system tokens/theme/atoms/molecules/organisms — only place raw
+                    design values may appear
+  lib/features/<f>  domain/ (entities + repository interfaces, core only),
+                    data/ (DAO + repository impl), presentation/ (screens,
+                    Riverpod controllers, feature-local widgets)
+  lib/app           composition root
+  Cross-feature imports are forbidden; share through core or data.
+
+  ## Invariants a proposal must respect
+  - "Money is integer minor units (lib/core/money.dart). Never double."
+  - "Repositories return Result<T> with AppFailure; they do not throw for"
+    expected failures.
+  - "DateTime is stored and compared in UTC; time comes from an injected Clock."
+  - "No hard-coded colours, text styles, paddings or radii outside"
+    lib/design_system/tokens|theme (tool/check_design_tokens.dart enforces this).
+  - "Design-system widgets accept domain types, not pre-formatted strings."
+  - "A Figma component set is implemented with all its variants, not just the one"
+    the current screen needs.
+
+  ## Design source
+  Figma file key kEYXQUyhXLZITkNxAHRVlf. It contains an icon set and a component
+  library (organisms with variants) but NO screen designs. Screen layout is
+  therefore a design decision this project makes and records, not something read
+  off the canvas.
+
+  ## Definition of done
+  A change is done when `tool/verify.sh --change <name>` passes. That gate is
+  format + analyze (--fatal-infos) + architecture check + design-token check +
+  tests + coverage (≥70% total, ≥85% on core/domain/data). Each run writes an
+  evidence file under docs/ai-workflow/verify-runs/.
+
+rules:
+  proposal:
+    - "State the user-visible outcome first; a proposal that only describes code is incomplete."
+    - "Include an explicit \"Non-goals\" section. Scope this repo can absorb later must be named as out of scope now."
+    - "Name every module the change touches. A change touching more than one of core/data/design_system/features must say so up front."
+    - "If the change adds a dependency or a schema migration, say so in the proposal, not only in design."
+  specs:
+    - "Every requirement must be observable and testable. Reject \"fast\", \"intuitive\", \"graceful\"."
+    - "Include acceptance criteria for the boundaries: zero, negative and very large amounts, currency mismatch, empty list, first run with an empty database."
+    - "Specify error behaviour as concrete AppFailure kinds, not \"shows an error\"."
+    - "For UI, state which Figma node the behaviour derives from, and which variants must be covered."
+  design:
+    - "Name at least two options for any non-obvious decision and say why the chosen one wins. Link to docs/adr/ when the decision is cross-cutting."
+    - "Show the SQL schema and migration path for any persistence change."
+    - "State how each requirement will be verified — which test file and which gate catches a regression."
+    - "Call out anything that would trip tool/check_architecture.dart or tool/check_design_tokens.dart and how it is avoided."
+  tasks:
+    - "Each task must be independently checkpointable: one task, one verify run, one commit."
+    - "Each task must name its verification signal (the test or gate that proves it done)."
+    - "Order tasks so the project builds and the gate passes after every task, never only at the end."
+    - "Keep tasks to roughly half a day of work; split anything larger."
+
+operations:
+  apply:
+    guidance:
+      - "Run `bash tool/verify.sh --fast --change <name>` after each task and the full gate before the last task is ticked."
+      - "Use /moneta:checkpoint to close out each task rather than committing ad hoc."
+      - "Never widen a checker rule or lower a coverage threshold to make a task pass; surface the conflict instead."
+      - "When implementation reveals the spec was wrong, stop and update the spec before writing more code."
+  archive:
+    guidance:
+      - "Require a full passing `tool/verify.sh` run for this change, and cite its evidence file path."
+      - "Run the change-verifier agent first and resolve anything it marks DO NOT SHIP."
+      - "Append the change's outcome to docs/ai-workflow/evidence-log.md before archiving."
