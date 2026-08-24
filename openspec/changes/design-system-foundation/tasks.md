@@ -7,16 +7,16 @@
   elevation token named in `specs/design-system/tokens/spec.md` has a row with a
   Figma node id. If a value cannot be read from Figma, stop and ask — do not
   interpolate the chart palette.
-- [ ] 1.2 Implement `lib/design_system/tokens/colors.dart` (surface, text, border,
+- [x] 1.2 Implement `lib/design_system/tokens/colors.dart` (surface, text, border,
   brand, semantic, 8-slot chart palette, brand gradient). Verify:
   `test/design_system/tokens/colors_test.dart` asserts every hex value from
   task 1.1 and that the chart palette has exactly 8 base + 8 subtle entries.
-- [ ] 1.3 Bundle the Inter and Plus Jakarta Sans font files, declare them in
+- [x] 1.3 Bundle the Inter and Plus Jakarta Sans font files, declare them in
   `pubspec.yaml`, and implement `lib/design_system/tokens/typography.dart` with
   the six named styles. Verify: `test/design_system/tokens/typography_test.dart`
   asserts family, size, weight, height and letter spacing for all six, and
   `flutter test` renders without a font-fallback warning.
-- [ ] 1.4 Implement `spacing.dart`, `radii.dart`, `elevation.dart`, `motion.dart`.
+- [x] 1.4 Implement `spacing.dart`, `radii.dart`, `elevation.dart`, `motion.dart`.
   Verify: `test/design_system/tokens/tokens_test.dart` asserts radius 18/24/pill
   and both shadow effects against the task 1.1 values.
 
