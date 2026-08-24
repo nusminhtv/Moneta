@@ -54,6 +54,12 @@ Rules that hold for every task:
 Agents: `spec-auditor` (before apply), `change-verifier` (before archive),
 `figma-fidelity` (after any Figma-derived widget).
 
+Hooks (`.claude/hooks/`): `session_start` prints workflow state; `post_edit_dart`
+analyzes each file written through Edit/Write; `post_bash_dart` analyzes after a
+Bash command that wrote a `.dart` file (Edit/Write hooks cannot see heredocs);
+`stop_verify_guard` refuses to end a turn that left `lib/` or `test/` modified
+without a passing verify run.
+
 ## Architecture
 
 ```
