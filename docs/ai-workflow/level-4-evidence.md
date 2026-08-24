@@ -9,8 +9,8 @@ fail it on its own terms.
 
 **Snapshot:** 2 changes archived · 2 changes open and planned (`home-overview`,
 `design-system-corrections`) · 28 tasks checkpointed · 31 commits · 37 verify runs
-(20 pass, 17 fail) · 485 tests · 4 ADRs · 27 requirements archived · 7 gates ·
-2 spec audits.
+(20 pass, 17 fail) · 485 tests · 4 ADRs · 27 requirements archived · 8 gates ·
+3 spec audits.
 
 ---
 
@@ -74,6 +74,7 @@ Smaller trade-offs live in each change's `design.md` (8 decisions in change 2,
 | `analyze` | `dart analyze --fatal-infos --fatal-warnings`, `very_good_analysis` + strict casts/inference/raw-types |
 | `architecture` | `tool/check_architecture.dart` — layer boundaries, no cross-feature imports |
 | `design-tokens` | `tool/check_design_tokens.dart` — no raw colours, text styles, insets or radii outside `tokens/` |
+| `timezone` | `tool/check_timezone.dart` — the process zone is non-UTC, so local-time assertions can fail |
 | `hooks` | `tool/check_hooks.sh` — every hook parses and no-ops cleanly |
 | `test` | 485 tests |
 | `coverage` | ≥70% overall, ≥85% on `core`, `*/domain/`, `*/data/` |
@@ -159,10 +160,15 @@ The automation was itself improved from experience, twice:
 `spec-auditor` ran on `home-overview` before any code was written. Both passes
 returned `NOT READY`.
 
-| Pass | Findings | Outcome |
+| Pass | Findings | Class of problem |
 | --- | --- | --- |
-| 1 | 11 | Two blocking: the proposal's central claim was false, and ADR 0004's deciding argument did not survive contact with `tool/coverage_critical.txt` |
-| 2 | 4 | A different class: three of four product decisions were correct in prose while the requirement still let two implementations disagree |
+| 1 | 11 | Claims that were false, and reasoning that was reverse-engineered |
+| 2 | 4 | Requirements correct in prose, ambiguous in the clause a test would have to fail against |
+| 3 | 1 + 4 | A requirement and a clause both correct, in a verification *environment* where the clause could not fail |
+
+The third class is the one self-review is least likely to catch, because
+everything on the page is right. It was found on a test that had not been written
+yet — and turned out to already be true of a shipped one.
 
 Reports: `docs/ai-workflow/audits/2026-08-24-home-overview-spec-audit.md` and
 `…-audit-2.md`.
@@ -186,6 +192,14 @@ What the audits caught that self-review had not:
 - A test assertion that passed for both the right and the wrong answer.
 - An assertion that could not be written at all (`dart:mirrors` is unavailable in
   Flutter tests).
+- A **shipped** test that had been decoration since `transactions-local-store`:
+  local-time assertions cannot fail under UTC, and CI runs UTC while this machine
+  runs +07. Fixed as a gate (`tool/check_timezone.dart`) rather than a test edit,
+  so the class cannot recur.
+- The same unverified "the only caller / not modified" claim, **three times** in
+  three different artifacts. Always plausible, always load-bearing, always one
+  `grep` from being checked. Worth naming as a personal failure pattern rather
+  than three separate mistakes.
 
 This is the criterion the framework calls *discuss*, and it is the one that
 produced the highest-value findings per unit of effort in the whole project.
@@ -221,4 +235,6 @@ produced the highest-value findings per unit of effort in the whole project.
    rasterisation could cost in a long scrolling list. Nothing profiles it.
 6. **One CI claim is unverified.** `.github/workflows/verify.yml` has never run —
    there is no remote. It runs the same script locally, but "CI is green" is not
-   something this repo can currently show.
+   something this repo can currently show. The third audit found a real
+   consequence of that: CI's UTC default silently disarmed a class of test, and
+   nothing would have reported it.

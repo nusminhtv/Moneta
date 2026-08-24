@@ -132,10 +132,12 @@ caught the second time was subtler and worth naming: three of the four product
 decisions were stated correctly in prose while the *requirement* still let two
 implementations disagree, and one task could not pass its own coverage gate.
 
-The first version of these artifacts was reviewed by the `spec-auditor` agent and
-returned `NOT READY`
-(`docs/ai-workflow/audits/2026-08-24-home-overview-spec-audit.md`). Its two
-blocking findings were that this proposal's claim "`lib/features/transactions` is
-not modified" was false, and that ADR 0004's deciding argument did not survive
-contact with `tool/coverage_critical.txt`. Both are corrected above and in ADR
-0004 v2. The audit is kept rather than superseded.
+The first pass's two blocking findings were that this proposal's claim
+"`lib/features/transactions` is not modified" was false, and that ADR 0004's
+deciding argument did not survive contact with `tool/coverage_critical.txt`. Both
+are corrected above and in ADR 0004. A third pass found one remaining problem of
+the same shape — a requirement stated correctly while its verification signal
+could not detect the wrong implementation, because it depended on a time zone
+nothing established. That is fixed by `tool/check_timezone.dart`, now a gate.
+
+The audits are kept rather than superseded.

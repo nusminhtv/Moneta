@@ -56,7 +56,9 @@ design-system component and can proceed.
   exactly that month with no hour gained or lost, that bounds are UTC, and that
   `lastDayInclusive` is the last **local** day — asserted in a zone ahead of UTC,
   where computing the day from the UTC end instant yields the previous day and
-  therefore fails. "Falls inside the period" is not a sufficient assertion: the
+  therefore fails. The gate pins `TZ=Asia/Ho_Chi_Minh` and
+  `tool/check_timezone.dart` enforces it, so that zone is available; do not write
+  the assertion in a way that would also pass in UTC. "Falls inside the period" is not a sufficient assertion: the
   wrong answer is also inside the period.
 - [ ] 2.2 Implement `recent_entry.dart` — id, display title, `Money` amount,
   `TransactionDirection`, `SpendCategory`, occurrence instant, all shared types.
@@ -104,8 +106,12 @@ design-system component and can proceed.
 - [ ] 4.2 Implement the mask half of the controller: read the preference on load,
   toggle and persist, absent means revealed, a failed read means revealed without
   an error state, a failed write follows the user's action for the session and
-  surfaces the failure. Verify: the same test file, in its own group, driven by a
-  substitutable preferences store.
+  surfaces the failure, **and the store itself being unconstructible** — an
+  unopenable database — still renders with figures shown, with the error state (if
+  any) coming from the snapshot read rather than from the preference. Verify: the
+  same test file, in its own group. Note the last case cannot be produced by
+  substituting a working store, so it needs the store's construction to fail, not
+  its read.
 - [ ] 4.3 Implement `HomeScreen` composing `BalanceCard` and the recent list, with
   distinct empty and error states and a retry action. Verify:
   `test/features/home/presentation/home_screen_test.dart` asserts that masked

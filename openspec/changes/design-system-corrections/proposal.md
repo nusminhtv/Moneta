@@ -25,7 +25,8 @@ hides the amounts on a screen that shows a list.
 
 - **`BalanceCard.safeToSpendUntil` becomes a `DateTime`.** The card formats it
   through the same `intl` pattern the rest of the app uses. **BREAKING** for
-  callers — currently only the gallery, which is updated in the same change.
+  callers. There are three construction sites, not one: `gallery_catalog.dart:68`
+  and `:78`, and `balance_card_test.dart:24` and `:219`. All are updated here.
 - **`TransactionRow` gains a masked form.** When masked it renders a fixed-width
   mask in place of the amount, matching how `BalanceCard` already masks: a fixed
   width rather than one dot per digit, because a mask that shrinks with the amount
@@ -52,9 +53,11 @@ None.
 - **No visual redesign.** Colours, spacing, type and layout are unchanged. This
   change is about what the components *accept*, not how they look.
 - **No masking of times or titles.** Only monetary amounts.
-- **No new Figma nodes.** `BalanceCard` masking already exists in Figma
-  (`State=Masked`, node `40:137`); the row's masked form does not, because the row
-  itself is not in Figma — see ADR 0003.
+- **No new Figma nodes.** `BalanceCard` masking already exists in Figma as the
+  `State=Masked` variant, node `40:137` — read from the component's own
+  description under node `40:161`, and added to `figma-map.md` by this change
+  because it was cited without being tracked. The row's masked form has no Figma
+  source, because the row itself is not in Figma — see ADR 0003.
 - **No mask persistence.** Where the preference is stored belongs to the caller,
   and to `home-overview`.
 - **No audit of every other component for the same violation.** Two are known and
@@ -67,9 +70,14 @@ None.
   `lib/app`, and the tests for all three.
 - **Dependencies:** none added. `intl` is already used by `TransactionRow` for the
   time of day.
-- **Breaking change:** yes, for `BalanceCard`'s constructor. The only current
-  caller is `lib/app/gallery/gallery_catalog.dart`, updated here. `home-overview`
-  is written against the new signature and is blocked on this change.
+- **Breaking change:** yes, for `BalanceCard`'s constructor. Callers, verified by
+  grep rather than assumed: `lib/app/gallery/gallery_catalog.dart` (two variants)
+  and `test/design_system/organisms/balance_card_test.dart` (two pump helpers).
+  An earlier draft of this proposal said "the only current caller is the gallery",
+  which was false — the same over-claim this change exists to correct in
+  `BalanceCard` itself, and the third time an audit has caught that pattern in
+  these artifacts. `home-overview` is written against the new signature and is
+  blocked on this change.
 - **Gates affected:** none newly. Both components already have variant tests and
   both are inside `lib/design_system`, so `tool/check_design_tokens.dart` applies
   as it already did.

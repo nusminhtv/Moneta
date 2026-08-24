@@ -53,9 +53,16 @@ period the figure describes.
 It is a **local** day, and the distinction is not cosmetic. The period end is held
 in UTC, so for UTC+7 the current month ends at 31 Aug 17:00 UTC. Subtracting a day
 from that UTC instant and then converting to local gives 31 August, which is right;
-computing the day in UTC gives 30 August, which is wrong. The test asserts this in
-a zone ahead of UTC, because in UTC itself both calculations agree and the bug is
-invisible.
+computing the day in UTC gives 30 August, which is wrong.
+
+That assertion only discriminates in a non-UTC zone — in UTC both calculations
+return 30 August and the test passes either way. The gate now pins
+`TZ=Asia/Ho_Chi_Minh` and `tool/check_timezone.dart` fails if that stops taking
+effect, so this test has a zone to rely on. Before that change CI ran UTC while
+this machine ran +07, which would have made the assertion green in the gate that
+guards merges. The dependency is named here because a reader of `home_period.dart`
+would otherwise have no way to know the test's power comes from an environment
+variable.
 
 ### D2 — Balance excludes what has not happened yet
 
@@ -82,6 +89,15 @@ the store represents (`occurred_at` is epoch milliseconds). Ugly and deliberate:
 the alternative is teaching `TransactionQuery` an inclusive-end mode, which is a
 change to the transactions capability for one caller's convenience. The reason is
 written at the call site so nobody "simplifies" it back.
+
+**This bound over-includes, by under a millisecond.** `DateTime` is
+microsecond-resolution on the VM, so an occurrence at `now + 300µs` is "strictly
+later than now" by the spec's wording and is included by this bound. That is
+accepted rather than fixed: the store truncates to milliseconds, so no such
+occurrence can be *stored* distinctly from `now`, and no test can construct a
+disagreement. Switching to microsecond arithmetic against a millisecond store
+would be precision the storage cannot honour — recorded here so the next reader
+does not "correct" it.
 
 The tempting shortcut — showing the period's net as the balance — is wrong in a
 way that looks right: in the first month of use the two agree exactly, so it
@@ -322,9 +338,10 @@ that a new screen is where it most likely fires. Concretely:
 | A failed migration on populated data | `test/data/database_test.dart` |
 
 | `appDatabaseProvider` disposal closes the connection | `test/data/app_providers_test.dart` — new, and the reason task 1.1 is not import-lines-only |
+| `lastDayInclusive` discriminates at all | `tool/check_timezone.dart` — the gate that keeps the zone non-UTC |
 
 Plus the standing gates: format, analyze `--fatal-infos`, architecture,
-design-tokens, hooks, tests, coverage (≥85% on `features/home/domain`,
+design-tokens, timezone, hooks, tests, coverage (≥85% on `features/home/domain`,
 `lib/data/preferences` **and `lib/data/app_providers.dart`**, which the `/data/`
 substring in `coverage_critical.txt` also matches).
 

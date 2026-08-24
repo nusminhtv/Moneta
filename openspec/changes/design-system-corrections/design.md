@@ -33,6 +33,11 @@ a `static String formatTimeOfDay(DateTime, {String? locale})` on the widget,
 exposed so tests and callers use the same formatting the row does. That precedent
 is good and this should match it rather than invent a second convention.
 
+One caveat inherited with the precedent: that method's own test was decorative
+until the gate pinned a non-UTC zone, because `format(i)` and `format(i.toLocal())`
+are identical strings in UTC. `formatPeriodEnd`'s test must be written to
+discriminate, not copied from the old shape.
+
 **Chosen: (a), following the existing precedent.**
 `BalanceCard.formatPeriodEnd(DateTime, {String? locale})`, static and public, using
 `DateFormat('d MMM')` — the `31 Aug` form the card's own Figma fixture shows.
@@ -97,8 +102,10 @@ to a component the gallery does not show would make the omission worse.
 
 ## Risks / trade-offs
 
-- **Breaking a shipped constructor.** Exactly one caller exists
-  (`gallery_catalog.dart`), updated here. `home-overview` is written against the
+- **Breaking a shipped constructor.** Three construction sites exist —
+  `gallery_catalog.dart:68`, `:78` and `balance_card_test.dart:24`, `:219` — all
+  updated here. An earlier draft said one, which an audit caught; the lesson is
+  that "the only caller" is a claim to grep for, not to assume. `home-overview` is written against the
   new signature. If a caller were missed, it would fail to compile rather than
   behave oddly, which is the failure mode to prefer.
 - **Two mask implementations to keep in step.** `BalanceCard` and
@@ -129,6 +136,18 @@ to a component the gallery does not show would make the omission worse.
 | The gallery shows both row forms | `test/app/gallery_test.dart` — the catalogue gains a `TransactionRow` section with two variants, count asserted |
 
 Plus the standing gates.
+
+## Deferred, with triggers
+
+Two things are deliberately not done here, collected in one place rather than
+scattered through the decisions:
+
+- **A shared date formatter.** D1 keeps formatting on each widget, following
+  `TransactionRow`'s precedent. Trigger: a third component needing the same
+  pattern.
+- **A shared `maskFor(Currency)` helper.** `BalanceCard` and `TransactionRow` will
+  each own a mask. They are used at different type scales, so a shared helper would
+  have to know about both. Trigger: a third masked component.
 
 ## Open questions
 

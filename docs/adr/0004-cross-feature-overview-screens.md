@@ -1,6 +1,6 @@
 # 0004. Where a cross-feature overview screen lives
 
-- **Status:** Accepted (revised after audit — see *Revision history*)
+- **Status:** Accepted (v2.2 — revised twice after audit; see *Revision history*)
 - **Date:** 2026-08-24
 - **Change:** home-overview
 
@@ -181,22 +181,25 @@ should be read as such.
 
 ## Revisit when
 
-- A second overview surface lands and the assembling provider in `lib/app` has
-  grown branching logic — that is the signal the derivation drifted out of
-  `features/home/domain`.
+- The assembling provider in `lib/app` acquires a **fourth** decision beyond
+  bounding the balance at now, applying the recent limit and refusing a mismatched
+  currency — that is the signal the derivation is drifting out of
+  `features/home/domain`. "Any branching logic" would fire on day one.
 - Or `features/home/domain` never gains anything beyond these three types, in
   which case the counter-argument was right and collapsing F into A is small.
 
 ## Revision history
 
 - **v1, 2026-08-24** — chose Option D (port + adapter), citing the coverage gate.
-- **v2.1, 2026-08-24** — a second audit pass found the criteria table still
-  overstating: it weighted "derivation behind the 85% gate" as a high criterion
-  while three of Home's derivations stay in `lib/app` under either option. Since
-  v2 spends a section dissecting exactly that error, leaving it in the table was
-  the one place the rewrite still argued backwards from its conclusion. Corrected
-  above.
 - **v2, 2026-08-24** — `spec-auditor` returned `NOT READY`; the coverage argument
   did not survive it and Option F was missing entirely. Rewritten with six
   options, Option F chosen, and the original error kept above rather than deleted.
   Audit: `docs/ai-workflow/audits/2026-08-24-home-overview-spec-audit.md`.
+- **v2.1, 2026-08-24** — a second audit pass found the criteria table still
+  overstating: it weighted "derivation behind the 85% gate" as a high criterion
+  while three of Home's derivations stay in `lib/app` under either option. Since
+  v2 spends a section dissecting exactly that error, leaving it in the table was
+  the one place the rewrite still argued backwards from its conclusion. Corrected.
+- **v2.2, 2026-08-24** — a third pass found the *Revisit when* trigger already
+  tripped at birth: it fired on the assembler making "any" decision, and the
+  assembler is born with three. Reworded to a fourth. No decision changed.

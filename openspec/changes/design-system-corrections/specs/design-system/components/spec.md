@@ -31,10 +31,13 @@ format that date itself.
 - **AND** the labels, the gradient and the layout are unchanged
 - **AND** the mask control shows the inverse icon
 
-#### Scenario: The period end is not a figure to hide
+#### Scenario: The masked card omits the period end
 - **WHEN** the card is masked
-- **THEN** the safe-to-spend date may still be shown, because it reveals nothing
-  about how much money there is
+- **THEN** the safe-to-spend line shows the masked amount and **no** date
+- **AND** this matches the Figma masked variant (`40:137`), whose text is
+  "Safe to spend ••• ••• ₫" with no trailing date, and matches what the component
+  already does — the earlier wording said the date "may" be shown, which no test
+  could fail
 
 #### Scenario: Masking is reversible from the card
 - **WHEN** the mask control is activated

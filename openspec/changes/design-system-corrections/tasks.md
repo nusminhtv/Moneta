@@ -6,9 +6,15 @@
   `TransactionRow.formatTimeOfDay` already set. Update
   `lib/app/gallery/gallery_catalog.dart`, the only caller. Verify:
   `test/design_system/organisms/balance_card_test.dart` asserts the rendered
-  safe-to-spend line for a known date, that `formatPeriodEnd` converts to local
-  time exactly once, and that the existing masked no-digit test still passes
-  unchanged; the project compiles with no other caller edits.
+  safe-to-spend line for a known date, and that `formatPeriodEnd` renders the
+  **local** date — asserted so it fails if the conversion is skipped, which the
+  gate's pinned `TZ=Asia/Ho_Chi_Minh` makes possible (a UTC run cannot tell).
+
+  Note what this task actually changes: the test file constructs `BalanceCard` at
+  two places (`:24`, `:219`), so both must be updated. The existing masked
+  no-digit assertion is unchanged in *substance* but its surrounding constructor
+  call is not — an earlier draft claimed the test "still passes unchanged", which
+  was false.
 
 ## 2. Transaction row gains a masked form
 
@@ -25,11 +31,19 @@
 
 ## 3. Gallery and close-out
 
-- [ ] 3.1 Add a `TransactionRow` section to `galleryCatalog` with both forms,
-  labelled `State=Default` and `State=Masked` to match the naming the other
-  sections use. Verify: `test/app/gallery_test.dart` asserts the new section has
-  exactly two variants and that the component list's expected order is updated —
-  the catalogue is a contract, so the count assertion must be extended rather
+- [ ] 3.1 Add a `TransactionRow` section to `galleryCatalog` with **three**
+  variants: expense, income, and masked. Two would drop the income/expense
+  distinction that `figma-map.md` records as this component's variant set and that
+  the spec keeps as separate scenarios — and it would defeat this change's own
+  point, since D2's claim that the mask hides direction is only checkable by
+  seeing an expense row, an income row and a masked row together.
+
+  Label them by what they are (`Expense`, `Income`, `Masked`) rather than in
+  Figma's `State=` form: the archived gallery requirement says variants are
+  "labelled by its **Figma** variant name", and this component has no Figma node,
+  so borrowing Figma-shaped names would imply a source that does not exist.
+  Verify: `test/app/gallery_test.dart` asserts the new section has exactly three
+  variants with those labels, and the component-order assertion is extended rather
   than loosened.
 - [ ] 3.2 Update `docs/adr/0003-transaction-row-layout.md` with the masked form:
   the row has no Figma source, so a masked variant is a *new designed variant* and
