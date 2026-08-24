@@ -61,11 +61,11 @@
 
 ## 5. Presentation
 
-- [ ] 5.1 Implement day grouping — local calendar day, net per day, no empty
+- [x] 5.1 Implement day grouping — local calendar day, net per day, no empty
   days. Verify: `test/features/transactions/presentation/day_grouping_test.dart`
   covers a mixed-sign day, a day boundary either side of local midnight, and a
   DST transition day.
-- [ ] 5.2 Implement the list controller (Riverpod): load, retry, delete with an
+- [x] 5.2 Implement the list controller (Riverpod): load, retry, delete with an
   in-memory undo buffer and an injected clock for expiry. Verify:
   `test/features/transactions/presentation/list_controller_test.dart` asserts
   undo restores the original id and list position, that the window expires, and
