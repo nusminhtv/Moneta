@@ -1,0 +1,10 @@
+# Test-scoped overrides.
+include: ../analysis_options.yaml
+
+linter:
+  rules:
+    # Tests state their inputs explicitly on purpose. `make(direction: expense)`
+    # in a test about expenses documents what is being tested even when expense
+    # is the helper's default; removing it to satisfy the lint makes the test
+    # read as if direction were irrelevant.
+    avoid_redundant_argument_values: false

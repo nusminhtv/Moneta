@@ -21,13 +21,13 @@
 
 ## 2. Transactions domain
 
-- [ ] 2.1 Implement `lib/features/transactions/domain/transaction.dart`:
+- [x] 2.1 Implement `lib/features/transactions/domain/transaction.dart`:
   the entity, `TransactionDirection`, and construction that rejects a
   non-positive amount and an over-length note as validation failures. Verify:
   `test/features/transactions/domain/transaction_test.dart` covers zero,
   negative, very large amounts, note absent vs empty vs over-length, and that
   the signed value is derived from direction rather than stored.
-- [ ] 2.2 Implement `TransactionQuery` (category set, date range) and the
+- [x] 2.2 Implement `TransactionQuery` (category set, date range) and the
   `TransactionRepository` interface returning `Result<T>`. Verify:
   `test/features/transactions/domain/transaction_query_test.dart` asserts an
   inverted range is rejected, an empty filter matches everything, and that the
@@ -35,7 +35,7 @@
 
 ## 3. Transactions data layer
 
-- [ ] 3.1 Implement `TransactionDao` — insert, query with filters, delete,
+- [x] 3.1 Implement `TransactionDao` — insert, query with filters, delete,
   and the aggregate summary — plus row↔entity mapping. Verify:
   `test/features/transactions/data/transaction_dao_test.dart` runs against
   `sqflite_common_ffi` and covers round-trip fidelity, exactness at a trillion
@@ -43,7 +43,7 @@
   the empty database, both filters, the exact boundary instants, summary figures
   for populated and empty periods, and that the summary is an aggregate query
   rather than a row read.
-- [ ] 3.2 Implement `SqliteTransactionRepository` converting DAO exceptions into
+- [x] 3.2 Implement `SqliteTransactionRepository` converting DAO exceptions into
   `AppFailure.storage`, validation into `AppFailure.validation`, and a missing
   delete target into `AppFailure.notFound`. Verify:
   `test/features/transactions/data/transaction_repository_test.dart` uses a
