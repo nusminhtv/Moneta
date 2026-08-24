@@ -1,20 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moneta/app/gallery/gallery_screen.dart';
-import 'package:moneta/design_system/theme/moneta_theme.dart';
+import 'package:moneta/app/shell.dart';
+import 'package:moneta/design_system/organisms/bottom_nav.dart';
+import 'package:moneta/features/transactions/presentation/add_transaction_sheet.dart';
+import 'package:moneta/features/transactions/presentation/transactions_screen.dart';
 
-/// The application's routes.
+/// Builds the application's routes.
 ///
-/// Only the gallery exists so far: product screens arrive with the changes that
-/// introduce them, and Figma contains no screen frames to build from yet.
+/// The four destinations live inside a shell so the bottom navigation persists
+/// across them and its active tab is derived from the current location rather
+/// than tracked separately.
 GoRouter buildRouter({String initialLocation = '/'}) {
   return GoRouter(
     initialLocation: initialLocation,
     routes: [
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const _Placeholder(),
+      ShellRoute(
+        builder: (context, state, child) => MonetaShell(
+          onAdd: () => showAddTransactionSheet(context),
+          child: child,
+        ),
+        routes: [
+          GoRoute(
+            path: DestinationRoutes.paths[MonetaDestination.home]!,
+            builder: (context, state) =>
+                const PlaceholderScreen(title: 'Moneta'),
+          ),
+          GoRoute(
+            path: DestinationRoutes.paths[MonetaDestination.transactions]!,
+            builder: (context, state) => const TransactionsScreen(),
+          ),
+          GoRoute(
+            path: DestinationRoutes.paths[MonetaDestination.insights]!,
+            builder: (context, state) =>
+                const PlaceholderScreen(title: 'Insights'),
+          ),
+          GoRoute(
+            path: DestinationRoutes.paths[MonetaDestination.profile]!,
+            builder: (context, state) =>
+                const PlaceholderScreen(title: 'Profile'),
+          ),
+        ],
       ),
+      // Outside the shell: the gallery is a development surface, not a
+      // destination, and showing it with a nav bar would imply otherwise.
       GoRoute(
         path: GalleryScreen.routePath,
         builder: (context, state) => const GalleryScreen(),
@@ -23,37 +52,12 @@ GoRouter buildRouter({String initialLocation = '/'}) {
   );
 }
 
-class _Placeholder extends StatelessWidget {
-  const _Placeholder();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = context.moneta;
-    return Scaffold(
-      backgroundColor: theme.colors.canvas,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Moneta',
-              style: theme.text.headingH1.copyWith(
-                color: theme.colors.textPrimary,
-              ),
-            ),
-            SizedBox(height: theme.spacing.xl),
-            TextButton(
-              onPressed: () => context.go(GalleryScreen.routePath),
-              child: Text(
-                'Design system gallery',
-                style: theme.text.labelMd.copyWith(
-                  color: theme.colors.brandOnSurface,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+/// Opens the add-transaction sheet.
+Future<void> showAddTransactionSheet(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    builder: (context) => const AddTransactionSheet(),
+  );
 }

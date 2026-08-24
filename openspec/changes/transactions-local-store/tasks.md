@@ -82,7 +82,7 @@
 
 ## 6. App wiring and close-out
 
-- [ ] 6.1 Wire the router: a real transactions route, the bottom navigation
+- [x] 6.1 Wire the router: a real transactions route, the bottom navigation
   driving it, and the add action opening the form. Verify:
   `test/app/router_test.dart` asserts each destination reaches its route and that
   the active tab matches the current route — Figma calls a mismatch "a real
