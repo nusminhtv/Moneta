@@ -1,39 +1,56 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/design_system/tokens/spacing.dart';
+import 'package:moneta/features/onboarding/presentation/onboarding_providers.dart';
 
 /// The brand splash, Figma `71:2`.
 ///
-/// Hands over on its own after [duration]; the design offers nothing to tap.
-class SplashScreen extends StatefulWidget {
+/// Hands over on its own; the design offers nothing to tap. It is also where the
+/// first-run decision is made — a splash exists to cover startup work, and
+/// reading one flag is exactly that. Doing it in a router redirect instead would
+/// race with the write that finishes the introduction.
+class SplashScreen extends ConsumerStatefulWidget {
   /// Creates the splash.
   const SplashScreen({
-    required this.onComplete,
-    this.duration = const Duration(milliseconds: 1200),
+    required this.onDecided,
+    this.minimumDuration = const Duration(milliseconds: 900),
     super.key,
   });
 
-  /// Called once [duration] has elapsed.
-  final VoidCallback onComplete;
+  /// Called with whether the introduction should be shown.
+  ///
+  /// Fires once, after both the flag has resolved and [minimumDuration] has
+  /// elapsed — so a fast read does not make the splash flash.
+  final void Function({required bool showOnboarding}) onDecided;
 
-  /// How long the splash shows.
-  final Duration duration;
+  /// Shortest time the splash stays on screen.
+  final Duration minimumDuration;
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  bool _decided = false;
+
   @override
   void initState() {
     super.initState();
-    unawaited(
-      Future<void>.delayed(widget.duration, () {
-        if (mounted) widget.onComplete();
-      }),
-    );
+    unawaited(_decide());
+  }
+
+  Future<void> _decide() async {
+    // Both must complete: the read, and the minimum display time.
+    final results = await Future.wait([
+      ref.read(shouldShowOnboardingProvider.future),
+      Future<bool>.delayed(widget.minimumDuration, () => true),
+    ]);
+    if (!mounted || _decided) return;
+    _decided = true;
+    widget.onDecided(showOnboarding: results.first);
   }
 
   @override

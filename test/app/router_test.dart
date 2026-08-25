@@ -7,6 +7,9 @@ import 'package:moneta/app/shell.dart';
 import 'package:moneta/design_system/organisms/bottom_nav.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/design_system/tokens/colors.dart';
+import 'package:moneta/features/onboarding/presentation/onboarding_providers.dart';
+import 'package:moneta/features/onboarding/presentation/onboarding_screen.dart';
+import 'package:moneta/features/onboarding/presentation/splash_screen.dart';
 import 'package:moneta/features/transactions/presentation/add_transaction_sheet.dart';
 import 'package:moneta/features/transactions/presentation/transaction_providers.dart';
 import 'package:moneta/features/transactions/presentation/transactions_screen.dart';
@@ -194,6 +197,98 @@ void main() {
         tabColour(tester, MonetaDestination.transactions),
         colors.brandOnSurface,
       );
+    });
+  });
+
+  group('startup', () {
+    // The decision is overridden rather than read: pumpAndSettle in a FakeAsync
+    // zone would never see a real sqflite read complete, so the test would hang
+    // rather than fail. See CLAUDE.md.
+    Future<List<int>> pumpFromSplash(
+      WidgetTester tester, {
+      required bool showOnboarding,
+    }) async {
+      final completions = <int>[];
+      await tester.binding.setSurfaceSize(const Size(393, 852));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            transactionRepositoryProvider.overrideWith((ref) => repository),
+            shouldShowOnboardingProvider.overrideWith(
+              (ref) => Future.value(showOnboarding),
+            ),
+            completeOnboardingProvider.overrideWithValue(() async {
+              completions.add(1);
+            }),
+          ],
+          child: MaterialApp.router(
+            theme: MonetaTheme.dark().toThemeData(),
+            routerConfig: buildRouter(initialLocation: SplashRoute.path),
+          ),
+        ),
+      );
+      await tester.pump();
+      return completions;
+    }
+
+    // pumpAndSettle alone will not do: with no animation scheduled it returns
+    // on the first pump and leaves the splash's minimum-duration timer pending.
+    // The duration is read off the widget so this does not hardcode 900ms.
+    Future<void> settleSplash(WidgetTester tester) async {
+      final splash = tester.widget<SplashScreen>(find.byType(SplashScreen));
+      await tester.pump(splash.minimumDuration);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('the app opens on the splash, not on a destination', (
+      tester,
+    ) async {
+      await pumpFromSplash(tester, showOnboarding: true);
+      expect(find.byType(SplashScreen), findsOneWidget);
+      expect(find.byType(MonetaBottomNav), findsNothing);
+      await settleSplash(tester);
+    });
+
+    testWidgets('a first run goes on to the introduction', (tester) async {
+      await pumpFromSplash(tester, showOnboarding: true);
+      await settleSplash(tester);
+
+      expect(find.byType(OnboardingScreen), findsOneWidget);
+      expect(
+        find.byType(MonetaBottomNav),
+        findsNothing,
+        reason: 'the introduction is not a destination inside the shell',
+      );
+    });
+
+    testWidgets('a returning run goes straight to the shell', (tester) async {
+      await pumpFromSplash(tester, showOnboarding: false);
+      await settleSplash(tester);
+
+      expect(find.byType(OnboardingScreen), findsNothing);
+      expect(find.byType(MonetaBottomNav), findsOneWidget);
+      expect(tabColour(tester, MonetaDestination.home), colors.brandOnSurface);
+    });
+
+    testWidgets('finishing the introduction records it and lands on Home', (
+      tester,
+    ) async {
+      final completions = await pumpFromSplash(tester, showOnboarding: true);
+      await settleSplash(tester);
+
+      // Skip is the shortest path through; the screen's own tests cover Next.
+      await tester.tap(find.byKey(OnboardingScreen.skipKey));
+      await tester.pumpAndSettle();
+
+      expect(
+        completions,
+        hasLength(1),
+        reason: 'left the introduction without recording it — it would return',
+      );
+      expect(find.byType(MonetaBottomNav), findsOneWidget);
+      expect(tabColour(tester, MonetaDestination.home), colors.brandOnSurface);
     });
   });
 

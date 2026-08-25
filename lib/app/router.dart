@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moneta/app/gallery/gallery_screen.dart';
 import 'package:moneta/app/shell.dart';
 import 'package:moneta/design_system/organisms/bottom_nav.dart';
+import 'package:moneta/features/onboarding/presentation/onboarding_providers.dart';
 import 'package:moneta/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:moneta/features/onboarding/presentation/splash_screen.dart';
 import 'package:moneta/features/transactions/presentation/add_transaction_sheet.dart';
@@ -61,16 +63,16 @@ GoRouter buildRouter({String initialLocation = defaultInitialRoute}) {
       GoRoute(
         path: SplashRoute.path,
         builder: (context, state) => SplashScreen(
-          onComplete: () => context.go(OnboardingRoute.path),
+          onDecided: ({required showOnboarding}) => context.go(
+            showOnboarding
+                ? OnboardingRoute.path
+                : DestinationRoutes.paths[MonetaDestination.home]!,
+          ),
         ),
       ),
       GoRoute(
         path: OnboardingRoute.path,
-        builder: (context, state) => OnboardingScreen(
-          onFinished: () => context.go(
-            DestinationRoutes.paths[MonetaDestination.home]!,
-          ),
-        ),
+        builder: (context, state) => const OnboardingRouteScreen(),
       ),
       // Outside the shell: the gallery is a development surface, not a
       // destination, and showing it with a nav bar would imply otherwise.
@@ -92,6 +94,24 @@ abstract final class SplashRoute {
 abstract final class OnboardingRoute {
   /// Route path.
   static const String path = '/onboarding';
+}
+
+/// Hosts [OnboardingScreen] and records completion before leaving it.
+class OnboardingRouteScreen extends ConsumerWidget {
+  /// Creates the route wrapper.
+  const OnboardingRouteScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return OnboardingScreen(
+      onFinished: () async {
+        await ref.read(completeOnboardingProvider)();
+        if (context.mounted) {
+          context.go(DestinationRoutes.paths[MonetaDestination.home]!);
+        }
+      },
+    );
+  }
 }
 
 /// Opens the add-transaction sheet.

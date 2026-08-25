@@ -22,7 +22,7 @@ final class Migration {
 }
 
 /// The schema version the application expects.
-const int schemaVersion = 1;
+const int schemaVersion = 2;
 
 /// Every migration, in ascending order.
 final List<Migration> migrations = [
@@ -50,6 +50,20 @@ CREATE TABLE transactions (
       await db.execute(
         'CREATE INDEX idx_transactions_category ON transactions (category)',
       );
+    },
+  ),
+  Migration(
+    version: 2,
+    apply: (db) async {
+      // Small durable values that belong to no single feature: a display
+      // preference, whether first-run has happened. Values are TEXT and parsed
+      // by a typed accessor, so a malformed value is a storage failure rather
+      // than a silent default.
+      await db.execute('''
+CREATE TABLE settings (
+  key   TEXT NOT NULL PRIMARY KEY,
+  value TEXT NOT NULL
+)''');
     },
   ),
 ];

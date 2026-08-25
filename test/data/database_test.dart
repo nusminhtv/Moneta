@@ -146,16 +146,20 @@ void main() {
     test(
       'refuses to open a database newer than the app, without data loss',
       () async {
-        // Simulate a user downgrading: write at v2, then open with a v1 app.
-        final twoStep = [
-          migrations.first,
+        // Simulate a user downgrading: write one version ABOVE the app, then
+        // open with the app's own version. Expressed relative to schemaVersion
+        // so this keeps working as the schema grows — hardcoding 2 is what broke
+        // it when v2 shipped.
+        const aheadVersion = schemaVersion + 1;
+        final ahead = [
+          ...migrations,
           Migration(
-            version: 2,
+            version: aheadVersion,
             apply: (db) =>
                 db.execute('ALTER TABLE transactions ADD COLUMN x TEXT'),
           ),
         ];
-        final newer = build(set: twoStep, version: 2);
+        final newer = build(set: ahead, version: aheadVersion);
         final db = (await newer.open()).valueOrNull!;
         await db.insert('transactions', {
           'id': 'keep-me',
@@ -181,7 +185,7 @@ void main() {
         );
 
         // The row is still there: refusing must not destroy data.
-        final check = build(set: twoStep, version: 2);
+        final check = build(set: ahead, version: aheadVersion);
         final rows = await (await check.open()).valueOrNull!.query(
           'transactions',
         );
@@ -192,21 +196,24 @@ void main() {
 
     test('a failing migration leaves the stored version behind', () async {
       final failing = [
-        migrations.first,
-        Migration(version: 2, apply: (_) async => throw StateError('boom')),
+        ...migrations,
+        Migration(
+          version: schemaVersion + 1,
+          apply: (_) async => throw StateError('boom'),
+        ),
       ];
       final first = build();
       await first.open();
       await first.close();
 
-      final upgrading = build(set: failing, version: 2);
+      final upgrading = build(set: failing, version: schemaVersion + 1);
       final result = await upgrading.open();
       expect(result.isOk, isFalse);
 
-      // Still openable at v1, with its schema intact.
+      // Still openable at the app's version, with its schema intact.
       final recovered = build();
       final db = (await recovered.open()).valueOrNull!;
-      expect(await db.getVersion(), 1);
+      expect(await db.getVersion(), schemaVersion);
       final tables = await db.rawQuery(
         "SELECT name FROM sqlite_master WHERE type='table'",
       );
@@ -228,18 +235,19 @@ void main() {
       });
       await first.close();
 
-      final twoStep = [
-        migrations.first,
+      const nextVersion = schemaVersion + 1;
+      final withAccount = [
+        ...migrations,
         Migration(
-          version: 2,
+          version: nextVersion,
           apply: (db) =>
               db.execute('ALTER TABLE transactions ADD COLUMN account TEXT'),
         ),
       ];
-      final upgraded = build(set: twoStep, version: 2);
+      final upgraded = build(set: withAccount, version: nextVersion);
       final db2 = (await upgraded.open()).valueOrNull!;
 
-      expect(await db2.getVersion(), 2);
+      expect(await db2.getVersion(), nextVersion);
       final rows = await db2.query('transactions');
       expect(rows.single['id'], 'survivor');
       expect(rows.single.containsKey('account'), isTrue);

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moneta/data/database/migrations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -146,6 +148,88 @@ void main() {
         whereArgs: ['x'],
       );
       expect(row.single['amount_minor'], big);
+    });
+  });
+
+  group('v2 — settings, applied to a populated database', () {
+    test(
+      'v1 rows survive the upgrade and the new table arrives empty',
+      () async {
+        // The first migration this project applies to real data. Before v2
+        // there was only one version, so this case could not be exercised.
+        //
+        // File-backed, not in-memory: two opens of inMemoryDatabasePath are two
+        // different databases, so an in-memory version of this test would query
+        // an empty table and prove nothing.
+        final dir = await Directory.systemTemp.createTemp('moneta_v2');
+        addTearDown(() => dir.delete(recursive: true));
+        final path = '${dir.path}/moneta.db';
+
+        Future<Database> openAt(int version, List<Migration> using) {
+          return factory.openDatabase(
+            path,
+            options: OpenDatabaseOptions(
+              version: version,
+              onCreate: (db, v) =>
+                  runMigrations(db, from: 0, to: v, using: using),
+              onUpgrade: (db, from, to) =>
+                  runMigrations(db, from: from, to: to, using: using),
+            ),
+          );
+        }
+
+        final v1 = await openAt(1, [migrations.first]);
+        await v1.insert('transactions', {
+          'id': 'survivor',
+          'amount_minor': 45000,
+          'currency': 'VND',
+          'direction': 'expense',
+          'category': 'food',
+          'occurred_at': 1756000000000,
+          'note': 'phở',
+          'created_at': 1756000000000,
+        });
+        await v1.close();
+
+        final v2 = await openAt(2, migrations);
+        expect(await v2.getVersion(), 2);
+
+        final rows = await v2.query('transactions');
+        expect(rows, hasLength(1));
+        expect(rows.single['id'], 'survivor');
+        expect(rows.single['note'], 'phở');
+        expect(rows.single['amount_minor'], 45000);
+
+        final settings = await v2.query('settings');
+        expect(settings, isEmpty, reason: 'the new table starts empty');
+        await v2.close();
+      },
+    );
+
+    test('settings has a text primary key and a not-null value', () async {
+      final db = await freshDatabase(version: schemaVersion);
+      final columns = await db.rawQuery('PRAGMA table_info(settings)');
+      final byName = {for (final c in columns) c['name']! as String: c};
+
+      expect(byName.keys.toSet(), {'key', 'value'});
+      expect(byName['key']!['type'], 'TEXT');
+      expect(byName['key']!['pk'], 1);
+      expect(byName['value']!['notnull'], 1);
+      await db.close();
+    });
+
+    test('a duplicate key replaces rather than accumulating', () async {
+      final db = await freshDatabase(version: schemaVersion);
+      await db.insert('settings', {'key': 'k', 'value': 'a'});
+      await db.insert(
+        'settings',
+        {'key': 'k', 'value': 'b'},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      final rows = await db.query('settings');
+      expect(rows, hasLength(1));
+      expect(rows.single['value'], 'b');
+      await db.close();
     });
   });
 
