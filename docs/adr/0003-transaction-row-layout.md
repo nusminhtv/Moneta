@@ -1,5 +1,13 @@
 # 0003. Transaction row layout
 
+> **⚠️ PREMISE FALSE — 2026-08-25.** This ADR's whole justification is that
+> "the Figma file has no transaction row and no screen frames". It has both.
+> `TransactionRow` is a real Figma component, instanced on page `5:17` at
+> `67:416`, `67:453`, `67:588` and `67:618`. The decision below was made
+> against a design that existed and was never opened. Pending reconciliation by
+> the `figma-fidelity` agent.
+
+
 - **Status:** Accepted
 - **Date:** 2026-08-24
 - **Change:** transactions-local-store

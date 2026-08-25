@@ -1,3 +1,15 @@
+> ## ⛔ FROZEN — 2026-08-25
+>
+> This change was planned on a false premise: that the Figma file contains no
+> screen designs. It contains 74 screens, and the project never opened them
+> because `get_metadata` without a `nodeId` returns an incomplete page list.
+>
+> Do not implement any of the tasks below. The `figma-fidelity` agent is
+> reconciling what has already been built against the real designs; this change
+> is reopened, revised or discarded once that lands.
+>
+> See `docs/design-system/figma-map.md` for the correction.
+
 ## 1. Balance card takes a date
 
 - [ ] 1.1 Change `BalanceCard.safeToSpendUntil` to a `DateTime` and add

@@ -1,5 +1,12 @@
 # 0004. Where a cross-feature overview screen lives
 
+> **⚠️ PREMISE SUSPECT — 2026-08-25.** This ADR and the `home-overview` change
+> rest on "Figma contains no screen frames". The file contains 74 screens
+> across pages the project never queried. A Home page almost certainly exists.
+> The architecture reasoning may survive; the premise does not. Pending
+> reconciliation by the `figma-fidelity` agent.
+
+
 - **Status:** Accepted (v2.2 — revised twice after audit; see *Revision history*)
 - **Date:** 2026-08-24
 - **Change:** home-overview

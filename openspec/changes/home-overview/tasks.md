@@ -1,3 +1,15 @@
+> ## ⛔ FROZEN — 2026-08-25
+>
+> This change was planned on a false premise: that the Figma file contains no
+> screen designs. It contains 74 screens, and the project never opened them
+> because `get_metadata` without a `nodeId` returns an incomplete page list.
+>
+> Do not implement any of the tasks below. The `figma-fidelity` agent is
+> reconciling what has already been built against the real designs; this change
+> is reopened, revised or discarded once that lands.
+>
+> See `docs/design-system/figma-map.md` for the correction.
+
 Blocked on `design-system-corrections` (see the proposal's Prerequisite section),
 whose artifacts are written and validated. Only **task 4.3** needs it — that is the
 task that renders `BalanceCard` and the masked row. Tasks 1 through 4.2 touch no
