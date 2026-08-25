@@ -143,14 +143,24 @@ File key `kEYXQUyhXLZITkNxAHRVlf`. It is a **training file**: its Cover claims 7
 screens, 37 variant sets and **twelve deliberate mistakes**, and points at a
 `📁 Screen Index` page and a `🔧 Utilities / Known Deviations` answer key.
 
-**Our access reaches only three pages** — Cover, `🎨 Foundations / Iconography`
-(50 icons + rules) and `🧩 Components / Organisms` (14 component sets). The screen
-pages and the index are not listed by `get_metadata`.
+**`get_metadata` without a `nodeId` returns an incomplete page list.** It reports
+three pages (Cover, Foundations, Organisms). That is not the file. Passing a
+concrete node id reaches pages it never listed — `5:14` is
+`📱 01 Onboarding & Auth` with twelve finished screens. Do not conclude anything
+about what the file contains from the page listing; query a node.
 
-So: do **not** repeat the earlier claim that this file has no screen designs. It
-has 74 and we cannot see them. Any screen layout decided without them is
-provisional — flag it as such rather than recording it as a design decision, and
-say plainly that the design was unavailable rather than absent.
+Every screen has a sibling **annotation frame** giving `Purpose`, `Components`,
+`States` and `Data` — a written spec per screen, including accessibility rules.
+Read the annotation before implementing the screen.
+
+The component library is also larger than the Organisms page shows. Screens use
+`Button/Primary`, `Button/Secondary`, `TextField/Filled`, `TextField/Error`,
+`Checkbox`, `Divider/Subtle`, `Select`, `ListRow`, `SectionHeader` — none of which
+appear on `🧩 Components / Organisms`.
+
+**Never claim this file lacks a design.** That claim has been made twice and was
+wrong twice. If something cannot be found, say it was not found and name what was
+queried.
 
 Implemented nodes are tracked in `docs/design-system/figma-map.md`. Check it
 before implementing anything: the component may already exist.

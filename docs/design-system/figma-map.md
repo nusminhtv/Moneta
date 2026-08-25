@@ -6,39 +6,40 @@ Source of truth: Figma file `kEYXQUyhXLZITkNxAHRVlf`
 **Check this table before implementing anything from Figma.** If a node already
 has a widget, extend it; do not create a second implementation.
 
-## ⚠️ This map describes only the part of the file we can see
+## ⚠️ This map is incomplete, and was twice wrong about why
 
-The file's own Cover page (node `123:36`) states:
+The file's Cover states it is a training file with **74 screens**, 37 variant
+sets, 119 variables and **twelve deliberate mistakes**, and points at a
+`📁 Screen Index` page and a `🔧 Utilities / Known Deviations` answer key.
 
-> "Personal finance, mobile only. A complete dark-first design system and **74
-> screens** — with twelve deliberate mistakes hidden in them."
->
-> 74 screens · 37 variant sets · 239 variants · 119 variables · 48 icons ·
-> 12 deviations
->
-> "Start on 📁 Screen Index. Trainers: 🔧 Utilities / Known Deviations is the
-> answer key — keep it closed."
+Two corrections, in order, because the reasoning matters more than the conclusion:
 
-**Our Figma access lists only three pages** — Cover, Foundations/Iconography and
-Components/Organisms. `📁 Screen Index`, `🔧 Utilities / Known Deviations` and every
-screen page are not reachable. The counts do not reconcile either: the Cover claims
-37 variant sets and 48 icons; the visible pages hold 14 and 50.
+1. This document first asserted **"the file contains no screen frames"**. False.
+2. It was then corrected to **"our access reaches only three pages"**. Also false.
 
-Two consequences, both serious:
+Both came from the same mistake: `get_metadata` with no `nodeId` returns three
+pages, and that was treated as the file's contents. Querying a concrete node
+reaches pages the listing never showed — `5:14` is `📱 01 Onboarding & Auth`,
+twelve finished screens, each with an annotation frame specifying its purpose,
+components, states and data.
 
-1. **"There are no screen designs in this file" — the earlier claim in this
-   document and in `CLAUDE.md` — is false.** There are 74. We cannot see them.
-   Every screen layout this project has "decided" (see ADR 0003 and ADR 0004) may
-   duplicate or contradict a design that already exists.
-2. **Twelve of the file's deviations are deliberate and there is an answer key.**
-   The deviations recorded below were found by comparing implementation against
-   the visible pages. Some may be the planted ones; others may be ours. Until the
-   full file is reachable, treat this table as observations, not as a reconciled
-   list.
+**So the design was there the whole time.** Screen layouts this project recorded
+as its own decisions — see ADR 0003 and ADR 0004 — were decided against a design
+that existed and was never opened. Those ADRs are not merely provisional; their
+stated premise is false and they need reconciling against the real screens.
 
-Resolving the access is a prerequisite for any further screen work.
+The component inventory below is likewise a floor, not a ceiling. Screens
+reference `Button/Primary`, `Button/Secondary`, `TextField/Filled`,
+`TextField/Error`, `Checkbox`, `Divider/Subtle`, `Select`, `ListRow` and
+`SectionHeader`, none of which are on the Organisms page. `text-secondary`
+(`#9aa3b4`) is recorded as "not observed" in `figma-tokens.md` and appears in
+every annotation frame.
 
-## What the Figma file contains *that we can reach*
+Method note for anyone extending this map: **query nodes, do not enumerate pages.**
+
+## What this map has actually inspected
+
+
 
 | Page | Node | Contents |
 | --- | --- | --- |
