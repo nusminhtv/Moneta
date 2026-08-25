@@ -35,10 +35,24 @@ context: |
     the current screen needs.
 
   ## Design source
-  Figma file key kEYXQUyhXLZITkNxAHRVlf. It contains an icon set and a component
-  library (organisms with variants) but NO screen designs. Screen layout is
-  therefore a design decision this project makes and records, not something read
-  off the canvas.
+  Figma file key kEYXQUyhXLZITkNxAHRVlf. It is a training file whose Cover claims
+  74 screens, 37 variant sets and twelve deliberate mistakes, with an answer key
+  at the Utilities page. Read the screen's sibling annotation frame — Purpose,
+  Components, States, Data, accessibility rules — before implementing it.
+
+  This block previously said the file contains "NO screen designs" and that
+  screen layout is therefore this project's own decision. That was false and it
+  was acted on: two changes were planned, and requirements and ADRs written,
+  against it. `get_metadata` WITHOUT a nodeId returns an incomplete page list
+  (three pages); that listing is not the file. Query a concrete node. `5:14` is
+  twelve finished onboarding screens, `5:17` seven budget screens, `29:70` a
+  TransactionRow with four variants, `107:75` the real spacing collection.
+  Pages step by 3 from `5:7` to `5:25`; the Screen Index is `5:24`.
+
+  Never state that this file lacks a design. That claim has been wrong three
+  times. If something cannot be found, say it was not found and name what was
+  queried. Check docs/design-system/figma-map.md before implementing anything —
+  the component may already exist.
 
   ## Definition of done
   A change is done when `tool/verify.sh --change <name>` passes. That gate is
