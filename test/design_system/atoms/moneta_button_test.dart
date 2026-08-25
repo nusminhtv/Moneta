@@ -103,13 +103,15 @@ void main() {
               MonetaButton.foregroundFor(style, state, colors),
               reason: '${style.name}/${size.name}/${state.name} foreground',
             );
+            // The whole style, not three of its properties. Comparing only
+            // (fontSize, fontWeight, fontFamily) meant `.copyWith(height: 4,
+            // letterSpacing: 9)` passed — and line height and letter spacing
+            // are the subject of the typography spec's own scenarios, so they
+            // are not an incidental axis. Compared after neutralising `color`,
+            // which is asserted separately just above.
             expect(
-              (applied.fontSize, applied.fontWeight, applied.fontFamily),
-              (
-                size.labelStyle(text).fontSize,
-                size.labelStyle(text).fontWeight,
-                size.labelStyle(text).fontFamily,
-              ),
+              applied.copyWith(color: const Color(0xFF000000)),
+              size.labelStyle(text).copyWith(color: const Color(0xFF000000)),
               reason: '${style.name}/${size.name}/${state.name} label style',
             );
             built++;
@@ -345,8 +347,13 @@ void main() {
         leading: MonetaIconName.plus,
         trailing: MonetaIconName.chevronRight,
       );
-      final icons = tester.widgetList<MonetaIcon>(find.byType(MonetaIcon));
+      final icons = tester
+          .widgetList<MonetaIcon>(find.byType(MonetaIcon))
+          .toList();
       expect(icons, hasLength(2));
+      // Identity, not just count and position: the two could be swapped.
+      expect(icons.first.icon, MonetaIconName.plus);
+      expect(icons.last.icon, MonetaIconName.chevronRight);
       final label = tester.getRect(find.text('Next'));
       final first = tester.getRect(find.byType(MonetaIcon).first);
       final last = tester.getRect(find.byType(MonetaIcon).last);

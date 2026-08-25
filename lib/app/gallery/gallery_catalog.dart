@@ -105,21 +105,21 @@ final List<GallerySection> galleryCatalog = [
     // the slots are what a reviewer needs to compare against the frames.
     variants: [
       GalleryVariant(
-        'Slot=4 (accounts)',
+        'Slot=4, Glyph=credit-card (accounts)',
         (_) => const OnboardingIllustration(
           glyph: MonetaIconName.creditCard,
           chartSlot: 4,
         ),
       ),
       GalleryVariant(
-        'Slot=1 (budgets)',
+        'Slot=1, Glyph=target (budgets)',
         (_) => const OnboardingIllustration(
           glyph: MonetaIconName.target,
           chartSlot: 1,
         ),
       ),
       GalleryVariant(
-        'Slot=2 (goals)',
+        'Slot=2, Glyph=award (goals)',
         (_) => const OnboardingIllustration(
           glyph: MonetaIconName.award,
           chartSlot: 2,

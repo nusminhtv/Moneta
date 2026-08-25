@@ -62,6 +62,18 @@ void main() {
       if (cells.length < 3) continue;
       final first = cells[1].trim().replaceAll('`', '');
       if (first.isEmpty || first.startsWith('-') || first == 'Token') continue;
+      // A row only counts as provenance if some cell actually names a node
+      // (`39:243`) or explicitly says the value was not observed. Reading only
+      // the name meant `| radius-bogus | | |` — every other cell empty —
+      // satisfied a requirement whose words are "naming the Figma node it was
+      // read from". The check read the file and ignored the provenance.
+      final rest = cells.skip(2).join(' ');
+      final hasNode = RegExp(r'\b\d+:\d+\b').hasMatch(rest);
+      final saysDerived = RegExp(
+        'not observed',
+        caseSensitive: false,
+      ).hasMatch(rest);
+      if (!hasNode && !saysDerived) continue;
       (rows[kind] ??= <String>{}).add(first.toLowerCase());
     }
     return rows;
@@ -93,6 +105,12 @@ void main() {
       'spacing': ['space'],
       'layout': <String>[],
     };
+    // A handful of Dart names do not derive from their doc name by any rule:
+    // `level3` is documented as `elevation/3`, and `brandGlow` as `glow/brand`
+    // with the words the other way round. Aliasing them explicitly is honest
+    // where widening the matcher would not be — an alias can only ever match a
+    // row that really exists, and a dead alias fails its own test below.
+    const aliases = {'level3': 'elevation/3', 'brandGlow': 'glow/brand'};
     final groups = groupsByKind[kind] ?? const <String>[];
     final head = kebab.split('-').first;
     final tail = kebab.contains('-')
@@ -100,6 +118,7 @@ void main() {
         : kebab;
     return {
       kebab,
+      if (aliases.containsKey(field)) aliases[field]!,
       if (kind == 'colour') '$kebab-base',
       if (kebab.contains('-') && groups.contains(head)) '$head/$tail',
       // Gated on a hyphen unless the kind has exactly one group. `amountXl` ->
@@ -129,28 +148,42 @@ void main() {
   /// probes walked past it. Matching every form is the only version of this that
   /// cannot be evaded by choosing a different keyword.
   List<String> valuesIn(String source, List<String> types) {
-    final names = <String>[];
-    for (final type in types) {
-      for (final pattern in [
-        // final Color x;   /  final double x;
-        '^\\s{2}final $type (\\w+);',
-        // static const Color x = …  /  const Color x = …
-        '^\\s{2}(?:static\\s+)?const $type (\\w+)\\s*=',
-        // $type get x =>  (a computed token)
-        '^\\s{2}$type get (\\w+)',
-        // final $type x = …  (initialised field)
-        '^\\s{2}final $type (\\w+)\\s*=',
-      ]) {
-        names.addAll(
-          RegExp(pattern, multiLine: true)
-              .allMatches(source)
-              .map((m) => m.group(1)!)
-              .where((n) => !n.startsWith('_')),
-        );
-      }
+    final names = <String>{};
+    final typeAlternation = types.map(RegExp.escape).join('|');
+    for (final pattern in [
+      // `final <Type> x;`   /  `final <Type> x = …`
+      '^\\s*final (?:$typeAlternation) (\\w+)\\s*[;=]',
+      // `static const <Type> x = …`  /  `const <Type> x = …`
+      '^\\s*(?:static\\s+)?const (?:$typeAlternation) (\\w+)\\s*=',
+      // `<Type> get x`
+      '^\\s*(?:$typeAlternation) get (\\w+)',
+      // Untyped, inferred from the initialiser: `static const x = Color(0x…)`.
+      // Omitting the annotation defeated every typed pattern — an undocumented
+      // `static const oopsUntyped = Color(0xFF123456)` passed the whole gate.
+      // `\\s*` rather than `\\s{2}` throughout, because anchoring at
+      // class-member indent made a top-level declaration invisible too.
+      '^\\s*(?:static\\s+)?(?:const|final) (\\w+)\\s*=\\s*(?:const\\s+)?(?:$typeAlternation)[(.]',
+    ]) {
+      names.addAll(
+        RegExp(pattern, multiLine: true)
+            .allMatches(source)
+            .map((m) => m.group(1)!)
+            .where((n) => !n.startsWith('_')),
+      );
     }
-    return names.toSet().toList();
+    return names.toList();
   }
+
+  /// Every type that appears in a token file's declarations, so `valuesIn` is
+  /// driven by the file rather than by a hand-written type list.
+  ///
+  /// Passing `['Color']` and `['double']` by hand is how `List<BoxShadow>` in
+  /// `elevation.dart` stayed outside the check entirely: the parser could read
+  /// the section, it was simply never asked about that type.
+  List<String> typesIn(String source) => RegExp(
+    r'^\s*(?:static\s+)?(?:final|const) ([A-Z]\w*(?:<[^>]*>)?) \w+\s*[;=]',
+    multiLine: true,
+  ).allMatches(source).map((m) => m.group(1)!).toSet().toList();
 
   void expectAllDocumented(
     List<String> fields,
@@ -243,7 +276,9 @@ void main() {
   test('every radius token has a row naming its Figma source', () {
     expectAllDocumented(
       valuesIn(
-        File('lib/design_system/tokens/radii.dart').readAsStringSync(),
+        File(
+          'lib/design_system/tokens/radii.dart',
+        ).readAsStringSync(),
         ['double'],
       ),
       'radius',
@@ -251,35 +286,78 @@ void main() {
     );
   });
 
-  test('every spacing and layout value has a row', () {
-    // One file, two kinds. The deprecated instance scale is excluded by name:
-    // it is documented at length as invented, which is the opposite of missing
-    // provenance.
+  test('every elevation and effect token has a row', () {
+    // `List<BoxShadow>` was outside the check not because the parser could not
+    // read the Elevation section but because nobody passed it that type. Types
+    // now come from the file.
     final source = File(
-      'lib/design_system/tokens/spacing.dart',
+      'lib/design_system/tokens/elevation.dart',
     ).readAsStringSync();
-    final spacingClass = source.substring(
-      source.indexOf('class MonetaSpacing'),
-      source.indexOf('class MonetaLayout'),
+    expectAllDocumented(
+      valuesIn(source, typesIn(source)),
+      'elevation',
+      documentedByKind(),
     );
-    final layoutClass = source.substring(source.indexOf('class MonetaLayout'));
+  });
 
-    final rows = documentedByKind();
-    // Selected by declaration form, not by a `space` name prefix: an
-    // undocumented `static const double gutter = 21` slipped straight past the
-    // prefix filter. Figma's scale is `static const`; the deprecated invented
-    // scale is instance `final` fields, documented at length as invented.
-    final staticScale = RegExp(
-      r'^\s{2}static const double (\w+)\s*=',
-      multiLine: true,
-    ).allMatches(spacingClass).map((m) => m.group(1)!).toList();
+  test('no token file declares a type the check never asks about', () {
+    // The guard on the guard, and the one that would have caught
+    // `List<BoxShadow>`, the untyped declaration and the top-level declaration
+    // before a reviewer did. Every type declared in every token file must be
+    // one this suite actually looks up, or explicitly listed as carrying no
+    // design value.
+    const notDesignValues = {
+      // Structural, not design values: the token classes themselves, and the
+      // Flutter types they are built out of.
+      'MonetaColors', 'MonetaTypography', 'MonetaRadii', 'MonetaElevation',
+      'MonetaMotion', 'MonetaChartPalette', 'MonetaSpacing',
+      'String', 'bool', 'int', 'Duration', 'Curve', 'FontWeight',
+      'BorderRadius', 'Gradient', 'LinearGradient', 'Alignment',
+      // Aggregates of values already checked individually — `figmaScale` and
+      // `all` list the same twelve `space/*` steps the spacing test covers.
+      'List<double>',
+    };
+    const checked = {
+      'Color',
+      'TextStyle',
+      'double',
+      'List<BoxShadow>',
+      'BoxShadow',
+      'List<Color>',
+    };
+    final unchecked = <String>{};
+    for (final file in Directory(
+      'lib/design_system/tokens',
+    ).listSync().whereType<File>().where((f) => f.path.endsWith('.dart'))) {
+      for (final type in typesIn(file.readAsStringSync())) {
+        if (!checked.contains(type) && !notDesignValues.contains(type)) {
+          unchecked.add('$type (${file.path})');
+        }
+      }
+    }
     expect(
-      staticScale,
-      contains('spaceBase'),
-      reason: 'failed to parse the static scale — the check would be vacuous',
+      unchecked,
+      isEmpty,
+      reason:
+          'these declared types hold values nothing checks for provenance. '
+          'Either look them up or say why they are not design values: '
+          '${unchecked.join(', ')}',
     );
-    expectAllDocumented(staticScale, 'spacing', rows);
-    expectAllDocumented(valuesIn(layoutClass, ['double']), 'layout', rows);
+  });
+
+  test('every provenance alias points at a row that exists', () {
+    // Aliases are additive, so a stale one cannot make an undocumented value
+    // pass — but it can make the map read as more considered than it is, which
+    // is what nine dead gallery exemptions did.
+    final rows = documentedByKind();
+    final all = rows.values.expand((r) => r).toSet();
+    for (final target in ['elevation/3', 'glow/brand']) {
+      expect(
+        all,
+        contains(target),
+        reason: 'alias target "$target" is not a documented row any more',
+      );
+    }
   });
 
   test('the deprecated instance scale is still called out as invented', () {

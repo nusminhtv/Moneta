@@ -164,6 +164,14 @@ void main() {
       );
       final decoration = box.decoration as BoxDecoration;
       expect(decoration.border!.top.color, colors.borderSubtle);
+      // "A hairline ring" is the spec's own wording, and the width was pinned
+      // nowhere — `width: 9` passed the whole gate. Flutter's default border
+      // width is 1.0, which is what hairline means here.
+      expect(
+        decoration.border!.top.width,
+        1,
+        reason: 'the ring is a hairline, not a stroke',
+      );
       expect(
         decoration.color,
         isNull,

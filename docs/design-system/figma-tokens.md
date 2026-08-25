@@ -164,20 +164,20 @@ and their literal gaps were reverse-engineered into a scale.
 
 The real collection, read from `107:75`, with Figma's own stated purpose for each:
 
-| Figma token | Value | Purpose (Figma's words) |
-| --- | --- | --- |
-| `space/0` | 0 | reset only |
-| `space/2xs` | 2 | icon to label inside a chip |
-| `space/xs` | 4 | label to value in a stat tile |
-| `space/sm` | **8** | between rows in a dense list |
-| `space/md` | **12** | default vertical rhythm on a screen |
-| `space/base` | **16** | card inner padding |
-| `space/lg` | **20** | screen horizontal gutter |
-| `space/xl` | **24** | between sections |
-| `space/2xl` | 32 | above a section header |
-| `space/3xl` | 40 | hero block padding |
-| `space/4xl` | 48 | empty-state breathing room |
-| `space/5xl` | 64 | full-screen state centring |
+| Figma token | Value | Purpose (Figma's words) | Source node |
+| --- | --- | --- | --- |
+| `space/0` | 0 | reset only | `107:75` |
+| `space/2xs` | 2 | icon to label inside a chip | `107:75` |
+| `space/xs` | 4 | label to value in a stat tile | `107:75` |
+| `space/sm` | **8** | between rows in a dense list | `107:75` |
+| `space/md` | **12** | default vertical rhythm on a screen | `107:75` |
+| `space/base` | **16** | card inner padding | `107:75` |
+| `space/lg` | **20** | screen horizontal gutter | `107:75` |
+| `space/xl` | **24** | between sections | `107:75` |
+| `space/2xl` | 32 | above a section header | `107:75` |
+| `space/3xl` | 40 | hero block padding | `107:75` |
+| `space/4xl` | 48 | empty-state breathing room | `107:75` |
+| `space/5xl` | 64 | full-screen state centring | `107:75` |
 
 Against `lib/design_system/tokens/spacing.dart`:
 

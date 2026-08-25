@@ -1,3 +1,8 @@
+**Where this leaves it.** Twelve of twelve round-4 mutations fail. Round 5 then
+found ten more, so this paragraph's original claim — that the surviving-mutation
+count was "the only number that has stayed honest" — was itself the round's worst
+over-claim. A count of mutations I wrote measures my imagination, not the suite.
+
 ## 1. Tokens
 
 - [x] 1.1 Add Figma's twelve `space/*` values to `MonetaSpacing` under Figma's
@@ -358,6 +363,16 @@ carries a `// design-token-ignore` with a reason; removing the annotation still
 passes `check_design_tokens.dart`, so it documents a CLAUDE.md rule about raw
 values in `atoms/` rather than silencing a gate finding.
 
+**Found by round 5 and now fixed, listed because this section missed them:** the
+`Icons` section's ~50 labels were entirely unverified; the class scan was bounded
+by three hand-listed directories; untyped and top-level token declarations were
+invisible; a provenance row needed no node id; `List<BoxShadow>` and the chart
+palette were outside the token check; the button's label height and letter
+spacing and the ring's stroke width were unpinned; nine of ten gallery exemptions
+were dead. The chart palette's 16 colours remain provenance-unchecked — they are
+positional literals in a `List<Color>` with no field name to look up — though
+their values are pinned in `colors_test.dart`.
+
 **Not machine-guarded:** the ⛔ warning on `design-system-corrections` is prose.
 Nothing stops someone archiving that change and restoring the false Transaction
 row claim; it depends on the warning being read.
@@ -431,3 +446,77 @@ checks are now generic rather than enumerated, which is the first structural
 change in four rounds rather than another patch, and the surviving-mutation count
 is the only number that has stayed honest — it went 5 → 15 → 12 → 0 against the
 attacks tried.
+
+## 10. Remediation after the fifth review
+
+Ten survivors. The verdict named the shape precisely, and it is a genuinely new
+observation rather than the same one again: **making a check generic over one axis
+creates new implicit enumerations, and those need the same adversarial treatment
+the old ones got.** Round 4 replaced "which sections do I check" with a loop over
+`galleryCatalog`, and in doing so introduced four hand-written lists nothing
+examined — which label *formats* are checkable, which *directories* are scanned,
+which Dart *types* the token parser is invoked with, and which doc *column* counts
+as provenance. Every one of the ten survivors lived in one of those four.
+
+The prescription was to make each generic check **fail closed**, and that is what
+these six do.
+
+- [x] 10.1 **Labels must parse into claims; an unparseable label fails.** The check
+  did `if (parts.length != 2) continue`, so any label without an `=` was silently
+  unverified — which is every one of the ~50 `Icons` variants, the largest section
+  in the gallery. Permuting all of them by one (a bijection, so distinctness was
+  satisfied) passed the entire gate: every icon rendered under the wrong name.
+  `_claimsIn` now parses both Figma's `Key=Value` syntax and the `group/name` form
+  the icon set uses, and a label yielding no claim is a failure rather than a
+  skip. It also reads **every** word of a value, not the first — taking the first
+  meant `Slot=4 (accounts)` checked `4` and never `accounts`.
+- [x] 10.2 **The class scan walks the filesystem.** `['atoms', 'molecules',
+  'organisms']` was the fourth hand-written list to be defeated in this one test:
+  a widget in `lib/design_system/cells/` passed the whole gate, and
+  `check_architecture.dart` did not object either. It now walks every directory
+  under `lib/design_system`, excluding `tokens` and `theme` by name — and asserts
+  those two still exist, so the exclusion cannot quietly start hiding a renamed
+  directory.
+- [x] 10.3 **A provenance row must actually name a node.** `| radius-bogus | | |`
+  — every cell but the name empty — satisfied a requirement whose words are
+  "naming the Figma node it was read from". The check read the file and ignored
+  the provenance, which is the recurring defect exactly, one level down again. A
+  row now counts only if some cell matches `\d+:\d+` or says *not observed*.
+  Turning that on rejected the whole `space/*` table, whose node (`107:75`) was
+  named in prose above the rows and in no row; the table now carries a source
+  column.
+- [x] 10.4 **The token parser no longer requires a type annotation, class indent,
+  or a hand-passed type list.** `static const oopsUntyped = Color(0xFF123456)`
+  and a top-level `const Color kOops = …` both passed the whole gate — so
+  "reads every declaration form" was false; it read every form that named its
+  type at member indent. Types now come from `typesIn`, read out of each file, and
+  a further test asserts that **every** type declared in any token file is either
+  looked up or explicitly listed as not a design value. That test is the one that
+  would have caught `List<BoxShadow>` — elevation's two values, outside the check
+  not because the parser could not read the section but because nobody passed it
+  that type. Both are now covered, via an alias map for `level3` → `elevation/3`
+  and `brandGlow` → `glow/brand`, whose targets are themselves asserted to exist.
+- [x] 10.5 **The button's label style is compared whole.** Only `fontSize`,
+  `fontWeight` and `fontFamily` were compared, so `.copyWith(height: 4,
+  letterSpacing: 9)` passed — and line height and letter spacing are the subject
+  of the typography spec's own scenarios, so not an incidental axis. Also pinned
+  the ring's stroke width, since "a hairline ring" is the spec's own wording and
+  `width: 9` passed; and the identity of a button's leading and trailing icons,
+  which could be swapped.
+- [x] 10.6 **The gallery exemption set must be live.** Nine of its ten entries
+  matched nothing the scan can find — eight `enum`s, which a class-only regex can
+  never match, and one class absent from `lib/` entirely. The comment said "each
+  entry is a decision, not a convenience"; it was one decision plus noise, and a
+  dead entry is precisely how a future exemption could mask a real widget. Down to
+  `AmountSlot`, with a test that every exemption names something the scan found.
+
+**On the pattern.** Five rounds, and the honest summary is that adversarial review
+found real defects every single time, including in the round whose whole point was
+to stop needing another round. What changed here is the failure mode: rounds 1–4
+were "asserted the axis I just saw break"; round 5 was "made it generic and left
+the generic mechanism's own inputs unexamined". Both reduce to the same root —
+a check is only as strong as its least-examined enumeration — so the useful
+control is not a cleverer check but the review itself. I am not claiming the
+suite is now unbreakable. I am claiming these ten specific attacks fail, that
+each check now fails closed rather than skipping what it cannot parse, and that
+the count of my own mutations is not evidence of anything.

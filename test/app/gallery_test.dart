@@ -192,27 +192,48 @@ void main() {
       );
     });
 
+    test('every variant label parses into checkable claims', () {
+      // Fail closed. The previous version did `if (parts.length != 2) continue`,
+      // so a label with no `=` was silently unverified — which is every one of
+      // the ~50 Icons variants, the largest section in the gallery. Permuting
+      // all of them by one passed the whole gate: every icon rendered under the
+      // wrong name.
+      //
+      // A label must therefore be in Figma's `Key=Value` variant syntax, or in
+      // the `group/name` form the icon set uses. Anything else fails here rather
+      // than passing unchecked.
+      final unparseable = <String>[];
+      for (final section in galleryCatalog) {
+        for (final variant in section.variants) {
+          if (_claimsIn(variant.label).isEmpty) {
+            unparseable.add('${section.component}: "${variant.label}"');
+          }
+        }
+      }
+      expect(
+        unparseable,
+        isEmpty,
+        reason:
+            'these labels carry no checkable claim, so nothing verifies that '
+            'they describe what they build:\n  ${unparseable.join("\n  ")}',
+      );
+    });
+
     test('a label that names a property matches the widget it builds', () {
-      // Labels are `Key=Value, Key=Value` in Figma's own variant syntax. Any
-      // value that corresponds to an enum member on the built widget must
-      // actually be that member — which catches two labels being swapped, as
-      // well as a label describing a variant the widget does not build.
+      // Every claim in the label, not the first word of each value. Taking only
+      // the first word meant `Slot=4 (accounts)` checked `4` and never
+      // `accounts`, so the three illustration glyphs could be rotated among the
+      // three variants with the suite green.
       final mismatches = <String>[];
       for (final section in galleryCatalog) {
         for (final variant in section.variants) {
-          final described = _describe(variant.build(_dummyContext));
-          for (final pair in variant.label.split(', ')) {
-            final parts = pair.split('=');
-            if (parts.length != 2) continue;
-            final value = parts[1].split(' ').first.toLowerCase();
-            // Only enum-ish words are checked; free text like `31 Aug` is not a
-            // property claim.
-            // Digits included: `Slot=4` and `Active=2` are property claims too,
-            // and excluding them let two `Slot=N` labels be swapped unnoticed.
-            if (!RegExp(r'^[a-z0-9][a-z0-9]*$').hasMatch(value)) continue;
-            if (!described.toLowerCase().contains(value)) {
+          final described = _describe(
+            variant.build(_dummyContext),
+          ).toLowerCase();
+          for (final claim in _claimsIn(variant.label)) {
+            if (!described.contains(claim)) {
               mismatches.add(
-                '${section.component} "${variant.label}" claims $value, '
+                '${section.component} "${variant.label}" claims "$claim", '
                 'builds $described',
               );
             }
@@ -241,13 +262,21 @@ void main() {
       //
       // A plain test(), not testWidgets: file I/O inside a FakeAsync zone never
       // completes and would hang instead of failing. See CLAUDE.md.
+      // The whole of lib/design_system, walked from the filesystem. Naming
+      // atoms/molecules/organisms by hand meant a widget in a fourth directory
+      // was invisible — `lib/design_system/cells/` passed the entire gate. Every
+      // round of this check has been defeated by whatever it enumerated by hand,
+      // so it enumerates nothing: `tokens` and `theme` are excluded by name
+      // because they hold no widgets, and that exclusion is itself asserted
+      // below.
+      const nonWidgetDirs = {'tokens', 'theme'};
       final declared = <String, String>{};
-      for (final dir in ['atoms', 'molecules', 'organisms']) {
-        // Recursive: the first version of this used a non-recursive listSync,
-        // so a widget in a subdirectory was invisible to it.
-        final directory = Directory('lib/design_system/$dir');
-        for (final file
-            in directory.listSync(recursive: true).whereType<File>()) {
+      final root = Directory('lib/design_system');
+      for (final entity in root.listSync()) {
+        if (entity is! Directory) continue;
+        final dir = entity.path.split(Platform.pathSeparator).last;
+        if (nonWidgetDirs.contains(dir)) continue;
+        for (final file in entity.listSync(recursive: true).whereType<File>()) {
           if (!file.path.endsWith('.dart')) continue;
           // `[\s\S]*?` spans the newline `dart format` inserts before a long
           // `extends` clause, and the optional generic parameter list keeps a
@@ -279,34 +308,36 @@ void main() {
         isNotEmpty,
         reason: 'found no design-system widgets — the scan itself is broken',
       );
-
-      // Two documented exceptions, each with a reason rather than a shrug:
+      expect(
+        nonWidgetDirs.every(
+          (d) => Directory('lib/design_system/$d').existsSync(),
+        ),
+        isTrue,
+        reason: 'an excluded directory no longer exists — re-check the list',
+      );
+      // One exemption, and it must be live. The previous set had ten entries of
+      // which nine matched nothing the scan can find — eight `enum`s, which a
+      // class-only regex can never match, and one class that does not exist in
+      // `lib/` at all. It read as a list of considered decisions and was one
+      // decision plus noise, and a dead entry is exactly how a future exemption
+      // could silently mask a real widget.
       //
-      // AmountSlot is a layout constraint, not a Figma component — it renders
-      // nothing of its own and has no node. Putting it in the gallery would show
-      // an empty box.
-      //
-      // MonetaIcon is covered by the catalog's `Icons` section, which renders
-      // the whole set rather than one glyph at a time.
-      // Each entry is a decision, not a convenience. A widget belongs in the
-      // gallery; these are not widgets, or render nothing of their own.
-      const exempt = {
-        // Layout constraint with no Figma node — it renders nothing itself.
-        'AmountSlot',
-        // Enums and value types that configure the widgets above, not
-        // components in their own right.
-        'MonetaButtonSize',
-        'MonetaButtonStyle',
-        'MonetaButtonState',
-        'MonetaIconName',
-        'MonetaProgressBarSize',
-        'CategoryIconSize',
-        'BudgetStatus',
-        'MonetaDestination',
-        'NavDestinationSpec',
-      };
-      const aliases = {'MonetaIcon': 'Icons'};
+      // AmountSlot is a layout constraint, not a Figma component: a bare
+      // ConstrainedBox with no node, which is the spec's own "renders nothing of
+      // its own". MonetaIcon is aliased, not exempted — the catalog's `Icons`
+      // section renders the whole set.
+      const exempt = <String>{'AmountSlot'};
+      final deadExemptions = exempt.difference(declared.keys.toSet());
+      expect(
+        deadExemptions,
+        isEmpty,
+        reason:
+            'these exemptions match nothing the scan found, so they exempt '
+            'nothing: ${deadExemptions.join(', ')}',
+      );
       declared.removeWhere((name, _) => exempt.contains(name));
+
+      const aliases = {'MonetaIcon': 'Icons'};
 
       // The catalog names components as Figma does, which drops the Moneta
       // prefix the Dart classes carry.
@@ -398,13 +429,41 @@ void main() {
   });
 }
 
+/// The checkable claims a variant label makes, lowercased.
+///
+/// Figma's variant syntax is `Key=Value, Key=Value`; the icon set uses
+/// `group/name`. Both are parsed. A label in neither form yields an empty set,
+/// which the test above treats as a failure rather than as nothing to check.
+Set<String> _claimsIn(String label) {
+  final claims = <String>{};
+  for (final pair in label.split(', ')) {
+    final parts = pair.split('=');
+    if (parts.length == 2) {
+      // Every word of the value, not just the first: `Slot=4 (accounts)` claims
+      // both the slot number and the slide it belongs to.
+      for (final word in parts[1].split(RegExp(r'[\s()]+'))) {
+        if (RegExp(r'^[a-z0-9][a-z0-9-]*$').hasMatch(word.toLowerCase())) {
+          claims.add(word.toLowerCase());
+        }
+      }
+    } else if (pair.contains('/')) {
+      claims.add(pair.split('/').last.toLowerCase());
+    }
+  }
+  return claims;
+}
+
 /// A canonical description of what a gallery variant actually built.
 ///
-/// Deliberately a `switch` with no default: adding a component to the catalog
-/// without teaching this function about it is a compile error, so the
-/// distinctness check above cannot silently stop covering a section. That is the
-/// whole point — the previous version enumerated four sections by hand and left
-/// six unchecked.
+/// Unknown types throw rather than degrading to a generic description, so adding
+/// a component to the catalog without teaching this function about it fails the
+/// two generic checks above instead of silently narrowing their coverage.
+///
+/// It is **not** a compile error, and tasks.md 9.1 and commit `8f33e44` both said
+/// it was. `Widget` is not a sealed type, so an exhaustive switch over it is not
+/// expressible; the `_ =>` arm below is a runtime `UnsupportedError`. The gate
+/// still fails, so the effect is what was claimed — but the mechanism was not,
+/// and the mechanism was the load-bearing part of the argument.
 String _describe(Widget widget) => switch (widget) {
   MonetaButton(:final style, :final size, :final state, :final label) =>
     'Button(${style.name},${size.name},${state.name},$label)',
@@ -414,8 +473,11 @@ String _describe(Widget widget) => switch (widget) {
   // pair of swapped `Slot=N` labels went unnoticed.
   MonetaPaginationDots(:final count, :final activeIndex) =>
     'Dots(count=$count,active=${activeIndex + 1})',
+  // Names the slide too, because the gallery label does (`Slot=4 (accounts)`)
+  // and a claim nothing can be compared against is a claim nothing checks.
   OnboardingIllustration(:final glyph, :final chartSlot) =>
-    'Illustration(${glyph.name},$chartSlot)',
+    'Illustration(${glyph.figmaName},$chartSlot,'
+        '${OnboardingSlide.values.where((s) => s.chartSlot == chartSlot).map((s) => s.name).join("|")})',
   TransactionRow(:final direction, :final category, :final title) =>
     'Row(${direction.name},${category.name},$title)',
   // `masked` false is labelled `State=Default` in Figma, so the description
@@ -437,7 +499,9 @@ String _describe(Widget widget) => switch (widget) {
     }},$fraction,${size.name})',
   CategoryIcon(:final category, :final size) =>
     'CategoryIcon(${category.name},${size.name})',
-  MonetaIcon(:final icon, :final size) => 'Icon(${icon.name},$size)',
+  // `figmaName` (`alert-triangle`), not `name` (`alertTriangle`): the label is
+  // the Figma name, and the description has to be comparable to it.
+  MonetaIcon(:final icon, :final size) => 'Icon(${icon.figmaName},$size)',
   _ => throw UnsupportedError(
     'gallery_test._describe does not know ${widget.runtimeType}. Add it, so the '
     'variant-distinctness check keeps covering every section.',
