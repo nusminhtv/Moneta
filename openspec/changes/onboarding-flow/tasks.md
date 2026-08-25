@@ -305,35 +305,45 @@ variant". Colours and type were outside "every token".
   table, the border table and label/widget agreement, so the specs now describe
   what the tests check rather than more than they check.
 
-## Still not fixed — the accurate list
+## Still not fixed
 
-Rewritten because the previous version read as complete and was not, which is the
-specific failure these three rounds were about.
+Previously headed "the accurate list". It was not — round 4 found eleven
+categories missing from it. Dropping the adjective: this is what I know about, and
+the last three reviews each found something that was not on it.
 
-**Verification gaps, known and unclosed:**
-- Slides 2 and 3 never seen on device (5.2). Tap injection unavailable here.
+**Verification gaps:**
+- Slides 2 and 3 never seen on device. Tap injection unavailable here: the native
+  simulator integration needs `sudo xcode-select -s` and the AppleScript fallback
+  needs assistive access.
 - No test at any surface size other than 393×852. The placeholder test font makes
   measured overflow at smaller sizes uninterpretable, so this needs goldens on a
-  fixed platform, not another widget test.
+  fixed platform rather than another widget test.
 - `lib/features/transactions/presentation/transaction_providers.dart` at 12.5%
-  (1/8 lines), outside `tool/coverage_critical.txt`, so the gate is silent.
-  `features/*/presentation` is not in that file at all — which is how
-  `splash_screen.dart` reached 0% (see 4.4).
+  (1/8 lines). `features/*/presentation` is not in `tool/coverage_critical.txt`
+  at all — the same blind spot that let `splash_screen.dart` reach 0%.
 - `OnboardingIllustration` untested at an out-of-range `chartSlot`, and under an
-  unbounded-width parent, where its `width: double.infinity` under a
-  `LayoutBuilder` would throw. Not reachable from the current screen.
+  unbounded-width parent, where `width: double.infinity` under a `LayoutBuilder`
+  would throw. Not reachable from the current screen.
+- `MonetaPaginationDots` untested at `count: 1` and at a negative `activeIndex`.
+- The `Swiping matches the buttons` scenario's **AND** clause — that the forward
+  action still finishes on the last slide — is not reached *by swiping*.
+- Elevation tokens are not covered by the provenance check, though its parser can
+  read the section. Colours, type, radius, static spacing and layout are.
+
+**Requirements not fully satisfied:**
 - `Full variant coverage` in the main spec set says a partially implemented set
   "is not complete". `TransactionRow` ships 2 of `29:70`'s 4 variants. The
-  divergence is documented; the SHALL is still unsatisfied.
-- The `Swiping matches the buttons` scenario has an **AND** clause — that the
-  forward action still finishes on the last slide — that no test reaches *by
-  swiping*.
+  divergence is documented; the SHALL is not met.
+- `MonetaButton` ships `leadingIcon`, `trailingIcon` and `expand`, and
+  `MonetaPaginationDots` a `semanticLabel`, that no requirement asks for and no
+  gallery variant renders — so "every component in every variant" does not reach
+  that API.
 
-**Values in code never read from Figma** — the full list is the table in
+**Values in code never read from Figma** — the table in
 `docs/design-system/figma-map.md` under "Values used in code with no recorded
 inspection". Pinning them in tests stops them drifting; it does not verify them.
-Includes the pagination dot geometry, the Button paddings and icon sizes, and the
-illustration constants.
+The dot positions are listed there; the ring/halo/glyph placements (45.5/3,
+70.5/28, 140.5/98) were not, and now are.
 
 **Fidelity divergences recorded but not reconciled:** `TransactionRow` vs `29:70`
 (disc 32/40, height 56/≥64, gutter 16/20, no `· account`, no Transfer or
@@ -347,3 +357,77 @@ never investigated.
 carries a `// design-token-ignore` with a reason; removing the annotation still
 passes `check_design_tokens.dart`, so it documents a CLAUDE.md rule about raw
 values in `atoms/` rather than silencing a gate finding.
+
+**Not machine-guarded:** the ⛔ warning on `design-system-corrections` is prose.
+Nothing stops someone archiving that change and restoring the false Transaction
+row claim; it depends on the warning being read.
+
+## 9. Remediation after the fourth review
+
+Twelve mutations survived round 3, and the diagnosis was the same for the fourth
+time: *I keep asserting the axis I just watched break, then recording the
+requirement as covered.* Dots-fill fixed but not dots-opacity. `normal` and
+`disabled` pinned but not `loading`. Button's labels checked but not the other
+nine sections'. `final Color` scanned but not `static const Color`.
+
+So this round the fix is not another axis. **Every check below is exhaustive by
+construction** — it enumerates from the enum, the catalog or the file rather than
+from a hand-written list, so there is no next axis to forget.
+
+- [x] 9.1 **The gallery checks are now one pass over every section.** Ten
+  hand-written per-section tests became two generic ones: no two variants of any
+  component may build the same widget, and a label that names a property must
+  match the widget built. Both walk `galleryCatalog`, so a new section is covered
+  the moment it is added. Backed by `_describe`, a `switch` with **no default** —
+  adding a component without teaching it about the new type is a compile error,
+  which is what stops the coverage silently narrowing again. Four mutations now
+  fail: BudgetCard's three states collapsed, all 24 CategoryIcon variants
+  collapsed, and two `Slot=N` labels swapped (twice — the first fix skipped
+  digit-valued claims, so `Slot=4` was not checked at all).
+- [x] 9.2 **The class scan matches every class, not widget-looking superclasses.**
+  `class MonetaStepDots extends MonetaPaginationDots` walked past a
+  `\w*(?:Widget|State)` pattern — the third superclass pattern to be widened and
+  then evaded. It now matches **every** class declaration in those directories;
+  each must be either in the gallery or in an `exempt` set with a stated reason.
+  A widget can extend anything, so no superclass pattern can be made
+  exhaustive; requiring an explicit decision can.
+- [x] 9.3 **The provenance check reads every declaration form and every kind it
+  can parse.** It matched one form per kind, so a `static const Color`, a
+  `TextStyle` getter, a `TextStyle` left out of `all`, and a length not prefixed
+  `space` were each invisible — four separate probes walked past. It now matches
+  `final`, `static const`, initialised fields and getters, and covers colours,
+  type, radius, the static spacing scale and `MonetaLayout`. Turning it on
+  immediately found four real gaps: `violet600`, `violet500`, `mint600` and
+  `violet900Canvas`, the gradient stops, documented in prose but in no row.
+  Two matcher holes closed as well: a text style renamed to a bare `sm` borrowed
+  the row for `label/sm`, so the group cross-product is now gated on the field
+  name containing a hyphen unless the kind has exactly one group (colour, radius
+  and spacing have bare field names — `canvas`, `pill`, `space0` — and one prefix
+  each, so there is nothing there to borrow from).
+- [x] 9.4 **`fabSlotWidth = 72` had no source, and the layout requirement was
+  false.** The requirement added in 8.5 says every Figma-derived value has a row;
+  `MonetaLayout` had no check at all, and the doc's layout table was keyed by
+  prose ("Screen frame", "FAB") so no check could have read it. Re-keyed by the
+  Dart identifier, and `fabSlotWidth` is now recorded as **not observed —
+  derived** (56 plus 8 clearance each side) both in the doc and in its own doc
+  comment. That is the third value found to be invented after being written as
+  though transcribed.
+- [x] 9.5 **The full Button state matrix and the full border table are pinned.**
+  `loading` was the one state with no token pin, so its foreground and background
+  could be anything across 15 of 45 combinations. The border test enumerated
+  three styles by hand and omitted `secondary`. Both now iterate
+  `MonetaButtonStyle.values` × `MonetaButtonState.values`.
+- [x] 9.6 **The illustration's cluster position and all four dot opacities are
+  pinned.** Concentricity does not pin position: translating ring, halo and glyph
+  down 12px or left 20px kept them concentric and passed. The absolute
+  placements are now asserted at two widths, the "and centres" half of the
+  wide-screen scenario is tested, and the opacity check reads all four dots
+  instead of the first.
+
+**Where this leaves it.** Twelve of twelve round-4 mutations now fail, and I
+re-ran every earlier round's mutations too. But three rounds of "this one is
+fixed" should discount that claim on its own: the honest summary is that the
+checks are now generic rather than enumerated, which is the first structural
+change in four rounds rather than another patch, and the surviving-mutation count
+is the only number that has stayed honest — it went 5 → 15 → 12 → 0 against the
+attacks tried.

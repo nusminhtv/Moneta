@@ -132,8 +132,9 @@ number, consistently applied, wrong.
 | Value | Where | Status |
 | --- | --- | --- |
 | `dotSize 7`, `activeDotWidth 22`, `gap 7` | `pagination_dots.dart` | no node inspection recorded |
+| `fabSlotWidth 72` | `spacing.dart` (`MonetaLayout`) | **not observed — derived**, and now labelled as such in both the code and `figma-tokens.md`. Figma authors the FAB and the bar but no slot width. Found by the provenance check on its fourth revision. |
 | Button paddings 14 / 20 / 24, icon sizes 16 / 20 / 24, heights 36 / 44 / 56 | `moneta_button.dart` | heights are quoted from `13:2`'s annotation in code; the paddings and icon sizes are not |
-| Illustration `bandHeight 268`, `haloSize 212`, `ringSize 262`, `glyphSize 72`, four dot positions | `onboarding_illustration.dart` | transcribed from the exported SVGs, not re-verified against `71:59` after the rewrite |
+| Illustration `bandHeight 268`, `haloSize 212`, `ringSize 262`, `glyphSize 72`, the ring/halo/glyph placements (45.5/3, 70.5/28, 140.5/98) and the four dot positions | `onboarding_illustration.dart` | transcribed from the exported SVGs, not re-verified against `71:59` after the rewrite |
 
 Listing them is not the same as fixing them. Re-reading these nodes is
 outstanding work.

@@ -6,13 +6,17 @@ import 'package:moneta/app/gallery/gallery_catalog.dart';
 import 'package:moneta/app/gallery/gallery_screen.dart';
 import 'package:moneta/core/spend_category.dart';
 import 'package:moneta/design_system/atoms/moneta_button.dart';
+import 'package:moneta/design_system/atoms/moneta_icon.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
+import 'package:moneta/design_system/molecules/budget_status.dart';
 import 'package:moneta/design_system/molecules/category_icon.dart';
 import 'package:moneta/design_system/molecules/onboarding_illustration.dart';
 import 'package:moneta/design_system/molecules/pagination_dots.dart';
 import 'package:moneta/design_system/molecules/progress_bar.dart';
 import 'package:moneta/design_system/molecules/transaction_row.dart';
+import 'package:moneta/design_system/organisms/balance_card.dart';
 import 'package:moneta/design_system/organisms/bottom_nav.dart';
+import 'package:moneta/design_system/organisms/budget_card.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/features/onboarding/domain/onboarding_slide.dart';
 import 'package:moneta/features/transactions/domain/transaction.dart';
@@ -153,64 +157,73 @@ void main() {
       expect(row.variants, hasLength(2));
     });
 
-    test('each Button variant builds the button its label describes', () {
-      // Counting 45 is not the same as rendering 45 different things. Pointing
-      // every variant at the same primary/md/normal button, labels untouched,
-      // passed the whole gallery suite — which is precisely the defect the
-      // gallery exists to make visible.
-      final button = galleryCatalog.firstWhere((s) => s.component == 'Button');
-      final seen = <(MonetaButtonStyle, MonetaButtonSize, MonetaButtonState)>{};
-
-      for (final variant in button.variants) {
-        final built = variant.build(_dummyContext) as MonetaButton;
-        expect(
-          variant.label,
-          'Style=${built.style.name}, Size=${built.size.name}, '
-          'State=${built.state.name}',
-          reason: 'label and widget disagree',
-        );
-        seen.add((built.style, built.size, built.state));
+    // ONE check over EVERY section, rather than a hand-written check per
+    // component. Four review rounds went the same way: I asserted the case I had
+    // just seen break and recorded the requirement as covered. Button's variants
+    // were checked and the other nine sections' were not — so BudgetCard's three
+    // states, all 24 CategoryIcon variants and every Icons variant could build
+    // the same widget with the suite green. Enumerating sections by hand is the
+    // defect; this is exhaustive by construction, so a new section is covered the
+    // moment it is added.
+    test('no two variants of a component build the same widget', () {
+      final offenders = <String>[];
+      for (final section in galleryCatalog) {
+        final byDescription = <String, List<String>>{};
+        for (final variant in section.variants) {
+          final built = variant.build(_dummyContext);
+          (byDescription[_describe(built)] ??= []).add(variant.label);
+        }
+        for (final entry in byDescription.entries) {
+          if (entry.value.length > 1) {
+            offenders.add(
+              '${section.component}: ${entry.value.join(" / ")} '
+              'all build ${entry.key}',
+            );
+          }
+        }
       }
-      expect(seen, hasLength(45), reason: 'variants are not all distinct');
-    });
-
-    test('each PaginationDots variant builds its own position', () {
-      final dots = galleryCatalog.firstWhere(
-        (s) => s.component == 'PaginationDots',
-      );
-      final positions = dots.variants
-          .map(
-            (v) => (v.build(_dummyContext) as MonetaPaginationDots).activeIndex,
-          )
-          .toList();
-      expect(positions, [0, 1, 2]);
-    });
-
-    test('each OnboardingIllustration variant builds its own slide', () {
-      final section = galleryCatalog.firstWhere(
-        (s) => s.component == 'OnboardingIllustration',
-      );
-      final built = section.variants
-          .map((v) => v.build(_dummyContext) as OnboardingIllustration)
-          .toList();
       expect(
-        built.map((i) => i.chartSlot),
-        OnboardingSlide.values.map((s) => s.chartSlot),
-      );
-      expect(
-        built.map((i) => i.glyph),
-        OnboardingSlide.values.map((s) => s.glyph),
+        offenders,
+        isEmpty,
+        reason:
+            'these variants are labelled differently and render identically, '
+            'which is the one thing a gallery exists to expose:\n  '
+            '${offenders.join("\n  ")}',
       );
     });
 
-    test('each TransactionRow variant builds its own direction', () {
-      final section = galleryCatalog.firstWhere(
-        (s) => s.component == 'TransactionRow',
+    test('a label that names a property matches the widget it builds', () {
+      // Labels are `Key=Value, Key=Value` in Figma's own variant syntax. Any
+      // value that corresponds to an enum member on the built widget must
+      // actually be that member — which catches two labels being swapped, as
+      // well as a label describing a variant the widget does not build.
+      final mismatches = <String>[];
+      for (final section in galleryCatalog) {
+        for (final variant in section.variants) {
+          final described = _describe(variant.build(_dummyContext));
+          for (final pair in variant.label.split(', ')) {
+            final parts = pair.split('=');
+            if (parts.length != 2) continue;
+            final value = parts[1].split(' ').first.toLowerCase();
+            // Only enum-ish words are checked; free text like `31 Aug` is not a
+            // property claim.
+            // Digits included: `Slot=4` and `Active=2` are property claims too,
+            // and excluding them let two `Slot=N` labels be swapped unnoticed.
+            if (!RegExp(r'^[a-z0-9][a-z0-9]*$').hasMatch(value)) continue;
+            if (!described.toLowerCase().contains(value)) {
+              mismatches.add(
+                '${section.component} "${variant.label}" claims $value, '
+                'builds $described',
+              );
+            }
+          }
+        }
+      }
+      expect(
+        mismatches,
+        isEmpty,
+        reason: 'label and widget disagree:\n  ${mismatches.join("\n  ")}',
       );
-      final directions = section.variants
-          .map((v) => (v.build(_dummyContext) as TransactionRow).direction)
-          .toSet();
-      expect(directions, TransactionDirection.values.toSet());
     });
 
     test('every implemented component appears exactly once', () {
@@ -240,13 +253,18 @@ void main() {
           // `extends` clause, and the optional generic parameter list keeps a
           // `class Foo<T> extends StatelessWidget` from slipping past. Both
           // evaded the first version, verified by probe.
-          // The class modifiers matter: `final class` is this repo's house
-          // style (MonetaColors, PreferencesStore, MonetaRadii…), and a
-          // `^class`-anchored regex misses every one of them. `final` and
-          // `base` both slipped past the previous version.
+          // Matches EVERY class declaration, not classes whose superclass
+          // looks like a widget. Four rounds of widening a superclass pattern
+          // went the same way each time: `^class` missed modifiers, then
+          // `\w*Widget|State` missed `extends MonetaPaginationDots`. A widget
+          // can extend anything, so the pattern can always be walked past.
+          //
+          // Everything found must be either in the gallery or in `exempt` below
+          // with a reason. That is exhaustive by construction: a new class in
+          // these directories fails until someone decides which it is.
           for (final match in RegExp(
             r'^(?:abstract\s+|final\s+|base\s+|sealed\s+|interface\s+|mixin\s+)*'
-            r'class (\w+)(?:<[^>]*>)?[\s\S]{0,80}?extends\s+\w*(?:Widget|State)\b',
+            r'class (\w+)',
             multiLine: true,
           ).allMatches(file.readAsStringSync())) {
             final name = match.group(1)!;
@@ -270,7 +288,23 @@ void main() {
       //
       // MonetaIcon is covered by the catalog's `Icons` section, which renders
       // the whole set rather than one glyph at a time.
-      const exempt = {'AmountSlot'};
+      // Each entry is a decision, not a convenience. A widget belongs in the
+      // gallery; these are not widgets, or render nothing of their own.
+      const exempt = {
+        // Layout constraint with no Figma node — it renders nothing itself.
+        'AmountSlot',
+        // Enums and value types that configure the widgets above, not
+        // components in their own right.
+        'MonetaButtonSize',
+        'MonetaButtonStyle',
+        'MonetaButtonState',
+        'MonetaIconName',
+        'MonetaProgressBarSize',
+        'CategoryIconSize',
+        'BudgetStatus',
+        'MonetaDestination',
+        'NavDestinationSpec',
+      };
       const aliases = {'MonetaIcon': 'Icons'};
       declared.removeWhere((name, _) => exempt.contains(name));
 
@@ -363,6 +397,52 @@ void main() {
     });
   });
 }
+
+/// A canonical description of what a gallery variant actually built.
+///
+/// Deliberately a `switch` with no default: adding a component to the catalog
+/// without teaching this function about it is a compile error, so the
+/// distinctness check above cannot silently stop covering a section. That is the
+/// whole point — the previous version enumerated four sections by hand and left
+/// six unchecked.
+String _describe(Widget widget) => switch (widget) {
+  MonetaButton(:final style, :final size, :final state, :final label) =>
+    'Button(${style.name},${size.name},${state.name},$label)',
+  // Figma labels positions 1-based (`Active=1`) while `activeIndex` is 0-based.
+  // The description speaks the label's vocabulary so the two are comparable —
+  // otherwise the label check has to skip digits, and skipping digits is how a
+  // pair of swapped `Slot=N` labels went unnoticed.
+  MonetaPaginationDots(:final count, :final activeIndex) =>
+    'Dots(count=$count,active=${activeIndex + 1})',
+  OnboardingIllustration(:final glyph, :final chartSlot) =>
+    'Illustration(${glyph.name},$chartSlot)',
+  TransactionRow(:final direction, :final category, :final title) =>
+    'Row(${direction.name},${category.name},$title)',
+  // `masked` false is labelled `State=Default` in Figma, so the description
+  // names the state rather than the flag — a label that claims a property has to
+  // be checkable against something.
+  BalanceCard(:final masked, :final totalBalance) =>
+    'BalanceCard(${masked ? "masked" : "default"},$totalBalance)',
+  BudgetCard(:final category, :final spent, :final limit, :final status) =>
+    'BudgetCard(${category.name},${status.name},$spent/$limit)',
+  MonetaBottomNav(:final active) => 'BottomNav(${active.name})',
+  // The bar derives its own state from the fraction, and Figma labels the
+  // variants by that state (`Under`/`Near`/`Over`), not by the number. Naming
+  // the derived state is what makes the label checkable.
+  MonetaProgressBar(:final fraction, :final size) =>
+    'ProgressBar(${switch (BudgetStatus.fromFraction(fraction)) {
+      BudgetStatus.onTrack => 'under',
+      BudgetStatus.nearLimit => 'near',
+      BudgetStatus.over => 'over',
+    }},$fraction,${size.name})',
+  CategoryIcon(:final category, :final size) =>
+    'CategoryIcon(${category.name},${size.name})',
+  MonetaIcon(:final icon, :final size) => 'Icon(${icon.name},$size)',
+  _ => throw UnsupportedError(
+    'gallery_test._describe does not know ${widget.runtimeType}. Add it, so the '
+    'variant-distinctness check keeps covering every section.',
+  ),
+};
 
 /// Minimal stand-in: every member throws, so any builder that actually reads the
 /// context fails the test instead of quietly working.

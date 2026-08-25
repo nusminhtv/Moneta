@@ -53,8 +53,17 @@ linear-gradient(137.66142364584857deg,
   #12A87A 80.882%)
 ```
 
-Implemented from the three named palette constants above, not from three fresh
-hex literals, so a palette change does propagate.
+Implemented from named palette constants, not from three fresh hex literals, so a
+palette change does propagate. Those constants are the raw hexes rather than
+semantic tokens, so they get their own rows — the provenance check reads every
+`Color` declaration in any form, and these four were invisible to it until it did.
+
+| Token | Value | Source node |
+| --- | --- | --- |
+| `violet600` | `#6541EA` | `40:113` gradient stop 1 |
+| `violet500` | `#7A5AF8` | `40:113` gradient stop 2, and `brand-base` |
+| `mint600` | `#12A87A` | `40:113` gradient stop 3 |
+| `violet900-canvas` | `#06070A` | `39:8`, the same value as `bg-canvas` |
 
 ## Colour — semantic
 
@@ -212,18 +221,30 @@ comes from a different token entirely.
 
 ## Layout constants
 
-| Constant | Value | Source node |
-| --- | --- | --- |
-| Screen frame | 393 × 852 | `39:2` StatusBar note |
-| Top safe area | 59 | `39:2` |
-| Bottom safe area | 34 | `39:243` |
-| Content column width | 353 | `40:161`, `40:256`, `42:329` |
-| Bottom nav bar height | 64 (+ 34 safe area) | `39:243` |
-| FAB | 56 × 56, floats 18–19 above the bar | `39:243` |
-| Icon canvas | 24, stroke weight 1.75 | `5:7` and every icon note |
-| Category icon | Sm 32 / glyph 16 · Md 40 / glyph 20 · Lg 48 / glyph 24 | `33:311` |
-| Progress bar | height 10, `radius-pill` | `21:139` |
-| Touch target | 44 minimum for icon actions | `20:90` IconButton note |
+Keyed by the identifier in `MonetaLayout` rather than by prose, so
+`test/design_system/tokens/token_provenance_test.dart` can check that every
+constant has a row. The previous version of this table was prose-keyed and
+therefore unenforceable — which is how `fab-slot-width` shipped with no source
+at all.
+
+| Constant | Value | Purpose | Source node |
+| --- | --- | --- | --- |
+| `frame-width` | 393 | screen frame | `39:2` StatusBar note |
+| `frame-height` | 852 | screen frame | `39:2` StatusBar note |
+| `safe-area-top` | 59 | baked into every screen frame | `39:2` |
+| `safe-area-bottom` | 34 | baked into every screen frame | `39:243` |
+| `content-width` | 353 | content column inside the frame | `40:161`, `40:256`, `42:329` |
+| `bottom-nav-height` | 64 | nav bar, excluding safe area | `39:243` |
+| `fab-size` | 56 | FAB diameter | `39:243` |
+| `fab-overlap` | 19 | how far the FAB floats above the bar | `39:243` |
+| `fab-slot-width` | 72 | the gap the nav bar leaves for the FAB | **not observed — derived** (56 + 8 clearance each side). Figma authors the FAB and the bar but no slot width; this number is ours. |
+| `icon-size` | 24 | icon canvas | `5:7` and every icon note |
+| `icon-stroke-width` | 1.75 | icon stroke | `5:7` |
+| `progress-bar-height` | 10 | with `radius-pill` | `21:139` |
+| `min-touch-target` | 44 | minimum for icon actions | `20:90` IconButton note |
+
+Category icon sizes (Sm 32 / glyph 16 · Md 40 / glyph 20 · Lg 48 / glyph 24) come
+from `33:311` and live on `CategoryIconSize`, not in `MonetaLayout`.
 
 ## Motion
 

@@ -91,6 +91,7 @@ void main() {
       'radius': ['radius'],
       'elevation': ['elevation', 'glow', 'shadow'],
       'spacing': ['space'],
+      'layout': <String>[],
     };
     final groups = groupsByKind[kind] ?? const <String>[];
     final head = kebab.split('-').first;
@@ -101,7 +102,15 @@ void main() {
       kebab,
       if (kind == 'colour') '$kebab-base',
       if (kebab.contains('-') && groups.contains(head)) '$head/$tail',
-      for (final group in groups) ...['$group/$kebab', '$group-$kebab'],
+      // Gated on a hyphen unless the kind has exactly one group. `amountXl` ->
+      // `amount-xl` genuinely needs `display/amount-xl`, but ungated across
+      // typography's six groups the same rule let a style renamed to a bare `sm`
+      // borrow the row for `label/sm`. Colour (`bg`), radius (`radius`) and
+      // spacing (`space`) each have one group and bare field names — `canvas`
+      // must reach `bg-canvas` and `pill` must reach `radius-pill` — so there is
+      // only one prefix to borrow from and nothing to confuse it with.
+      if (kebab.contains('-') || groups.length == 1)
+        for (final group in groups) ...['$group/$kebab', '$group-$kebab'],
       // `space2xs` -> `space/2xs`: the field glues the group to a step name that
       // starts with a digit, so no camelCase boundary exists to split on.
       for (final group in groups)
@@ -110,11 +119,38 @@ void main() {
     };
   }
 
-  /// Fields on a token class, as `^  final <Type> <name>;`.
-  List<String> fieldsOf(String source, String type) => RegExp(
-    '^  final $type (\\w+);',
-    multiLine: true,
-  ).allMatches(source).map((m) => m.group(1)!).toList();
+  /// Every identifier in a token file that holds a design value, in **any**
+  /// declaration form.
+  ///
+  /// The previous version matched one form per kind — `^  final Color`,
+  /// `^  static const double space…`, and the `all` getter — so a colour
+  /// declared `static const`, a text style declared as a getter or left out of
+  /// `all`, and a length not prefixed `space` were all invisible. Three separate
+  /// probes walked past it. Matching every form is the only version of this that
+  /// cannot be evaded by choosing a different keyword.
+  List<String> valuesIn(String source, List<String> types) {
+    final names = <String>[];
+    for (final type in types) {
+      for (final pattern in [
+        // final Color x;   /  final double x;
+        '^\\s{2}final $type (\\w+);',
+        // static const Color x = …  /  const Color x = …
+        '^\\s{2}(?:static\\s+)?const $type (\\w+)\\s*=',
+        // $type get x =>  (a computed token)
+        '^\\s{2}$type get (\\w+)',
+        // final $type x = …  (initialised field)
+        '^\\s{2}final $type (\\w+)\\s*=',
+      ]) {
+        names.addAll(
+          RegExp(pattern, multiLine: true)
+              .allMatches(source)
+              .map((m) => m.group(1)!)
+              .where((n) => !n.startsWith('_')),
+        );
+      }
+    }
+    return names.toSet().toList();
+  }
 
   void expectAllDocumented(
     List<String> fields,
@@ -167,20 +203,38 @@ void main() {
     );
   });
 
-  test('every text style in `all` has a row naming its Figma source', () {
+  test('every text style has a row naming its Figma source', () {
+    // Every `TextStyle` on the class, not only the ones listed in `all` — a
+    // style could be declared, used, and omitted from `all` to escape the count
+    // check that used to be the only backstop here.
+    expectAllDocumented(
+      valuesIn(typographySource, ['TextStyle']),
+      'typography',
+      documentedByKind(),
+    );
+  });
+
+  test('the `all` list is the whole type set, not a subset', () {
+    // Guards the other direction: a style that exists but is left out of `all`
+    // never reaches the theme, which looks like a missing style rather than a
+    // wiring bug.
     final block = typographySource.substring(
       typographySource.indexOf('List<TextStyle> get all => ['),
     );
-    final fields = RegExp(r'^\s{4}(\w+),', multiLine: true)
+    final listed = RegExp(r'^\s{4}(\w+),', multiLine: true)
         .allMatches(block.substring(0, block.indexOf('];')))
         .map((m) => m.group(1)!)
-        .toList();
-    expectAllDocumented(fields, 'typography', documentedByKind());
+        .toSet();
+    expect(
+      valuesIn(typographySource, ['TextStyle']).toSet(),
+      listed,
+      reason: 'a declared text style is missing from `all`, or vice versa',
+    );
   });
 
   test('every colour token has a row naming its Figma source', () {
     expectAllDocumented(
-      fieldsOf(colorsSource, 'Color'),
+      valuesIn(colorsSource, ['Color']),
       'colour',
       documentedByKind(),
     );
@@ -188,25 +242,49 @@ void main() {
 
   test('every radius token has a row naming its Figma source', () {
     expectAllDocumented(
-      fieldsOf(
+      valuesIn(
         File('lib/design_system/tokens/radii.dart').readAsStringSync(),
-        'double',
+        ['double'],
       ),
       'radius',
       documentedByKind(),
     );
   });
 
-  test('every Figma-named spacing step has a row', () {
-    // Only the `space*` statics — the deprecated instance scale is documented at
-    // length as invented, which is the opposite of missing provenance.
+  test('every spacing and layout value has a row', () {
+    // One file, two kinds. The deprecated instance scale is excluded by name:
+    // it is documented at length as invented, which is the opposite of missing
+    // provenance.
     final source = File(
       'lib/design_system/tokens/spacing.dart',
     ).readAsStringSync();
-    final fields = RegExp(
-      r'^  static const double (space\w+) =',
+    final spacingClass = source.substring(
+      source.indexOf('class MonetaSpacing'),
+      source.indexOf('class MonetaLayout'),
+    );
+    final layoutClass = source.substring(source.indexOf('class MonetaLayout'));
+
+    final rows = documentedByKind();
+    // Selected by declaration form, not by a `space` name prefix: an
+    // undocumented `static const double gutter = 21` slipped straight past the
+    // prefix filter. Figma's scale is `static const`; the deprecated invented
+    // scale is instance `final` fields, documented at length as invented.
+    final staticScale = RegExp(
+      r'^\s{2}static const double (\w+)\s*=',
       multiLine: true,
-    ).allMatches(source).map((m) => m.group(1)!).toList();
-    expectAllDocumented(fields, 'spacing', documentedByKind());
+    ).allMatches(spacingClass).map((m) => m.group(1)!).toList();
+    expect(
+      staticScale,
+      contains('spaceBase'),
+      reason: 'failed to parse the static scale — the check would be vacuous',
+    );
+    expectAllDocumented(staticScale, 'spacing', rows);
+    expectAllDocumented(valuesIn(layoutClass, ['double']), 'layout', rows);
+  });
+
+  test('the deprecated instance scale is still called out as invented', () {
+    // Not provenance — the opposite. If this heading ever loses its warning, the
+    // exclusion above silently starts hiding real gaps.
+    expect(doc, contains('OUR SCALE IS INVENTED AND WRONGLY NAMED'));
   });
 }

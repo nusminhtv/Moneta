@@ -185,6 +185,11 @@ abstract final class MonetaLayout {
   static const double fabOverlap = 19;
 
   /// Width of the gap in the tab row that the floating action button sits over.
+  ///
+  /// **Not observed in Figma — derived.** The file authors the FAB (56) and the
+  /// bar, but no slot width; this is 56 plus 8 clearance either side. Recorded
+  /// in `docs/design-system/figma-tokens.md` as derived rather than left to look
+  /// like a transcription.
   static const double fabSlotWidth = 72;
 
   /// Default icon canvas size.

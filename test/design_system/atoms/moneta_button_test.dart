@@ -380,6 +380,62 @@ void main() {
     // the table against itself. That catches a broken wiring and nothing else:
     // repointing secondary/tertiary/ghost to `colors.income` passed all 617
     // tests. Only primary and disabled were pinned to a token anywhere.
+    test('every style in EVERY state names its expected token', () {
+      // Exhaustive over the 15 style x state pairs, written out. Round 2 pinned
+      // the five styles in `normal`; round 3 added `disabled`. `loading` was
+      // left, so `if (state == loading) return colors.income` passed 644 tests —
+      // the same finding a third time, one axis over. Enumerating the axis I
+      // just saw break is the mistake; this enumerates the whole matrix, so
+      // there is no next axis.
+      const brandFilled = {
+        MonetaButtonStyle.primary,
+        MonetaButtonStyle.destructive,
+      };
+      for (final style in MonetaButtonStyle.values) {
+        for (final state in MonetaButtonState.values) {
+          final expected = switch (state) {
+            MonetaButtonState.disabled => colors.textTertiary,
+            _ =>
+              brandFilled.contains(style)
+                  ? colors.textOnBrand
+                  : colors.textPrimary,
+          };
+          expect(
+            MonetaButton.foregroundFor(style, state, colors),
+            expected,
+            reason: 'label colour for ${style.name}/${state.name}',
+          );
+        }
+      }
+    });
+
+    test('every style in EVERY state names its expected background', () {
+      // Same reasoning: the 45-loop compared the rendered background to
+      // `backgroundFor(...)`, the table against itself, so a loading-state
+      // background could be anything.
+      for (final style in MonetaButtonStyle.values) {
+        for (final state in MonetaButtonState.values) {
+          final expected = switch ((style, state)) {
+            (_, MonetaButtonState.disabled) =>
+              style == MonetaButtonStyle.tertiary ||
+                      style == MonetaButtonStyle.ghost
+                  ? null
+                  : colors.surfaceRaised,
+            (MonetaButtonStyle.primary, _) => colors.brand,
+            (MonetaButtonStyle.secondary, _) => colors.surfaceRaised,
+            (MonetaButtonStyle.destructive, _) => colors.expense,
+            (MonetaButtonStyle.tertiary, _) ||
+            (MonetaButtonStyle.ghost, _) => null,
+          };
+          expect(
+            MonetaButton.backgroundFor(style, state, colors),
+            expected,
+            reason: 'background for ${style.name}/${state.name}',
+          );
+        }
+      }
+    });
+
     test('every style in the normal state names its expected token', () {
       const expected = {
         MonetaButtonStyle.primary: 'textOnBrand',
@@ -540,11 +596,11 @@ void main() {
               : colors.borderStrong,
           reason: 'tertiary border in ${state.name}',
         );
-        for (final style in [
-          MonetaButtonStyle.primary,
-          MonetaButtonStyle.ghost,
-          MonetaButtonStyle.destructive,
-        ]) {
+        // Every style except tertiary, derived rather than listed. The hand-
+        // written list omitted `secondary`, so giving secondary a border passed.
+        for (final style in MonetaButtonStyle.values.where(
+          (s) => s != MonetaButtonStyle.tertiary,
+        )) {
           expect(
             MonetaButton.borderFor(style, state, colors),
             isNull,

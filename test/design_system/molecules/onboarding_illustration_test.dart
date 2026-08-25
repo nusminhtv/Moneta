@@ -221,6 +221,61 @@ void main() {
       });
     }
 
+    // Figma's absolute positions for the three centred elements, written out.
+    // Concentricity alone does not pin them: translating all three down 12px or
+    // left 20px kept them concentric and passed.
+    for (final width in <double>[353, 280]) {
+      testWidgets(
+        'ring, halo and glyph sit where Figma puts them at ${width}px',
+        (tester) async {
+          await pumpAt(tester, width);
+          final scale = width / 353;
+          final band = tester.getRect(find.byType(OnboardingIllustration));
+          const placements = <(String, double, double)>[
+            ('ring', 45.5, 3),
+            ('halo', 70.5, 28),
+            ('glyph', 140.5, 98),
+          ];
+          final keys = {
+            'ring': OnboardingIllustration.ringKey,
+            'halo': OnboardingIllustration.haloKey,
+            'glyph': OnboardingIllustration.glyphKey,
+          };
+          for (final (name, left, top) in placements) {
+            final rect = rectOf(tester, keys[name]!);
+            expect(
+              rect.left - band.left,
+              moreOrLessEquals(left * scale, epsilon: 0.5),
+              reason: '$name x at $width',
+            );
+            expect(
+              rect.top - band.top,
+              moreOrLessEquals(top * scale, epsilon: 0.5),
+              reason: '$name y at $width',
+            );
+          }
+        },
+      );
+    }
+
+    testWidgets(
+      'a wide screen centres the illustration rather than aligning it',
+      (tester) async {
+        // The spec says it "holds its authored size **and** centres". Only the
+        // size half was asserted, so the whole cluster could sit against the left
+        // edge of a tablet-width band.
+        const width = 353.0 * 2;
+        await pumpAt(tester, width);
+        final band = tester.getRect(find.byType(OnboardingIllustration));
+        final ring = rectOf(tester, OnboardingIllustration.ringKey);
+        expect(
+          ring.center.dx,
+          moreOrLessEquals(band.center.dx, epsilon: 0.5),
+          reason: 'the cluster is not centred in the available width',
+        );
+      },
+    );
+
     testWidgets('the halo and ring are the diameters Figma authors', (
       tester,
     ) async {
@@ -255,6 +310,20 @@ void main() {
       tester,
     ) async {
       await pumpAt(tester, 353);
+      // All four, not dot 0. `opacity: index == 0 ? accentDotOpacity : 1` passed
+      // the version that read only the first — four lines below the test added
+      // because only dot 0's *fill* was checked.
+      for (var index = 0; index < 4; index++) {
+        final each = tester.widget<Opacity>(
+          find
+              .ancestor(
+                of: find.byKey(OnboardingIllustration.dotKey(index)),
+                matching: find.byType(Opacity),
+              )
+              .first,
+        );
+        expect(each.opacity, 0.5, reason: 'dot $index opacity');
+      }
       final opacity = tester.widget<Opacity>(
         find
             .ancestor(
