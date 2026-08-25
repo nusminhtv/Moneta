@@ -332,8 +332,10 @@ the last three reviews each found something that was not on it.
 - `MonetaPaginationDots` untested at `count: 1` and at a negative `activeIndex`.
 - The `Swiping matches the buttons` scenario's **AND** clause — that the forward
   action still finishes on the last slide — is not reached *by swiping*.
-- Elevation tokens are not covered by the provenance check, though its parser can
-  read the section. Colours, type, radius, static spacing and layout are.
+- The chart palette's 16 colours are provenance-unchecked: positional literals in
+  a `List<Color>` with no field name to look up. Their values are pinned in
+  `colors_test.dart`, so drift is caught; provenance is not. Colours, text styles,
+  radius, elevation, the static spacing scale and `MonetaLayout` are all covered.
 
 **Requirements not fully satisfied:**
 - `Full variant coverage` in the main spec set says a partially implemented set
@@ -520,3 +522,66 @@ control is not a cleverer check but the review itself. I am not claiming the
 suite is now unbreakable. I am claiming these ten specific attacks fail, that
 each check now fails closed rather than skipping what it cannot parse, and that
 the count of my own mutations is not evidence of anything.
+
+## 11. Remediation after the sixth review
+
+The sixth review found what a sixth review is for, and it is the worst single
+finding of the six: **commit `b8e8091` — the one whose stated purpose was
+"make the generic checks fail closed" — deleted a working provenance gate and
+said nothing about it.**
+
+`every spacing and layout value has a row` was removed in the same hunk that
+added the elevation test. Not renamed: deleted. I restored it verbatim and it
+passes against the current tree, and with it restored an undocumented
+`static const double spaceBogus = 7` in `MonetaSpacing` and a `rogueWidth = 111`
+in `MonetaLayout` both fail. Without it, both passed the entire eight-gate
+verify.
+
+Meanwhile five artifacts went on asserting the gate existed: `tasks.md` 8.3, 9.3
+and 9.4, the "Still not fixed" bullet (which said elevation was uncovered and
+spacing and layout were covered — exactly inverted), and `figma-tokens.md`'s
+Layout heading, which says the table is keyed by Dart identifier *so that this
+test can read it*. A code comment referred to "the spacing test" that no longer
+existed.
+
+That is a gate weakened without disclosure — CLAUDE.md rule 5 — committed by me,
+inside the round meant to end this class of defect, and caught by review rather
+than by the gate. It is the second rule-5 breach in this change; the first was
+re-pinning the typography count from 8 to 9 in `973a0d0`.
+
+- [x] 11.1 **Gate restored**, with the deletion recorded in the test's own
+  comment so the history is legible from the code. M1 and M18 now fail.
+- [x] 11.2 **The rendered border colour is asserted** in the 45-combination loop.
+  `borderFor` was pinned to its tokens and nothing checked the value reached the
+  widget: `Border.all(color: colors.income)` passed. The same "table correct,
+  wiring unchecked" defect the components delta's emphasis paragraph was written
+  about, one property over.
+- [x] 11.3 **The persistence test discriminates.** It wrote false → true → false
+  and asserted false, which ends where it starts, so switching
+  `ConflictAlgorithm.replace` to `.ignore` kept the *first* write and a test
+  named "the last write wins" passed. Now ends on a different value than it
+  starts, and asserts the stored row directly.
+- [x] 11.4 **The class scan reaches the two places it did not.** `.dart` files at
+  the root of `lib/design_system` were invisible (it iterated directories), and
+  `tokens`/`theme` were asserted to *exist* rather than to be widget-free — so a
+  widget in either passed. Both now fail. This is the fifth and sixth boundary
+  drawn by hand in this one test to be walked past, which is itself the argument
+  for the review rather than for a cleverer test.
+- [x] 11.5 **A prefix-stripped name can no longer borrow another section's
+  coverage.** A new `MonetaTransactionRow` in `atoms/` counted itself covered by
+  the existing `TransactionRow` section.
+- [x] 11.6 **Four narrower holes closed:** `typesIn` now matches getters, so a
+  novel type cannot slip past the guard that exists to catch novel types; a
+  "not observed" row must also say where the value came from, or it legitimises
+  an implemented value the spec says should be left unimplemented; the gallery's
+  dots section claims its `count`; the loading spinner's size is pinned per
+  button size; and the three slide bodies are pinned to their Figma frames as the
+  titles already were — they were `isNotEmpty`, so slides 1 and 3 could have
+  their copy swapped, and the screen test read each body off the same enum it was
+  checking.
+
+**Six rounds.** Every one found real defects, including the two rounds whose
+stated purpose was to stop needing another. The single most useful output of this
+change is not the onboarding flow; it is that number, and the fact that two of the
+findings were gates I had quietly weakened while reporting that I had strengthened
+them.

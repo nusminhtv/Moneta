@@ -97,6 +97,16 @@ void main() {
               MonetaButton.backgroundFor(style, state, colors),
               reason: '${style.name}/${size.name}/${state.name} background',
             );
+            // The rendered border, not just the table. `borderFor` was pinned
+            // to its tokens and nothing checked the value reached the widget:
+            // `Border.all(color: colors.income)` passed. Same "table correct,
+            // wiring unchecked" defect the foreground assertion was rewritten
+            // for, one property over.
+            expect(
+              decoration.border?.top.color,
+              MonetaButton.borderFor(style, state, colors),
+              reason: '${style.name}/${size.name}/${state.name} border',
+            );
             final applied = labelStyleOf(tester);
             expect(
               applied.color,
@@ -519,6 +529,29 @@ void main() {
     // from a node inspection. Pinning them here does not make them verified
     // against Figma; it makes them unable to drift silently, which is a
     // different and lesser claim.
+    testWidgets("the loading spinner takes the size's icon size", (
+      tester,
+    ) async {
+      // Never asserted: `_Spinner(size: 24)` for every size passed.
+      const expected = {
+        MonetaButtonSize.sm: 16.0,
+        MonetaButtonSize.md: 20.0,
+        MonetaButtonSize.lg: 24.0,
+      };
+      for (final entry in expected.entries) {
+        await pumpButton(
+          tester,
+          size: entry.key,
+          state: MonetaButtonState.loading,
+        );
+        expect(
+          tester.getSize(find.byKey(MonetaButton.spinnerKey)),
+          Size.square(entry.value),
+          reason: entry.key.name,
+        );
+      }
+    });
+
     test('each size keeps its authored height, padding and icon size', () {
       const expected = {
         MonetaButtonSize.sm: (height: 36.0, padding: 14.0, icon: 16.0),

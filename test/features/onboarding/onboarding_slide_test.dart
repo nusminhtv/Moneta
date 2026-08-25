@@ -12,10 +12,26 @@ void main() {
     expect(OnboardingSlide.accounts.title, 'Every account in one place');
     expect(OnboardingSlide.budgets.title, 'Budgets that warn you early');
     expect(OnboardingSlide.goals.title, 'Save for what matters');
-    for (final slide in OnboardingSlide.values) {
-      expect(slide.body, isNotEmpty);
-      expect(slide.title, isNotEmpty);
-    }
+
+    // Bodies pinned to the frames, as the titles already were. They were only
+    // asserted `isNotEmpty`, so slide 1 and slide 3's copy could be swapped with
+    // the whole suite green — and the screen test read each body off the same
+    // enum it was checking, so it could not catch it either.
+    expect(
+      OnboardingSlide.accounts.body,
+      'Bank, cash, e-wallet and credit card. Moneta adds them up so you stop '
+      'doing mental maths.',
+    );
+    expect(
+      OnboardingSlide.budgets.body,
+      'Set a limit per category. Moneta tells you at 80%, not after you have '
+      'already gone over.',
+    );
+    expect(
+      OnboardingSlide.goals.body,
+      'Set a target and a date. Moneta works out the monthly amount and tracks '
+      'it for you.',
+    );
   });
 
   test('each slide names the Figma frame it came from', () {

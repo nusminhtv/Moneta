@@ -272,11 +272,21 @@ void main() {
       const nonWidgetDirs = {'tokens', 'theme'};
       final declared = <String, String>{};
       final root = Directory('lib/design_system');
-      for (final entity in root.listSync()) {
-        if (entity is! Directory) continue;
-        final dir = entity.path.split(Platform.pathSeparator).last;
-        if (nonWidgetDirs.contains(dir)) continue;
-        for (final file in entity.listSync(recursive: true).whereType<File>()) {
+
+      // Every .dart file under lib/design_system, including ones at its root.
+      // The previous version iterated top-level *directories* only, so
+      // `lib/design_system/rogue.dart` was invisible — the fifth hand-drawn
+      // boundary in this one test to be walked past.
+      final files = <File>[
+        ...root.listSync().whereType<File>(),
+        for (final entity in root.listSync().whereType<Directory>())
+          if (!nonWidgetDirs.contains(
+            entity.path.split(Platform.pathSeparator).last,
+          ))
+            ...entity.listSync(recursive: true).whereType<File>(),
+      ];
+      {
+        for (final file in files) {
           if (!file.path.endsWith('.dart')) continue;
           // `[\s\S]*?` spans the newline `dart format` inserts before a long
           // `extends` clause, and the optional generic parameter list keeps a
@@ -308,12 +318,33 @@ void main() {
         isNotEmpty,
         reason: 'found no design-system widgets — the scan itself is broken',
       );
+      // The excluded directories must be widget-FREE, not merely present.
+      // Asserting existence proved nothing: a widget class in `tokens/` passed
+      // the whole gate.
+      final widgetsInExcluded = <String>[];
+      for (final dir in nonWidgetDirs) {
+        final directory = Directory('lib/design_system/$dir');
+        expect(
+          directory.existsSync(),
+          isTrue,
+          reason: 'excluded directory $dir is gone — re-check the list',
+        );
+        for (final file
+            in directory.listSync(recursive: true).whereType<File>()) {
+          if (!file.path.endsWith('.dart')) continue;
+          if (RegExp(
+            r'extends\s+\w*(?:StatelessWidget|StatefulWidget|ConsumerWidget)',
+          ).hasMatch(file.readAsStringSync())) {
+            widgetsInExcluded.add(file.path);
+          }
+        }
+      }
       expect(
-        nonWidgetDirs.every(
-          (d) => Directory('lib/design_system/$d').existsSync(),
-        ),
-        isTrue,
-        reason: 'an excluded directory no longer exists — re-check the list',
+        widgetsInExcluded,
+        isEmpty,
+        reason:
+            'these files sit in a directory excluded as widget-free and declare '
+            'widgets: ${widgetsInExcluded.join(', ')}',
       );
       // One exemption, and it must be live. The previous set had ten entries of
       // which nine matched nothing the scan can find — eight `enum`s, which a
@@ -350,9 +381,19 @@ void main() {
             .replaceFirst(RegExp('^Moneta'), '')
             .toLowerCase();
         final alias = aliases[entry.key]?.toLowerCase();
-        final present = covered.any(
-          (c) => c == bare || c == entry.key.toLowerCase() || c == alias,
-        );
+        // `bare` alone let a new `MonetaTransactionRow` in atoms/ collide with
+        // the existing `TransactionRow` section and count itself covered. A
+        // stripped name only counts when no other declared class claims it.
+        final claimedByAnother = declared.keys
+            .where((k) => k != entry.key)
+            .any(
+              (k) =>
+                  k.replaceFirst(RegExp('^Moneta'), '').toLowerCase() == bare,
+            );
+        final present =
+            covered.contains(entry.key.toLowerCase()) ||
+            covered.contains(alias) ||
+            (covered.contains(bare) && !claimedByAnother);
         if (!present) missing.add('${entry.key} (${entry.value})');
       }
 

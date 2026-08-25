@@ -63,15 +63,25 @@ void main() {
         final (database, store) = await open();
         final db = (await database.open()).valueOrNull!;
 
+        // The last value must differ from the first, or the test cannot fail.
+        // This was false -> true -> false asserting false, which ends where it
+        // started: switching ConflictAlgorithm.replace to .ignore silently kept
+        // the *first* write and the test named "the last write wins" passed.
         await store.writeBool(PreferenceKey.onboardingComplete, value: false);
         await store.writeBool(PreferenceKey.onboardingComplete, value: true);
         await store.writeBool(PreferenceKey.onboardingComplete, value: false);
+        await store.writeBool(PreferenceKey.onboardingComplete, value: true);
 
         final rows = await db.query(PreferencesStore.table);
         expect(rows, hasLength(1));
         expect(
+          rows.single['value'],
+          'true',
+          reason: 'the stored row is not the last value written',
+        );
+        expect(
           (await store.readBool(PreferenceKey.onboardingComplete)).valueOrNull,
-          isFalse,
+          isTrue,
         );
         await database.close();
       },

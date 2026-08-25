@@ -93,7 +93,7 @@ final List<GallerySection> galleryCatalog = [
     variants: [
       for (var active = 0; active < 3; active++)
         GalleryVariant(
-          'Active=${active + 1}',
+          'Count=3, Active=${active + 1}',
           (_) => MonetaPaginationDots(count: 3, activeIndex: active),
         ),
     ],
