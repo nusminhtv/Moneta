@@ -27,7 +27,7 @@ deliberately **not implemented**, rather than guessed.
 | `text-primary` | `#F6F8FB` | `40:256`, `39:8` |
 | `text-tertiary` | `#7C8595` | `40:256`, `39:243` |
 | `text-on-brand` | `#FFFFFF` | `40:161` BalanceCard |
-| `text-secondary` | *not observed* | — |
+| `text-secondary` | `#9AA3B4` | verified `107:75` (row descriptions) — was wrongly recorded as not observed |
 
 ## Colour — brand
 
@@ -123,7 +123,8 @@ both styles visibly too tight.
 | `radius-lg` | 18 | `40:256` BudgetCard |
 | `radius-xl` | 24 | `40:161` BalanceCard |
 | `radius-pill` | 999 | `21:139`, `33:311`, `39:243` |
-| `radius-sm` | *not observed* | — |
+| `radius-xs` | 6 | verified `107:79` (`rounded-[var(--radius-xs,6px)]`) |
+| `radius-sm` | *reported as 10, not yet verified by us* | — |
 
 ## Elevation and effects
 
@@ -133,12 +134,57 @@ both styles visibly too tight.
 | `glow/brand` | drop shadow `#7A5AF859`, offset (0, 0), blur 24 | `39:243` FAB |
 | `elevation/1`, `elevation/2` | *not observed* | — |
 
-## Spacing
+## Spacing — ⚠️ OUR SCALE IS INVENTED AND WRONGLY NAMED
 
-No named spacing variables appear in any node read. Padding and gap values are
-literal in the components, so the scale below is **derived from observed values**,
-not read from a Figma variable set. Flagged as such: if a spacing variable
-collection exists in the file, this table should be replaced by it.
+**Corrected 2026-08-25, verified directly against node `107:75`.**
+
+The earlier text here said "No named spacing variables appear in any node read …
+if a spacing variable collection exists in the file, this table should be replaced
+by it." It exists. It was never looked for — only the component nodes were read,
+and their literal gaps were reverse-engineered into a scale.
+
+The real collection, read from `107:75`, with Figma's own stated purpose for each:
+
+| Figma token | Value | Purpose (Figma's words) |
+| --- | --- | --- |
+| `space/0` | 0 | reset only |
+| `space/2xs` | 2 | icon to label inside a chip |
+| `space/xs` | 4 | label to value in a stat tile |
+| `space/sm` | **8** | between rows in a dense list |
+| `space/md` | **12** | default vertical rhythm on a screen |
+| `space/base` | **16** | card inner padding |
+| `space/lg` | **20** | screen horizontal gutter |
+| `space/xl` | **24** | between sections |
+| `space/2xl` | 32 | above a section header |
+| `space/3xl` | 40 | hero block padding |
+| `space/4xl` | 48 | empty-state breathing room |
+| `space/5xl` | 64 | full-screen state centring |
+
+Against `lib/design_system/tokens/spacing.dart`:
+
+| Name | Ours | Figma | |
+| --- | --- | --- | --- |
+| `2xs` / `xxs` | 2 | 2 | ✓ |
+| `xs` | 4 | 4 | ✓ |
+| `sm` | 6 | **8** | ✗ |
+| `md` | 8 | **12** | ✗ |
+| `lg` | 10 | **20** | ✗ |
+| `xl` | 12 | **24** | ✗ |
+| — | 14, 28 | *do not exist* | ✗ |
+| — | *missing* | 32, 40, 48, 64 | ✗ |
+
+Only two of eleven steps are right. Every name past `xs` is bound to a smaller
+number than Figma's, so a widget asking for `spacing.lg` gets 10 where the design
+means 20.
+
+`test/design_system/tokens/tokens_test.dart` asserts this scale under the name
+*"matches the observed Figma values"*. It matches nothing that was ever read from
+Figma. That test does not merely fail to catch the defect — it states a falsehood
+and locks it in.
+
+Note the purposes are directly useful: `space/lg` = 20 is the **screen horizontal
+gutter**, which is exactly the value `TransactionRow` should use and where our 16
+comes from a different token entirely.
 
 | Step | Value | Observed in |
 | --- | --- | --- |
