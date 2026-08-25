@@ -8,13 +8,26 @@ import 'package:moneta/core/spend_category.dart';
 import 'package:moneta/design_system/atoms/moneta_button.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/molecules/category_icon.dart';
+import 'package:moneta/design_system/molecules/onboarding_illustration.dart';
+import 'package:moneta/design_system/molecules/pagination_dots.dart';
 import 'package:moneta/design_system/molecules/progress_bar.dart';
+import 'package:moneta/design_system/molecules/transaction_row.dart';
 import 'package:moneta/design_system/organisms/bottom_nav.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/features/onboarding/domain/onboarding_slide.dart';
 import 'package:moneta/features/transactions/domain/transaction.dart';
 
+/// The gallery's builders take a `BuildContext` and none of them reads it, so a
+/// throwaway element is enough to invoke them outside a pump. If a builder ever
+/// starts reading the context this cast fails loudly rather than silently
+/// returning something else.
+late BuildContext _dummyContext;
+
 void main() {
+  setUpAll(() {
+    _dummyContext = _NullContext();
+  });
+
   GallerySection sectionFor(String component) =>
       galleryCatalog.firstWhere((s) => s.component == component);
 
@@ -140,6 +153,66 @@ void main() {
       expect(row.variants, hasLength(2));
     });
 
+    test('each Button variant builds the button its label describes', () {
+      // Counting 45 is not the same as rendering 45 different things. Pointing
+      // every variant at the same primary/md/normal button, labels untouched,
+      // passed the whole gallery suite — which is precisely the defect the
+      // gallery exists to make visible.
+      final button = galleryCatalog.firstWhere((s) => s.component == 'Button');
+      final seen = <(MonetaButtonStyle, MonetaButtonSize, MonetaButtonState)>{};
+
+      for (final variant in button.variants) {
+        final built = variant.build(_dummyContext) as MonetaButton;
+        expect(
+          variant.label,
+          'Style=${built.style.name}, Size=${built.size.name}, '
+          'State=${built.state.name}',
+          reason: 'label and widget disagree',
+        );
+        seen.add((built.style, built.size, built.state));
+      }
+      expect(seen, hasLength(45), reason: 'variants are not all distinct');
+    });
+
+    test('each PaginationDots variant builds its own position', () {
+      final dots = galleryCatalog.firstWhere(
+        (s) => s.component == 'PaginationDots',
+      );
+      final positions = dots.variants
+          .map(
+            (v) => (v.build(_dummyContext) as MonetaPaginationDots).activeIndex,
+          )
+          .toList();
+      expect(positions, [0, 1, 2]);
+    });
+
+    test('each OnboardingIllustration variant builds its own slide', () {
+      final section = galleryCatalog.firstWhere(
+        (s) => s.component == 'OnboardingIllustration',
+      );
+      final built = section.variants
+          .map((v) => v.build(_dummyContext) as OnboardingIllustration)
+          .toList();
+      expect(
+        built.map((i) => i.chartSlot),
+        OnboardingSlide.values.map((s) => s.chartSlot),
+      );
+      expect(
+        built.map((i) => i.glyph),
+        OnboardingSlide.values.map((s) => s.glyph),
+      );
+    });
+
+    test('each TransactionRow variant builds its own direction', () {
+      final section = galleryCatalog.firstWhere(
+        (s) => s.component == 'TransactionRow',
+      );
+      final directions = section.variants
+          .map((v) => (v.build(_dummyContext) as TransactionRow).direction)
+          .toSet();
+      expect(directions, TransactionDirection.values.toSet());
+    });
+
     test('every implemented component appears exactly once', () {
       final components = galleryCatalog.map((s) => s.component).toList();
       expect(components.toSet(), hasLength(components.length));
@@ -167,8 +240,13 @@ void main() {
           // `extends` clause, and the optional generic parameter list keeps a
           // `class Foo<T> extends StatelessWidget` from slipping past. Both
           // evaded the first version, verified by probe.
+          // The class modifiers matter: `final class` is this repo's house
+          // style (MonetaColors, PreferencesStore, MonetaRadii…), and a
+          // `^class`-anchored regex misses every one of them. `final` and
+          // `base` both slipped past the previous version.
           for (final match in RegExp(
-            r'^class (\w+)(?:<[^>]*>)?[\s\S]{0,80}?extends\s+\w*(?:Widget|State)\b',
+            r'^(?:abstract\s+|final\s+|base\s+|sealed\s+|interface\s+|mixin\s+)*'
+            r'class (\w+)(?:<[^>]*>)?[\s\S]{0,80}?extends\s+\w*(?:Widget|State)\b',
             multiLine: true,
           ).allMatches(file.readAsStringSync())) {
             final name = match.group(1)!;
@@ -284,4 +362,12 @@ void main() {
       }
     });
   });
+}
+
+/// Minimal stand-in: every member throws, so any builder that actually reads the
+/// context fails the test instead of quietly working.
+class _NullContext implements BuildContext {
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnsupportedError('a gallery builder read its BuildContext');
 }

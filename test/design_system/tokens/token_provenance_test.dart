@@ -30,73 +30,144 @@ void main() {
     ).readAsStringSync();
   });
 
-  /// Every row's first cell in the doc's tables, lowercased.
-  Set<String> documentedTokens() {
-    final names = <String>{};
+  /// Rows keyed by the doc section they appear in, so a colour cannot borrow a
+  /// row from the spacing table. `primary` matched `text-primary` and a text
+  /// style called `xl` matched the `xl` row of the *spacing* comparison table —
+  /// both undocumented values passing a check written to catch exactly that.
+  Map<String, Set<String>> documentedByKind() {
+    const kindOf = {
+      'Colour': 'colour',
+      'Typography': 'typography',
+      'Radius': 'radius',
+      'Elevation': 'elevation',
+      'Spacing': 'spacing',
+      'Layout': 'layout',
+      'Motion': 'motion',
+    };
+    final rows = <String, Set<String>>{};
+    var kind = 'none';
     for (final line in doc.split('\n')) {
+      if (line.startsWith('## ')) {
+        final heading = line.substring(3).trim();
+        kind = kindOf.entries
+            .firstWhere(
+              (e) => heading.startsWith(e.key),
+              orElse: () => const MapEntry('', 'none'),
+            )
+            .value;
+        continue;
+      }
       if (!line.startsWith('|')) continue;
       final cells = line.split('|');
       if (cells.length < 3) continue;
       final first = cells[1].trim().replaceAll('`', '');
       if (first.isEmpty || first.startsWith('-') || first == 'Token') continue;
-      names.add(first.toLowerCase());
+      (rows[kind] ??= <String>{}).add(first.toLowerCase());
     }
-    return names;
+    return rows;
   }
 
-  /// `amountXl` -> `display/amount-xl` style candidates, since the doc names
-  /// tokens as Figma does and the Dart fields are camelCase.
-  /// `amountXl` -> the names the doc might use for it. The doc names tokens as
-  /// Figma does: a `bg-`/`text-` prefix, a `display/` group, or a `-base`
-  /// suffix on a semantic colour. The Dart fields are camelCase and drop all of
-  /// that, so a small set of candidates is tried rather than one rigid rule.
-  Set<String> candidatesFor(String field) {
+  /// The names the doc might use for a camelCase Dart field of a given kind.
+  /// Group prefixes are scoped to the kind, so cross-kind borrowing cannot
+  /// happen even when two tokens share a bare name.
+  Set<String> candidatesFor(String field, String kind) {
     final kebab = field
         .replaceAllMapped(RegExp('([a-z0-9])([A-Z])'), (m) => '${m[1]}-${m[2]}')
         .toLowerCase();
-    const groups = [
-      'display',
-      'heading',
-      'title',
-      'body',
-      'label',
-      'caption',
-      'text',
-      'bg',
-      'border',
-      'brand',
-      'chart',
-    ];
-    // amountXl -> amount-xl; the doc groups it as display/amount-xl. bodyLg ->
-    // body-lg, documented as body/lg, so the leading word may become the group.
+    const groupsByKind = {
+      // Only `bg`: the doc's other colour rows are full token names that the
+      // camelCase fields already kebab straight onto (`textPrimary` ->
+      // `text-primary`). Including `text` as a group let the undocumented field
+      // `primary` borrow `text-primary`'s row.
+      'colour': ['bg'],
+      'typography': [
+        'display',
+        'heading',
+        'title',
+        'body',
+        'label',
+        'caption',
+      ],
+      'radius': ['radius'],
+      'elevation': ['elevation', 'glow', 'shadow'],
+      'spacing': ['space'],
+    };
+    final groups = groupsByKind[kind] ?? const <String>[];
     final head = kebab.split('-').first;
     final tail = kebab.contains('-')
         ? kebab.substring(kebab.indexOf('-') + 1)
         : kebab;
     return {
       kebab,
-      '$kebab-base',
-      if (kebab.contains('-')) '$head/$tail',
+      if (kind == 'colour') '$kebab-base',
+      if (kebab.contains('-') && groups.contains(head)) '$head/$tail',
       for (final group in groups) ...['$group/$kebab', '$group-$kebab'],
+      // `space2xs` -> `space/2xs`: the field glues the group to a step name that
+      // starts with a digit, so no camelCase boundary exists to split on.
+      for (final group in groups)
+        if (kebab.startsWith(group))
+          '$group/${kebab.substring(group.length).replaceFirst(RegExp('^-'), '')}',
     };
   }
 
-  test('the doc has tables this test can actually read', () {
-    final documented = documentedTokens();
+  /// Fields on a token class, as `^  final <Type> <name>;`.
+  List<String> fieldsOf(String source, String type) => RegExp(
+    '^  final $type (\\w+);',
+    multiLine: true,
+  ).allMatches(source).map((m) => m.group(1)!).toList();
+
+  void expectAllDocumented(
+    List<String> fields,
+    String kind,
+    Map<String, Set<String>> rows,
+  ) {
+    expect(
+      fields,
+      isNotEmpty,
+      reason: 'parsed no $kind fields — the check would be vacuous',
+    );
+    final documented = rows[kind] ?? const <String>{};
     expect(
       documented,
       isNotEmpty,
-      reason: 'parsed no token rows — this check would pass vacuously',
+      reason: 'parsed no $kind rows from the doc — the check would be vacuous',
     );
-    // Spot-check a few known rows so a reformat that breaks parsing is loud.
-    expect(documented, contains('bg-canvas'));
-    expect(documented, contains('body/lg'));
-    expect(documented, contains('border-strong'));
+    final undocumented = fields
+        .where((f) => !candidatesFor(f, kind).any(documented.contains))
+        .toList();
+    expect(
+      undocumented,
+      isEmpty,
+      reason:
+          'these $kind values ship with no row in figma-tokens.md, which the '
+          'tokens spec says fails verification: ${undocumented.join(', ')}',
+    );
+  }
+
+  test('the doc has tables this test can actually read', () {
+    final rows = documentedByKind();
+    expect(rows['colour'], contains('bg-canvas'));
+    expect(rows['typography'], contains('body/lg'));
+    expect(rows['colour'], contains('border-strong'));
+    expect(rows['radius'], isNotEmpty);
+    expect(rows['spacing'], isNotEmpty);
+  });
+
+  test('a value cannot borrow a row from a different kind of token', () {
+    // The guard on the guard. `primary` is not a colour token in this file;
+    // `text-primary` is. Matching must not conflate them.
+    final rows = documentedByKind();
+    expect(
+      candidatesFor('primary', 'colour').any(rows['colour']!.contains),
+      isFalse,
+    );
+    expect(
+      candidatesFor('xl', 'typography').any(rows['typography']!.contains),
+      isFalse,
+    );
   });
 
   test('every text style in `all` has a row naming its Figma source', () {
-    final documented = documentedTokens();
-    // The fields listed in `all`, which is what ships.
     final block = typographySource.substring(
       typographySource.indexOf('List<TextStyle> get all => ['),
     );
@@ -104,55 +175,38 @@ void main() {
         .allMatches(block.substring(0, block.indexOf('];')))
         .map((m) => m.group(1)!)
         .toList();
-
-    expect(
-      fields,
-      hasLength(greaterThan(5)),
-      reason: 'failed to parse the `all` list — the check would be vacuous',
-    );
-
-    final undocumented = <String>[];
-    for (final field in fields) {
-      if (!candidatesFor(field).any(documented.contains)) {
-        undocumented.add(field);
-      }
-    }
-    expect(
-      undocumented,
-      isEmpty,
-      reason:
-          'these text styles ship with no row in figma-tokens.md, which the '
-          'tokens spec says fails verification: ${undocumented.join(', ')}',
-    );
+    expectAllDocumented(fields, 'typography', documentedByKind());
   });
 
   test('every colour token has a row naming its Figma source', () {
-    final documented = documentedTokens();
-    // Top-level `final Color x` fields on MonetaColors. Nested palettes (chart,
-    // brand) carry their own tables and are matched by prefix above.
+    expectAllDocumented(
+      fieldsOf(colorsSource, 'Color'),
+      'colour',
+      documentedByKind(),
+    );
+  });
+
+  test('every radius token has a row naming its Figma source', () {
+    expectAllDocumented(
+      fieldsOf(
+        File('lib/design_system/tokens/radii.dart').readAsStringSync(),
+        'double',
+      ),
+      'radius',
+      documentedByKind(),
+    );
+  });
+
+  test('every Figma-named spacing step has a row', () {
+    // Only the `space*` statics — the deprecated instance scale is documented at
+    // length as invented, which is the opposite of missing provenance.
+    final source = File(
+      'lib/design_system/tokens/spacing.dart',
+    ).readAsStringSync();
     final fields = RegExp(
-      r'^\s{2}final Color (\w+);',
+      r'^  static const double (space\w+) =',
       multiLine: true,
-    ).allMatches(colorsSource).map((m) => m.group(1)!).toList();
-
-    expect(
-      fields,
-      hasLength(greaterThan(5)),
-      reason: 'failed to parse the colour fields — the check would be vacuous',
-    );
-
-    final undocumented = <String>[];
-    for (final field in fields) {
-      if (!candidatesFor(field).any(documented.contains)) {
-        undocumented.add(field);
-      }
-    }
-    expect(
-      undocumented,
-      isEmpty,
-      reason:
-          'these colours ship with no row in figma-tokens.md: '
-          '${undocumented.join(', ')}',
-    );
+    ).allMatches(source).map((m) => m.group(1)!).toList();
+    expectAllDocumented(fields, 'spacing', documentedByKind());
   });
 }

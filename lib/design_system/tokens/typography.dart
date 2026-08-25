@@ -10,7 +10,7 @@ abstract final class MonetaFontFamily {
   static const String display = 'Plus Jakarta Sans';
 }
 
-/// The eight named text styles from the Figma type scale.
+/// The named text styles transcribed from the Figma type scale.
 ///
 /// Figma authors line height in pixels and letter spacing as a percentage of
 /// font size; Flutter wants a height *multiplier* and an absolute letter

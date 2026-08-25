@@ -54,9 +54,26 @@ The design system SHALL provide a row presenting one transaction: its category,
 its note or category name, the time of day, and its signed amount. The row SHALL
 support a masked form in which the amount is hidden.
 
-Figma contains **no** transaction row and no screen frames, so this component's
-layout is a decision this project makes from existing tokens and `CategoryIcon`
-rather than a transcription. The decision is recorded in `docs/adr/`.
+> ⚠️ **This change is frozen and this paragraph is wrong.** It was written on the
+> premise that Figma had no transaction row and no screen frames. Node `29:70` is
+> a transaction row with four variants and `5:14` is twelve finished screens.
+> `onboarding-flow` corrects the same requirement in the main spec set, including
+> the `The divergence from Figma is recorded, not silent` scenario. **Do not
+> archive this change as written** — archiving it after `onboarding-flow` would
+> restore the false claim to the authoritative specs for a third time and drop
+> that scenario. Rewrite this delta against `29:70` first, or drop it from the
+> change. Caught by `change-verifier` on the third review of `onboarding-flow`;
+> two earlier rounds missed it.
+
+Its Figma source is node **`29:70`**, which authors four variants. The
+implementation diverges from it — disc 32 against 40, height 56 against ≥64,
+gutter 16 against 20, no `· account` meta line, and Transfer and Pending absent
+because the domain has no concept for either. Those differences are listed in
+`docs/design-system/figma-map.md`.
+
+The masked form below is this project's own addition and has no counterpart in
+`29:70`; ADR 0003, which scored three layout alternatives, is flagged
+`PREMISE FALSE` for the same reason as this paragraph.
 
 #### Scenario: An expense row
 - **WHEN** a row shows an expense

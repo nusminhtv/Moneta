@@ -223,8 +223,9 @@ of the two rounds: the first found bugs in the code, the second found that my
   checks every shipped text style and colour against them, with vacuity guards so
   a reformat that breaks the parsing fails loudly instead of passing green.
   Verify: renaming `bodyLg` to an undocumented name fails it.
-- [x] 7.4 **The gallery guard now checks variants, and sees three declaration
-  forms it missed.** Trimming Button from 45 variants to 2 passed the whole
+- [x] 7.4 **The gallery guard now checks variant *counts*, and sees three more
+  declaration forms.** (Counts, not variants — round 3 was right to pull that
+  wording up. Checking that a variant *builds* what its label says is 8.4 below.) Trimming Button from 45 variants to 2 passed the whole
   suite: the scan checked presence only, while `gallery_catalog.dart`'s own
   comment claimed each count was enum-derived — true of the six original sections
   and none of the four added. Counts now derived for all four. The scan also
@@ -239,9 +240,110 @@ of the two rounds: the first found bugs in the code, the second found that my
 - [x] 7.6 **Two over-claims in section 6 corrected** — the height-0 mutation
   sentence, and 3.1 crediting the wrong file with the v1 → v2 upgrade proof.
 
-**Still not fixed, in one place rather than implied:** slides 2 and 3 unverified
-on device; `_Spinner` static; no test at a surface size other than 393×852;
-`transaction_providers.dart` at 12.5% coverage, outside `coverage_critical.txt`;
-`OnboardingIllustration` untested at an out-of-range `chartSlot` and under an
-unbounded-width parent; and every value in `figma-map.md`'s "no recorded
-inspection" table still unread from Figma.
+## 8. Remediation after the third review
+
+Third do-not-ship, same pattern a third time: each round's fix asserted something
+narrower than the requirement it claimed to enforce, and this file then recorded
+the narrower thing as done. Fifteen mutations survived round 2 — including a
+straight reintroduction of round 1's scaling bug on the four accent dots, and two
+ways to satisfy round 2's brand-new provenance gate vacuously.
+
+The pattern is worth naming rather than just fixing again: **I keep writing the
+assertion that would have caught the specific bug I just saw, then describing it
+as covering the requirement.** The dots were outside "both axes scale by the same
+factor". `fontSize` was outside "label style". Presence was outside "every
+variant". Colours and type were outside "every token".
+
+- [x] 8.1 **Round 1's bug, reintroduced on the dots, is now caught.** The dots'
+  `top` could go back to unscaled with the suite green: concentricity was
+  asserted for ring, halo and glyph only, and the dots were checked at the design
+  width alone, where the scale factor is 1.0 and unscaled is indistinguishable
+  from scaled. Position and diameter of all four are now pinned to Figma literals
+  at 353, 280 and 240px. Five surviving mutations now fail: unscaled dot `top`,
+  opacity 0.5→1, a dot moved to (0,0), `haloSize` 212→190, and dots 1–3 ignoring
+  `chartSlot` (only dot 0's fill was ever checked). The opacity assertion also
+  compared against the constant it was checking — the same self-referential trap
+  I had rewritten four lines above it.
+- [x] 8.2 **Four Button table entries pinned.** `lg`'s label style could be
+  repointed to another 16px style, losing its semibold, because round 2 pinned
+  `fontSize` only. `horizontalPadding` and `iconSize` were pinned nowhere, and
+  the icon test asserted the rendered size against the enum it came from. The
+  tertiary border was asserted `isNotNull`, and the disabled tertiary border not
+  at all. All five mutations now fail. My first attempt at the padding test
+  compared overall rendered widths, which cannot work — `pumpButton` constrains
+  the button to 353px — so it now reads the `Padding` widget out of the tree.
+- [x] 8.3 **The provenance check is kind-scoped and covers spacing and radius.**
+  Round 2's version could be satisfied by borrowing an unrelated row: an
+  undocumented colour called `primary` matched `text-primary`, and a text style
+  called `xl` matched the `xl` row of the *spacing* comparison table. It also
+  checked only colours and type — so the invented spacing scale, the very thing
+  the requirement cites as its motivation, was outside it. Now parses the doc by
+  section, matches within kind, and covers colours, type, radius and the
+  Figma-named `space/*` steps. Three probes now fail.
+- [x] 8.4 **The gallery checks that a variant builds what its label says.**
+  Pointing all 45 Button variants at one primary/md/normal button, labels
+  untouched, passed everything. Also widened the class regex: `final class` is
+  this repo's house style and `^class` missed every one — the fourth and fifth
+  declaration form after round 2 closed three.
+- [x] 8.5 **The tokens requirement no longer ships false.** "Every value in the
+  token layer SHALL have a row in `figma-tokens.md`" would have been false the
+  instant it folded in: `motion.dart` ships five values that deliberately have
+  none, and the untouched sibling requirement in the main spec set explicitly
+  blesses that. Scoped to Figma-derived values, with the non-Figma case stated as
+  its own rule rather than left as a contradiction between two requirements.
+- [x] 8.6 **`design-system-corrections` flagged so archiving it cannot restore the
+  false claim.** Its frozen delta still MODIFIES `Transaction row` with "Figma
+  contains no transaction row and no screen frames". Archiving it after this
+  change would have put that back into the authoritative specs a third time and
+  dropped the new `The divergence from Figma is recorded, not silent` scenario.
+  Two rounds missed this; it is not in `onboarding-flow`'s own files, which is
+  presumably why.
+- [x] 8.7 **Residue.** `typography.dart`'s header still said "The eight named text
+  styles" — the count the delta removed from the requirement. The Button
+  requirement listed the fifth style as `danger` while the enum, the gallery
+  label and the code all say `destructive`. New scenarios added for the size
+  table, the border table and label/widget agreement, so the specs now describe
+  what the tests check rather than more than they check.
+
+## Still not fixed — the accurate list
+
+Rewritten because the previous version read as complete and was not, which is the
+specific failure these three rounds were about.
+
+**Verification gaps, known and unclosed:**
+- Slides 2 and 3 never seen on device (5.2). Tap injection unavailable here.
+- No test at any surface size other than 393×852. The placeholder test font makes
+  measured overflow at smaller sizes uninterpretable, so this needs goldens on a
+  fixed platform, not another widget test.
+- `lib/features/transactions/presentation/transaction_providers.dart` at 12.5%
+  (1/8 lines), outside `tool/coverage_critical.txt`, so the gate is silent.
+  `features/*/presentation` is not in that file at all — which is how
+  `splash_screen.dart` reached 0% (see 4.4).
+- `OnboardingIllustration` untested at an out-of-range `chartSlot`, and under an
+  unbounded-width parent, where its `width: double.infinity` under a
+  `LayoutBuilder` would throw. Not reachable from the current screen.
+- `Full variant coverage` in the main spec set says a partially implemented set
+  "is not complete". `TransactionRow` ships 2 of `29:70`'s 4 variants. The
+  divergence is documented; the SHALL is still unsatisfied.
+- The `Swiping matches the buttons` scenario has an **AND** clause — that the
+  forward action still finishes on the last slide — that no test reaches *by
+  swiping*.
+
+**Values in code never read from Figma** — the full list is the table in
+`docs/design-system/figma-map.md` under "Values used in code with no recorded
+inspection". Pinning them in tests stops them drifting; it does not verify them.
+Includes the pagination dot geometry, the Button paddings and icon sizes, and the
+illustration constants.
+
+**Fidelity divergences recorded but not reconciled:** `TransactionRow` vs `29:70`
+(disc 32/40, height 56/≥64, gutter 16/20, no `· account`, no Transfer or
+Pending); BottomNav renders 59 against Figma's 64; BalanceCard stat labels use
+`captionMd` where Figma authors `label/sm`; no tabular figures on amount styles;
+the deprecated invented spacing scale still used by every pre-existing widget;
+`figma-map.md` still missing roughly 36 components across three pages; Light mode
+never investigated.
+
+**Cosmetic:** `_Spinner` is a static ring, not an animation. Its 2px stroke
+carries a `// design-token-ignore` with a reason; removing the annotation still
+passes `check_design_tokens.dart`, so it documents a CLAUDE.md rule about raw
+values in `atoms/` rather than silencing a gate finding.

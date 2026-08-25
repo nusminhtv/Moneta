@@ -446,6 +446,115 @@ void main() {
     );
   });
 
+  group('the size table is pinned to Figma', () {
+    // horizontalPadding and iconSize were pinned nowhere: sm's padding could go
+    // 14 -> 40 and every iconSize could collapse to 24 with a green suite. The
+    // existing icon test asserted `icon.size == size.iconSize`, the
+    // implementation against itself.
+    //
+    // figma-map.md records that these paddings and icon sizes were never read
+    // from a node inspection. Pinning them here does not make them verified
+    // against Figma; it makes them unable to drift silently, which is a
+    // different and lesser claim.
+    test('each size keeps its authored height, padding and icon size', () {
+      const expected = {
+        MonetaButtonSize.sm: (height: 36.0, padding: 14.0, icon: 16.0),
+        MonetaButtonSize.md: (height: 44.0, padding: 20.0, icon: 20.0),
+        MonetaButtonSize.lg: (height: 56.0, padding: 24.0, icon: 24.0),
+      };
+      expect(expected.keys, containsAll(MonetaButtonSize.values));
+      for (final entry in expected.entries) {
+        expect(entry.key.height, entry.value.height, reason: entry.key.name);
+        expect(
+          entry.key.horizontalPadding,
+          entry.value.padding,
+          reason: entry.key.name,
+        );
+        expect(entry.key.iconSize, entry.value.icon, reason: entry.key.name);
+      }
+    });
+
+    testWidgets('the rendered icon takes the size the table names', (
+      tester,
+    ) async {
+      const expected = {
+        MonetaButtonSize.sm: 16.0,
+        MonetaButtonSize.md: 20.0,
+        MonetaButtonSize.lg: 24.0,
+      };
+      for (final entry in expected.entries) {
+        await pumpButton(
+          tester,
+          size: entry.key,
+          leading: MonetaIconName.plus,
+        );
+        final icon = tester.widget<MonetaIcon>(find.byType(MonetaIcon));
+        expect(icon.size, entry.value, reason: entry.key.name);
+      }
+    });
+
+    testWidgets('the rendered padding is the one the table names', (
+      tester,
+    ) async {
+      // Read off the render tree, not the enum. `pumpButton` constrains the
+      // button to 353px, so comparing overall widths proves nothing — my first
+      // version of this test did exactly that and failed for the right reason.
+      const expected = {
+        MonetaButtonSize.sm: 14.0,
+        MonetaButtonSize.md: 20.0,
+        MonetaButtonSize.lg: 24.0,
+      };
+      for (final entry in expected.entries) {
+        await pumpButton(tester, size: entry.key);
+        final padding = tester.widget<Padding>(
+          find
+              .descendant(
+                of: find.byType(MonetaButton),
+                matching: find.byType(Padding),
+              )
+              .first,
+        );
+        expect(
+          padding.padding.resolve(TextDirection.ltr).left,
+          entry.value,
+          reason: entry.key.name,
+        );
+      }
+    });
+  });
+
+  group('the border table is pinned to tokens', () {
+    test('only the bordered styles have a border, in both states', () {
+      for (final state in [
+        MonetaButtonState.normal,
+        MonetaButtonState.disabled,
+      ]) {
+        expect(
+          MonetaButton.borderFor(
+            MonetaButtonStyle.tertiary,
+            state,
+            colors,
+          ),
+          state == MonetaButtonState.disabled
+              ? colors.borderSubtle
+              : colors.borderStrong,
+          reason: 'tertiary border in ${state.name}',
+        );
+        for (final style in [
+          MonetaButtonStyle.primary,
+          MonetaButtonStyle.ghost,
+          MonetaButtonStyle.destructive,
+        ]) {
+          expect(
+            MonetaButton.borderFor(style, state, colors),
+            isNull,
+            reason: '${style.name} should have no border in ${state.name}',
+          );
+        }
+      }
+    });
+  });
+
   group('label type scale', () {
     test('the three sizes do not all share one label style', () {
       // Figma authors lg with the title style and the smaller two with a label
@@ -459,6 +568,10 @@ void main() {
       expect(md.fontSize, sm.fontSize);
       expect(lg.fontSize, 16, reason: 'lg is title/md at 16');
       expect(sm.fontSize, 14, reason: 'sm and md are label/md at 14');
+      // Weight as well as size: `titleMd` -> `bodyLg` keeps 16px and drops the
+      // semibold, and that mutation survived a size-only assertion.
+      expect(lg.fontWeight, FontWeight.w600, reason: 'lg is semibold');
+      expect(sm.fontWeight, FontWeight.w500, reason: 'sm and md are medium');
     });
 
     testWidgets('a lg button renders a visibly larger label than a sm one', (

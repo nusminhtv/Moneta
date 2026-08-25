@@ -8,7 +8,7 @@ requirement is enforced.
 ### Requirement: Button
 
 The design system SHALL provide a button covering the full variant set of Figma
-node `13:2`: five styles (primary, secondary, tertiary, ghost, danger) × three
+node `13:2`: five styles (primary, secondary, tertiary, ghost, destructive) × three
 sizes (sm, md, lg) × three states (default, disabled, loading).
 
 Variants SHALL be resolved through lookup tables rather than conditional
@@ -33,6 +33,22 @@ the entire suite.
 #### Scenario: A disabled button is inert
 - **WHEN** a disabled or loading button is activated
 - **THEN** no callback fires
+
+#### Scenario: The size table cannot drift
+- **WHEN** a size's height, horizontal padding or icon size changes
+- **THEN** verification fails against the authored values
+
+Padding and icon size were pinned nowhere: `sm`'s padding could go from 14 to 40,
+and every icon size collapse to 24, with the whole suite green. The icon test
+compared the rendered size to the enum it came from — the implementation against
+itself. Note that pinning them here stops them drifting; it does **not** make
+them verified against Figma. `docs/design-system/figma-map.md` records that these
+particular numbers were never read from a node.
+
+#### Scenario: Only the bordered style has a border
+- **WHEN** any style is rendered in the normal or disabled state
+- **THEN** only `tertiary` has one, and its colour is the strong border token
+  when interactive and the subtle one when disabled
 
 ### Requirement: Pagination dots
 
@@ -99,6 +115,15 @@ the test passed — TransactionRow since before this change.
   Figma node
 - **THEN** it may be exempted, and the exemption SHALL state its reason in the
   test
+
+#### Scenario: A variant must build what its label says
+- **WHEN** a gallery variant's label names a style, size, state or position
+- **THEN** the widget it builds SHALL match that label, and no two variants of a
+  component SHALL build the same thing
+
+Counting variants is not the same as rendering different ones. Pointing all 45
+Button variants at a single primary/md/normal button, labels untouched, passed
+the whole gallery suite — the exact defect a gallery exists to expose.
 
 ### Requirement: Transaction row
 

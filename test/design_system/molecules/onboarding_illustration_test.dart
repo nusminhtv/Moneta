@@ -171,27 +171,83 @@ void main() {
       );
     });
 
-    testWidgets('every accent dot is drawn, at its Figma size', (tester) async {
-      // The expected sizes are literals on purpose. Comparing the rendered
-      // width against `accentDots[i].size` would compare the implementation to
-      // itself: shrinking a dot from 12 to 1 changed both sides and the
-      // assertion held. These are the four sizes read from the Figma frame.
-      const expected = <double>[12, 8, 9, 14];
-      expect(
-        OnboardingIllustration.accentDots.map((d) => d.size),
-        expected,
-        reason: 'the transcribed dot sizes changed',
-      );
+    // Figma's four dots: position and diameter, written out. Reading them back
+    // off `accentDots` would compare the implementation to itself — the trap the
+    // first version of this test fell into.
+    const figmaDots = <({double left, double top, double size})>[
+      (left: 64, top: 66, size: 12),
+      (left: 274, top: 104, size: 8),
+      (left: 96, top: 224, size: 9),
+      (left: 258, top: 218, size: 14),
+    ];
 
-      await pumpAt(tester, OnboardingIllustration.designWidth);
-      for (final (index, size) in expected.indexed) {
-        final rect = rectOf(tester, OnboardingIllustration.dotKey(index));
-        expect(
-          rect.width,
-          moreOrLessEquals(size, epsilon: 0.5),
-          reason: 'dot $index is not ${size}px wide',
-        );
-        expect(rect.height, moreOrLessEquals(size, epsilon: 0.5));
+    testWidgets('the transcribed dots still match the Figma frame', (
+      tester,
+    ) async {
+      expect(OnboardingIllustration.accentDots, figmaDots);
+      await pumpAt(tester, 353);
+    });
+
+    // Asserted at three widths, not just at the design width. The dots' `top`
+    // was the one axis left unscaled after the ring/halo/glyph fix, and a test
+    // that only ever renders at scale 1.0 cannot see it — which is how the
+    // original defect survived its own fix.
+    for (final width in <double>[353, 280, 240]) {
+      testWidgets('every accent dot sits where Figma puts it at ${width}px', (
+        tester,
+      ) async {
+        await pumpAt(tester, width);
+        final scale = width / 353;
+        final band = tester.getRect(find.byType(OnboardingIllustration));
+
+        for (final (index, dot) in figmaDots.indexed) {
+          final rect = rectOf(tester, OnboardingIllustration.dotKey(index));
+          expect(
+            rect.width,
+            moreOrLessEquals(dot.size * scale, epsilon: 0.5),
+            reason: 'dot $index diameter at $width',
+          );
+          expect(
+            rect.left - band.left,
+            moreOrLessEquals(dot.left * scale, epsilon: 0.5),
+            reason: 'dot $index x at $width',
+          );
+          expect(
+            rect.top - band.top,
+            moreOrLessEquals(dot.top * scale, epsilon: 0.5),
+            reason: 'dot $index y at $width — is `top` being scaled?',
+          );
+        }
+      });
+    }
+
+    testWidgets('the halo and ring are the diameters Figma authors', (
+      tester,
+    ) async {
+      await pumpAt(tester, 353);
+      expect(
+        rectOf(tester, OnboardingIllustration.haloKey).width,
+        moreOrLessEquals(212, epsilon: 0.5),
+      );
+      expect(
+        rectOf(tester, OnboardingIllustration.ringKey).width,
+        moreOrLessEquals(262, epsilon: 0.5),
+      );
+    });
+
+    testWidgets('every accent dot takes the slot colour, not just the first', (
+      tester,
+    ) async {
+      // Only dot 0 was checked, so three of the four could ignore chartSlot.
+      for (final slot in [1, 4]) {
+        await pumpAt(tester, 353, chartSlot: slot);
+        for (var index = 0; index < figmaDots.length; index++) {
+          expect(
+            fillOf(tester, OnboardingIllustration.dotKey(index)),
+            colors.chart.base(slot),
+            reason: 'dot $index ignored chartSlot $slot',
+          );
+        }
       }
     });
 
@@ -207,7 +263,10 @@ void main() {
             )
             .first,
       );
-      expect(opacity.opacity, OnboardingIllustration.accentDotOpacity);
+      // 0.5 as a literal: comparing to `accentDotOpacity` compares the
+      // implementation to itself, and 0.5 -> 1 survived that version.
+      expect(opacity.opacity, 0.5);
+      expect(OnboardingIllustration.accentDotOpacity, 0.5);
     });
 
     testWidgets('the glyph is the one it was given', (tester) async {

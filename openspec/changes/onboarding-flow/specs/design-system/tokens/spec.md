@@ -64,22 +64,49 @@ that goes stale the next time a screen is built.
 
 ## ADDED Requirements
 
-### Requirement: Every token has a recorded Figma source
+### Requirement: Every Figma-derived token has a recorded source
 
-Every value in the token layer SHALL have a row in
-`docs/design-system/figma-tokens.md` naming the Figma node it was read from. A
-value with no such row SHALL NOT be added.
+Every value in the token layer that is derived from Figma SHALL have a row in
+`docs/design-system/figma-tokens.md` naming the node it was read from, and this
+SHALL be enforced by a check that reads that file.
+
+A value **not** derived from Figma SHALL be marked as such in code and given a
+prose entry in `figma-tokens.md` saying so and why. Today the motion tokens are
+the only such values: no transition or easing appears in any node read, so they
+come from Material's standard durations and curves. The requirement is scoped to
+Figma-derived values precisely because of them — an unqualified "every value
+SHALL have a row" would have been false the moment it was folded in, since
+`lib/design_system/tokens/motion.dart` ships five values that deliberately have
+no row.
 
 This exists because the invented spacing scale reached production, and because
-this change added `border-strong` and `body/lg` without recording either — the
-same failure in miniature. `figma-tokens.md` states this contract in its own
-first line; nothing enforced it.
+this change added `border-strong` and `body/lg` without recording either.
+`figma-tokens.md` states the contract in its own first line and nothing read the
+file: an eleventh text style with no row passed every token test.
 
-#### Scenario: A value is added without provenance
-- **WHEN** a token is added and `figma-tokens.md` has no row for it
-- **THEN** the change is not complete, whatever the gate says
+**Two rounds of review were needed to get this requirement right**, which is the
+point worth keeping. The first version asserted an enforcement that did not
+exist — the same defect it was written to fix, one level down. The second version
+had a cross-check so loose that an undocumented colour called `primary` borrowed
+the row for `text-primary`, and a text style called `xl` borrowed a row from the
+*spacing* table. The check is now scoped by kind and covers colours, type,
+radius and the Figma-named spacing steps.
+
+#### Scenario: A Figma-derived value is added without provenance
+- **WHEN** a colour, text style, radius or `space/*` step is added and
+  `figma-tokens.md` has no row for it under the matching section
+- **THEN** verification fails, naming the value
+
+#### Scenario: A value cannot borrow another kind's row
+- **WHEN** a value's name coincides with a documented token of a different kind
+- **THEN** it is still reported as undocumented
+
+#### Scenario: The cross-check cannot pass vacuously
+- **WHEN** the document is reformatted so its tables no longer parse
+- **THEN** verification fails, rather than reporting nothing to check
 
 #### Scenario: A value cannot be found in Figma
 - **WHEN** a needed value is not present in the design
-- **THEN** it is recorded as *not observed* and left unimplemented, rather than
-  guessed at
+- **THEN** it is either recorded as *not observed* and left unimplemented, or
+  implemented from a named non-Figma source, marked as such in code, and
+  explained in `figma-tokens.md` — never guessed at silently
