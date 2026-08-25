@@ -176,6 +176,15 @@ void main() {
       await pumpOnboarding(tester);
       for (final slide in OnboardingSlide.values) {
         expect(find.text(slide.title), findsOneWidget, reason: slide.name);
+        // The body and the glyph were in this test's name and in none of its
+        // assertions, so the illustration could ignore its glyph entirely and
+        // this still passed.
+        expect(find.text(slide.body), findsOneWidget, reason: slide.name);
+        final illustration = tester.widget<OnboardingIllustration>(
+          find.byType(OnboardingIllustration).first,
+        );
+        expect(illustration.glyph, slide.glyph, reason: slide.name);
+        expect(illustration.chartSlot, slide.chartSlot, reason: slide.name);
         if (!slide.isLast) await tapNext(tester);
       }
     });

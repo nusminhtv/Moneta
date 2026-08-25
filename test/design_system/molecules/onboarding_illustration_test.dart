@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moneta/design_system/atoms/moneta_icon.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/molecules/onboarding_illustration.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
@@ -210,10 +211,32 @@ void main() {
     });
 
     testWidgets('the glyph is the one it was given', (tester) async {
-      await pumpAt(tester, 353, glyph: MonetaIconName.award);
-      expect(find.byKey(OnboardingIllustration.glyphKey), findsOneWidget);
-      await pumpAt(tester, 353, glyph: MonetaIconName.creditCard);
-      expect(find.byKey(OnboardingIllustration.glyphKey), findsOneWidget);
+      // Asserting the identity of the rendered icon, not merely that the key
+      // exists. The findsOneWidget version of this test passed while the
+      // component ignored its `glyph` parameter and drew the same icon on all
+      // three slides — 617 green tests, one hardcoded constant.
+      for (final glyph in [
+        MonetaIconName.award,
+        MonetaIconName.creditCard,
+        MonetaIconName.target,
+      ]) {
+        await pumpAt(tester, 353, glyph: glyph);
+        final icon = tester.widget<MonetaIcon>(
+          find.byKey(OnboardingIllustration.glyphKey),
+        );
+        expect(icon.icon, glyph, reason: 'the illustration ignored its glyph');
+      }
+    });
+
+    testWidgets('the glyph is drawn at the Figma size in the base colour', (
+      tester,
+    ) async {
+      await pumpAt(tester, OnboardingIllustration.designWidth, chartSlot: 3);
+      final icon = tester.widget<MonetaIcon>(
+        find.byKey(OnboardingIllustration.glyphKey),
+      );
+      expect(icon.size, moreOrLessEquals(72, epsilon: 0.5));
+      expect(icon.color, colors.chart.base(3));
     });
   });
 }

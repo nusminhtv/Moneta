@@ -27,9 +27,12 @@
   `test/data/preferences_store_test.dart` covers write/read, absence, a malformed
   value as a storage failure, and durability across close and reopen; and
   `test/data/migrations_test.dart` asserts v1 rows survive the upgrade.
-  The upgrade assertion landed in `test/data/database_test.dart` (`upgrades an
-  existing database forward, preserving rows`) rather than a new file — it needed
-  the `AppDatabase` harness already there. Three tests in that file hardcoded
+  The v1 → v2 assertion is `test/data/migrations_test.dart:181` — a real
+  file-backed upgrade with a surviving row and an empty `settings` table.
+  `test/data/database_test.dart` also gained a generic
+  `schemaVersion → schemaVersion + 1` upgrade test, which does not touch
+  `settings`; an earlier version of this note credited that file with the
+  v1 → v2 proof, which was wrong. Three tests in that file hardcoded
   version 2 and broke on the bump; they are now written relative to
   `schemaVersion`, and the upgrade test had to move off `inMemoryDatabasePath`,
   where two opens are two different databases and the test proved nothing.
@@ -164,8 +167,11 @@ look.
   SHALL. Verify: `openspec validate onboarding-flow --strict`.
 - [x] 6.6 **Non-blocking findings cleared.** The frame-stability test asserted the
   forward button's rect, but that button sits below an `Expanded` and cannot move
-  — collapsing the reserved Skip slot to height 0, the exact 44px jump the slot
-  prevents, passed it; now asserted on the `PageView` and the illustration.
+  — making the Skip slot's height conditional on `isLast`, the exact 44px jump
+  the slot prevents, passed it; now asserted on the `PageView` and the
+  illustration. (A flat `height: 0` does *not* fail the new test, and correctly
+  so: every slide shifts equally, so the frame is still stable. My earlier
+  wording invited the stronger reading.)
   `MonetaButton` was using the deprecated invented spacing scale, the risk
   `design.md` named and left to review. `border-strong` and `body/lg` were used
   in shipped UI for a whole change without a row in `figma-tokens.md`, whose own
@@ -177,7 +183,65 @@ look.
   recorded Figma inspection, rather than implying all of them are transcriptions.
 
 **Not fixed, deliberately:** slides 2 and 3 still unverified on device (5.2);
-`_Spinner` is a static ring rather than an animation; no test at a surface size
+`_Spinner` is a static ring rather than an animation, and its 2px stroke now
+carries a `// design-token-ignore` with a reason — removing that annotation still
+passes `check_design_tokens.dart`, so it documents a CLAUDE.md rule about raw
+values in `atoms/` rather than silencing a gate finding; no test at a surface size
 other than 393×852; `transaction_providers.dart` sits at 12.5% coverage after
 this change edited it; and the values listed in `figma-map.md` under "no recorded
 inspection" have not been re-read from Figma.
+
+## 7. Remediation after the second review
+
+`change-verifier` returned do-not-ship again — not because the first round was
+faked (it broke each fix to check) but because three findings were the same
+species as the ones just closed, and two scenarios I had just written into the
+spec set claimed enforcement that did not exist. That is the more useful result
+of the two rounds: the first found bugs in the code, the second found that my
+*fixes* had the same blind spot as the code.
+
+- [x] 7.1 **`OnboardingIllustration` still ignored its `glyph`.** Hardcoding it so
+  all three slides drew the same icon passed 617/617. My own new test asserted
+  `findsOneWidget` on a key that always exists, and
+  `onboarding_screen_test.dart`'s `every slide shows its own title, body and
+  glyph` asserted the title only — body and glyph were in the name and in no
+  assertion. Now asserts the rendered `MonetaIcon.icon`, its size and its colour,
+  and the screen test checks each slide's body text and the illustration's glyph
+  and chart slot. Verify: the hardcode mutation now fails.
+- [x] 7.2 **Three of five Button styles' label colour was asserted against
+  itself.** The 45-loop compares the rendered colour to `foregroundFor(...)`,
+  which catches a broken wiring and nothing else. Repointing
+  secondary/tertiary/ghost to `colors.income` passed all 617 tests; only primary
+  and disabled were pinned to a token. Now every style's normal and disabled
+  label colour is pinned by name, plus a test that a new style cannot be added
+  without pinning it. Verify: the repoint mutation now fails.
+- [x] 7.3 **The `figma-tokens.md` cross-check now exists.** The tokens delta
+  written in 6.5 says a token with no row in that file fails verification.
+  Nothing read the file — adding a text style with no row passed 269 token tests.
+  That is 6.5's own defect one level down: a requirement asserting an enforcement
+  that isn't there. `token_provenance_test.dart` parses the doc's tables and
+  checks every shipped text style and colour against them, with vacuity guards so
+  a reformat that breaks the parsing fails loudly instead of passing green.
+  Verify: renaming `bodyLg` to an undocumented name fails it.
+- [x] 7.4 **The gallery guard now checks variants, and sees three declaration
+  forms it missed.** Trimming Button from 45 variants to 2 passed the whole
+  suite: the scan checked presence only, while `gallery_catalog.dart`'s own
+  comment claimed each count was enum-derived — true of the six original sections
+  and none of the four added. Counts now derived for all four. The scan also
+  missed a generic `class Foo<T> extends StatelessWidget`, a `dart format`-wrapped
+  `extends` clause, and any widget in a subdirectory; confirmed by probe, all
+  three now caught, probes removed.
+- [x] 7.5 **The proposal's bookkeeping matches its deltas.** It declared one new
+  capability and one modified while the change ships four, and still listed six
+  SVG assets that task 4.1 dropped. It also described the preferences store as
+  "the existing preferences work — which does not exist yet": a new capability
+  written up as an existing one, which is plausibly how it came to have no delta.
+- [x] 7.6 **Two over-claims in section 6 corrected** — the height-0 mutation
+  sentence, and 3.1 crediting the wrong file with the v1 → v2 upgrade proof.
+
+**Still not fixed, in one place rather than implied:** slides 2 and 3 unverified
+on device; `_Spinner` static; no test at a surface size other than 393×852;
+`transaction_providers.dart` at 12.5% coverage, outside `coverage_critical.txt`;
+`OnboardingIllustration` untested at an out-of-range `chartSlot` and under an
+unbounded-width parent; and every value in `figma-map.md`'s "no recorded
+inspection" table still unread from Figma.

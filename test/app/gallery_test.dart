@@ -5,11 +5,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moneta/app/gallery/gallery_catalog.dart';
 import 'package:moneta/app/gallery/gallery_screen.dart';
 import 'package:moneta/core/spend_category.dart';
+import 'package:moneta/design_system/atoms/moneta_button.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/molecules/category_icon.dart';
 import 'package:moneta/design_system/molecules/progress_bar.dart';
 import 'package:moneta/design_system/organisms/bottom_nav.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
+import 'package:moneta/features/onboarding/domain/onboarding_slide.dart';
+import 'package:moneta/features/transactions/domain/transaction.dart';
 
 void main() {
   GallerySection sectionFor(String component) =>
@@ -95,6 +98,48 @@ void main() {
       }
     });
 
+    test('Button covers the full 5 x 3 x 3 matrix', () {
+      // Derived from the enums, like the six pre-existing sections. Trimming the
+      // Button section from 45 variants to 2 passed the whole gallery suite —
+      // the completeness scan checks presence, not variants, so the requirement
+      // "every component in every variant" needed this per-section check that
+      // gallery_catalog.dart's own comment already claimed existed.
+      final button = galleryCatalog.firstWhere((s) => s.component == 'Button');
+      expect(
+        button.variants,
+        hasLength(
+          MonetaButtonStyle.values.length *
+              MonetaButtonSize.values.length *
+              MonetaButtonState.values.length,
+        ),
+      );
+      expect(button.variants, hasLength(45));
+    });
+
+    test('PaginationDots covers every active position', () {
+      final dots = galleryCatalog.firstWhere(
+        (s) => s.component == 'PaginationDots',
+      );
+      expect(dots.variants, hasLength(3));
+    });
+
+    test('OnboardingIllustration covers one variant per slide', () {
+      final illustration = galleryCatalog.firstWhere(
+        (s) => s.component == 'OnboardingIllustration',
+      );
+      expect(illustration.variants, hasLength(OnboardingSlide.values.length));
+    });
+
+    test('TransactionRow covers both implemented directions', () {
+      // Two, not the four Figma 29:70 authors. Transfer and Pending have no
+      // domain concept yet; recorded in figma-map.md rather than faked here.
+      final row = galleryCatalog.firstWhere(
+        (s) => s.component == 'TransactionRow',
+      );
+      expect(row.variants, hasLength(TransactionDirection.values.length));
+      expect(row.variants, hasLength(2));
+    });
+
     test('every implemented component appears exactly once', () {
       final components = galleryCatalog.map((s) => s.component).toList();
       expect(components.toSet(), hasLength(components.length));
@@ -112,11 +157,18 @@ void main() {
       // completes and would hang instead of failing. See CLAUDE.md.
       final declared = <String, String>{};
       for (final dir in ['atoms', 'molecules', 'organisms']) {
+        // Recursive: the first version of this used a non-recursive listSync,
+        // so a widget in a subdirectory was invisible to it.
         final directory = Directory('lib/design_system/$dir');
-        for (final file in directory.listSync().whereType<File>()) {
+        for (final file
+            in directory.listSync(recursive: true).whereType<File>()) {
           if (!file.path.endsWith('.dart')) continue;
+          // `[\s\S]*?` spans the newline `dart format` inserts before a long
+          // `extends` clause, and the optional generic parameter list keeps a
+          // `class Foo<T> extends StatelessWidget` from slipping past. Both
+          // evaded the first version, verified by probe.
           for (final match in RegExp(
-            r'^class (\w+) extends (?:StatelessWidget|StatefulWidget|ConsumerWidget|ConsumerStatefulWidget)',
+            r'^class (\w+)(?:<[^>]*>)?[\s\S]{0,80}?extends\s+\w*(?:Widget|State)\b',
             multiLine: true,
           ).allMatches(file.readAsStringSync())) {
             final name = match.group(1)!;

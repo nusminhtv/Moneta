@@ -32,9 +32,22 @@ the last slide the user lands in the app and never sees it again.
 
 ### New Capabilities
 - `onboarding`: what first-run shows, how it advances, and how it is remembered.
+- `storage/preferences`: a `settings` table (migration v2) and typed access to it.
+  Not listed here originally — the change said the flag "uses the existing
+  preferences work, which does not exist yet", which is a new capability
+  described as an existing one. Caught during the pre-archive review, when three
+  of the four capabilities this change touches turned out to have no spec delta.
 
 ### Modified Capabilities
-- `design-system/components`: adds Button and PaginationDots.
+- `design-system/components`: adds Button (45 variants), PaginationDots and
+  OnboardingIllustration; corrects the `Component gallery` requirement so its
+  coverage check reads the source tree instead of a hand-maintained list of six
+  names; and corrects the `Transaction row` requirement, which asserted that
+  Figma contains no transaction row and no screen frames. Both halves are false.
+- `design-system/tokens`: adds `border-strong`, `text-secondary`, `body/lg` and
+  Figma's twelve `space/*` values; removes the count from the typography
+  requirement, which said "exactly the eight" styles while nine ship — the guard
+  test having been re-pinned 8→9 to make it pass, undisclosed.
 
 ## Non-goals
 
@@ -51,6 +64,9 @@ the last slide the user lands in the app and never sees it again.
   `lib/features/onboarding` (new), `lib/data` (the seen-flag uses the existing
   preferences work — which does not exist yet, so this change adds a minimal
   key/value store), `lib/app` (routing).
-- **Assets:** six decorative SVGs for the slide illustration.
+- **Assets:** none. Six decorative SVGs were planned; reading them showed every
+  value is already a token, so the illustration is drawn natively — which also
+  keeps it inside `check_design_tokens.dart`, a gate that cannot see into an SVG.
+  See task 4.1.
 - **Figma nodes:** `71:2`, `71:37`, `71:103`, `71:162` (screens); `13:2` (Button);
   `70:223` (PaginationDots); `107:75` (spacing).

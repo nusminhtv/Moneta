@@ -375,6 +375,77 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+  group('the foreground table is pinned to tokens', () {
+    // The 45-loop compares the rendered label colour to `foregroundFor(...)` —
+    // the table against itself. That catches a broken wiring and nothing else:
+    // repointing secondary/tertiary/ghost to `colors.income` passed all 617
+    // tests. Only primary and disabled were pinned to a token anywhere.
+    test('every style in the normal state names its expected token', () {
+      const expected = {
+        MonetaButtonStyle.primary: 'textOnBrand',
+        MonetaButtonStyle.secondary: 'textPrimary',
+        MonetaButtonStyle.tertiary: 'textPrimary',
+        MonetaButtonStyle.ghost: 'textPrimary',
+        MonetaButtonStyle.destructive: 'textOnBrand',
+      };
+      final tokens = {
+        'textOnBrand': colors.textOnBrand,
+        'textPrimary': colors.textPrimary,
+      };
+
+      expect(
+        expected.keys,
+        containsAll(MonetaButtonStyle.values),
+        reason: 'a style was added without pinning its label colour',
+      );
+      for (final entry in expected.entries) {
+        expect(
+          MonetaButton.foregroundFor(
+            entry.key,
+            MonetaButtonState.normal,
+            colors,
+          ),
+          tokens[entry.value],
+          reason: '${entry.key.name} label colour is not ${entry.value}',
+        );
+      }
+    });
+
+    test('a disabled button of any style uses the tertiary text token', () {
+      for (final style in MonetaButtonStyle.values) {
+        expect(
+          MonetaButton.foregroundFor(
+            style,
+            MonetaButtonState.disabled,
+            colors,
+          ),
+          colors.textTertiary,
+          reason: style.name,
+        );
+      }
+    });
+
+    test(
+      'the brand-filled and the flat styles do not share a label colour',
+      () {
+        expect(
+          MonetaButton.foregroundFor(
+            MonetaButtonStyle.primary,
+            MonetaButtonState.normal,
+            colors,
+          ),
+          isNot(
+            MonetaButton.foregroundFor(
+              MonetaButtonStyle.ghost,
+              MonetaButtonState.normal,
+              colors,
+            ),
+          ),
+        );
+      },
+    );
+  });
+
   group('label type scale', () {
     test('the three sizes do not all share one label style', () {
       // Figma authors lg with the title style and the smaller two with a label
