@@ -29,8 +29,20 @@ final shouldShowOnboardingProvider = FutureProvider<bool>((ref) async {
 /// treating a skip as a defer would mean the user could never dismiss it.
 final completeOnboardingProvider = Provider<Future<void> Function()>((ref) {
   return () async {
-    final store = await ref.read(preferencesStoreProvider.future);
-    await store.writeBool(PreferenceKey.onboardingComplete, value: true);
+    try {
+      final store = await ref.read(preferencesStoreProvider.future);
+      await store.writeBool(PreferenceKey.onboardingComplete, value: true);
+    } on Object {
+      // D5's reasoning applies to the write, not just the read: showing the
+      // introduction again is an annoyance, trapping the user on its last slide
+      // is not. `preferencesStoreProvider` throws when the database cannot be
+      // opened, and this runs inside an async navigation callback — an escaping
+      // exception meant `context.go` never ran and nothing was shown at all.
+      // `writeBool` itself returns a Result and does not throw; this guards the
+      // store being unavailable.
+    }
+    // Invalidated either way. On a successful write the decision must change; on
+    // a failure re-reading is what produces the "show it again" fallback.
     ref.invalidate(shouldShowOnboardingProvider);
   };
 });

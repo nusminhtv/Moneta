@@ -28,6 +28,7 @@ deliberately **not implemented**, rather than guessed.
 | `text-tertiary` | `#7C8595` | `40:256`, `39:243` |
 | `text-on-brand` | `#FFFFFF` | `40:161` BalanceCard |
 | `text-secondary` | `#9AA3B4` | verified `107:75` (row descriptions) — was wrongly recorded as not observed |
+| `border-strong` | `rgba(255,255,255,0.18)` | `13:2` Button/Tertiary border, `70:223` inactive dot — added in `onboarding-flow` and, until the pre-archive review, not recorded here at all |
 
 ## Colour — brand
 
@@ -103,6 +104,15 @@ Two families: **Inter** (text) and **Plus Jakarta Sans** (display/headings).
 | `label/md` | Inter | 500 | 14 | 18 | 0 | `40:161`, `39:8` |
 | `label/sm` | Inter | 500 | 12 | 16 | 0 | `39:243` |
 | `caption/md` | Inter | 400 | 12 | 16 | 0 | `40:161`, `40:256` |
+| `body/lg` | Inter | 400 | 16 | 24 | 0 | `71:37`, `71:103`, `71:162` slide bodies; `71:2` splash tagline |
+
+Nine styles are implemented of the thirteen Figma defines. The four not
+implemented are not listed above because no surface has needed them; adding one
+means adding its row here first. `border-strong` and `body/lg` were both used in
+shipped UI for a whole change before either appeared in this table — the file's
+own opening line states that every value must name its source, and nothing
+enforced it. `openspec/changes/onboarding-flow/specs/design-system/tokens/spec.md`
+now makes it a requirement.
 
 ### Resolved ambiguity — letter spacing units
 

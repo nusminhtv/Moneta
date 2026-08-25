@@ -61,20 +61,6 @@ final class PreferencesStore {
     }
   }
 
-  /// Reads [key] as a boolean, falling back to [orElse] when nothing is stored.
-  ///
-  /// A failure is still a failure — this only collapses *absence*.
-  Future<Result<bool>> readBoolOr(
-    PreferenceKey key, {
-    required bool orElse,
-  }) async {
-    final result = await readBool(key);
-    return result.when(
-      ok: (value) => Ok(value ?? orElse),
-      err: Err.new,
-    );
-  }
-
   /// Writes [value] for [key], replacing anything already there.
   Future<Result<void>> writeBool(
     PreferenceKey key, {

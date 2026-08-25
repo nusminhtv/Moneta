@@ -1,13 +1,18 @@
 import 'package:flutter/widgets.dart';
 import 'package:moneta/core/money.dart';
 import 'package:moneta/core/spend_category.dart';
+import 'package:moneta/design_system/atoms/moneta_button.dart';
 import 'package:moneta/design_system/atoms/moneta_icon.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/molecules/category_icon.dart';
+import 'package:moneta/design_system/molecules/onboarding_illustration.dart';
+import 'package:moneta/design_system/molecules/pagination_dots.dart';
 import 'package:moneta/design_system/molecules/progress_bar.dart';
+import 'package:moneta/design_system/molecules/transaction_row.dart';
 import 'package:moneta/design_system/organisms/balance_card.dart';
 import 'package:moneta/design_system/organisms/bottom_nav.dart';
 import 'package:moneta/design_system/organisms/budget_card.dart';
+import 'package:moneta/features/transactions/domain/transaction.dart';
 
 /// One labelled variant in the gallery.
 @immutable
@@ -59,6 +64,69 @@ const _budgetLimit = Money(4000000, _vnd);
 /// count against the enum that defines it, so adding a variant to a component
 /// without adding it here fails verification.
 final List<GallerySection> galleryCatalog = [
+  GallerySection(
+    component: 'Button',
+    figmaNodeId: '13:2',
+    // All 45. The gallery is where the 5 × 3 × 3 matrix is actually looked at:
+    // every one of these was implemented and none was ever rendered here, so a
+    // wrong foreground or label style was invisible to a reviewer as well as to
+    // the suite.
+    variants: [
+      for (final style in MonetaButtonStyle.values)
+        for (final size in MonetaButtonSize.values)
+          for (final state in MonetaButtonState.values)
+            GalleryVariant(
+              'Style=${style.name}, Size=${size.name}, State=${state.name}',
+              (_) => MonetaButton(
+                label: 'Continue',
+                style: style,
+                size: size,
+                state: state,
+                onPressed: () {},
+              ),
+            ),
+    ],
+  ),
+  GallerySection(
+    component: 'PaginationDots',
+    figmaNodeId: '70:223',
+    variants: [
+      for (var active = 0; active < 3; active++)
+        GalleryVariant(
+          'Active=${active + 1}',
+          (_) => MonetaPaginationDots(count: 3, activeIndex: active),
+        ),
+    ],
+  ),
+  GallerySection(
+    component: 'OnboardingIllustration',
+    figmaNodeId: '71:59',
+    // One per slide, because the chart slot is the only thing that varies and
+    // the slots are what a reviewer needs to compare against the frames.
+    variants: [
+      GalleryVariant(
+        'Slot=4 (accounts)',
+        (_) => const OnboardingIllustration(
+          glyph: MonetaIconName.creditCard,
+          chartSlot: 4,
+        ),
+      ),
+      GalleryVariant(
+        'Slot=1 (budgets)',
+        (_) => const OnboardingIllustration(
+          glyph: MonetaIconName.target,
+          chartSlot: 1,
+        ),
+      ),
+      GalleryVariant(
+        'Slot=2 (goals)',
+        (_) => const OnboardingIllustration(
+          glyph: MonetaIconName.award,
+          chartSlot: 2,
+        ),
+      ),
+    ],
+  ),
   GallerySection(
     component: 'BalanceCard',
     figmaNodeId: '40:161',
@@ -167,6 +235,35 @@ final List<GallerySection> galleryCatalog = [
     variants: [
       for (final icon in MonetaIconName.values)
         GalleryVariant('icon/${icon.figmaName}', (_) => MonetaIcon(icon)),
+    ],
+  ),
+  GallerySection(
+    component: 'TransactionRow',
+    figmaNodeId: '29:70',
+    // Only the two directions the widget implements. Figma 29:70 also authors
+    // Transfer and Pending, which this codebase has no domain concept for yet —
+    // recorded in figma-map.md rather than faked with a placeholder here.
+    variants: [
+      GalleryVariant(
+        'Direction=Expense',
+        (_) => TransactionRow(
+          title: 'Highlands Coffee',
+          amount: const Money(45000, _vnd),
+          direction: TransactionDirection.expense,
+          category: SpendCategory.food,
+          occurredAt: DateTime.utc(2026, 8, 24, 2, 15),
+        ),
+      ),
+      GalleryVariant(
+        'Direction=Income',
+        (_) => TransactionRow(
+          title: 'Salary',
+          amount: _income,
+          direction: TransactionDirection.income,
+          category: SpendCategory.salary,
+          occurredAt: DateTime.utc(2026, 8, 24, 1),
+        ),
+      ),
     ],
   ),
 ];

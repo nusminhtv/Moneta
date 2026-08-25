@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 import 'package:moneta/design_system/atoms/moneta_icon.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
@@ -54,62 +55,101 @@ class OnboardingIllustration extends StatelessWidget {
   /// Opacity Figma applies to every accent dot.
   static const double accentDotOpacity = 0.5;
 
+  /// The hairline ring, for tests that assert the geometry.
+  static const Key ringKey = ValueKey('onboardingIllustration.ring');
+
+  /// The filled halo.
+  static const Key haloKey = ValueKey('onboardingIllustration.halo');
+
+  /// The centre glyph.
+  static const Key glyphKey = ValueKey('onboardingIllustration.glyph');
+
+  /// One accent dot, by its index in [accentDots].
+  static Key dotKey(int index) => ValueKey('onboardingIllustration.dot.$index');
+
   @override
   Widget build(BuildContext context) {
     final colors = context.moneta.colors;
     final base = colors.chart.base(chartSlot);
     final subtle = colors.chart.subtle(chartSlot);
 
-    return SizedBox(
-      height: bandHeight,
-      width: double.infinity,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Figma positions are absolute inside a 353-wide band. Scaling keeps
-          // them proportional on a narrower device rather than clipping.
-          final scale = constraints.maxWidth / designWidth;
-          double x(double v) => v * scale;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Figma positions are absolute inside a 353-wide band. Both axes scale
+        // by the same factor, so the ring, halo and glyph stay concentric on a
+        // narrower device. Scaling only `left` — which is what this did — left
+        // them concentric at exactly 353px and nowhere else: at 280 wide the
+        // glyph sat about 20px above the ring's centre.
+        //
+        // Never scaled up. Figma draws this at 353 inside a 393 screen; on a
+        // tablet a proportionally enormous halo is not what the design means, so
+        // it holds its authored size and centres instead.
+        final scale = math.min(1, constraints.maxWidth / designWidth);
+        double s(double v) => v * scale;
 
-          return Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Positioned(
-                left: x(45.5),
-                top: 3,
-                child: _Circle(
-                  diameter: x(ringSize),
-                  border: colors.borderSubtle,
-                ),
-              ),
-              Positioned(
-                left: x(70.5),
-                top: 28,
-                child: _Circle(diameter: x(haloSize), fill: subtle),
-              ),
-              Positioned(
-                left: x(140.5),
-                top: 98,
-                child: MonetaIcon(glyph, size: x(glyphSize), color: base),
-              ),
-              for (final dot in accentDots)
-                Positioned(
-                  left: x(dot.left),
-                  top: dot.top,
-                  child: Opacity(
-                    opacity: accentDotOpacity,
-                    child: _Circle(diameter: x(dot.size), fill: base),
+        return SizedBox(
+          height: s(bandHeight),
+          width: double.infinity,
+          child: Center(
+            child: SizedBox(
+              width: s(designWidth),
+              height: s(bandHeight),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    left: s(45.5),
+                    top: s(3),
+                    child: _Circle(
+                      key: ringKey,
+                      diameter: s(ringSize),
+                      border: colors.borderSubtle,
+                    ),
                   ),
-                ),
-            ],
-          );
-        },
-      ),
+                  Positioned(
+                    left: s(70.5),
+                    top: s(28),
+                    child: _Circle(
+                      key: haloKey,
+                      diameter: s(haloSize),
+                      fill: subtle,
+                    ),
+                  ),
+                  Positioned(
+                    left: s(140.5),
+                    top: s(98),
+                    child: MonetaIcon(
+                      glyph,
+                      key: glyphKey,
+                      size: s(glyphSize),
+                      color: base,
+                    ),
+                  ),
+                  for (final (index, dot) in accentDots.indexed)
+                    Positioned(
+                      left: s(dot.left),
+                      top: s(dot.top),
+                      child: Opacity(
+                        opacity: accentDotOpacity,
+                        child: _Circle(
+                          key: dotKey(index),
+                          diameter: s(dot.size),
+                          fill: base,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
 
 class _Circle extends StatelessWidget {
-  const _Circle({required this.diameter, this.fill, this.border});
+  const _Circle({required this.diameter, this.fill, this.border, super.key});
 
   final double diameter;
   final Color? fill;

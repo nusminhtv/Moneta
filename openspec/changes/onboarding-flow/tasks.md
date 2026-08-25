@@ -103,3 +103,81 @@
   have not been compared against `71:103` and `71:162` on a real device.
   A misnamed `onboarding-01-02-ios.png` was removed: it showed slide 1 only,
   while its name implied two slides.
+
+## 6. Remediation after pre-archive review
+
+The `change-verifier` agent returned **do-not-ship** on the first archive
+attempt, with five blocking findings. All five are fixed below. Each was verified
+independently before being acted on — the agent has been wrong before, and one of
+its own findings (a mutation it reported as caught) turned out to need a second
+look.
+
+- [x] 6.1 **A failed completion write no longer traps the user.**
+  `completeOnboardingProvider` awaited a store that throws when the database
+  cannot open, inside an async navigation callback — the exception escaped and
+  `context.go` never ran, so the last slide simply stopped responding. D5's
+  reasoning covered the read and was never extended to the write. The existing
+  test `a failed write does not crash the caller` closed the database while
+  keeping the store object, so `writeBool` returned `Err` and it passed; it read
+  as coverage of this case and was not. Verify: a new test overriding the store
+  provider to throw; removing the guard fails it.
+- [x] 6.2 **`OnboardingIllustration` geometry fixed, and given the test file it
+  never had.** Only horizontal positions were scaled, so ring, halo and glyph
+  were concentric at exactly 353px and nowhere else — about 20px apart at 280.
+  It also never scaled down its band height, and now never scales *up*, so a
+  tablet gets the authored illustration centred rather than a magnified one.
+  Its 100% line coverage came from the screen test rendering it in passing:
+  mutating it to ignore `chartSlot` entirely changed nothing anywhere.
+  Verify: `onboarding_illustration_test.dart`, 16 tests, concentricity asserted
+  at five widths. Three mutations caught (ignore `chartSlot`, shrink a dot,
+  unscale the glyph's top). My first version of the dot-size test compared the
+  rendered width to the same constant it was checking and could not fail —
+  rewritten against Figma's literals.
+- [x] 6.3 **Button foreground and label style now asserted on the rendered
+  widget.** Both went through the static lookup tables and never through the
+  widget. Repointing the label colour to `colors.income`, and collapsing `lg`'s
+  label style onto `sm`'s, each passed the entire suite. `tasks.md` 2.1 claimed
+  the 45-combination loop asserted "background, foreground and height"; it
+  asserted height and did-not-throw. Verify: the loop now reads the rendered
+  `Text`'s style; three mutations caught. Trailing-icon branch covered too — it
+  was the component's only unexecuted code.
+- [x] 6.4 **The gallery guard can now fail.** It asserted a hardcoded list of six
+  component names, so the requirement "renders every component in every variant"
+  was unenforceable: Button (45 variants), PaginationDots, OnboardingIllustration
+  and TransactionRow were all missing while it passed. Replaced with a scan of
+  `lib/design_system/{atoms,molecules,organisms}` for public widget classes.
+  `AmountSlot` is exempted with a stated reason; `MonetaIcon` maps to the `Icons`
+  section. All four components added — including TransactionRow, which predates
+  this change. Verify: deleting a section from the catalog fails the guard.
+- [x] 6.5 **Spec deltas written for the three capabilities that had none.**
+  The change modified `design-system/components`, `design-system/tokens` and
+  storage, and carried a delta only for `onboarding`. Archiving as it stood would
+  have shipped the 45-variant Button, PaginationDots, OnboardingIllustration,
+  schema v2 and `PreferencesStore` as behaviour with no requirement anywhere.
+  Also corrected two false statements now in the authoritative spec set: the
+  typography requirement said "exactly the eight" text styles while nine are
+  implemented — and the guard test had been edited from 8 to 9 in `973a0d0` to
+  make it pass, which is CLAUDE.md rule 5 and was not disclosed. The requirement
+  no longer states a count, because the count goes stale every time a screen is
+  built. And the `Transaction row` requirement asserted "Figma contains no
+  transaction row and no screen frames" — the twice-wrong claim, embedded in a
+  SHALL. Verify: `openspec validate onboarding-flow --strict`.
+- [x] 6.6 **Non-blocking findings cleared.** The frame-stability test asserted the
+  forward button's rect, but that button sits below an `Expanded` and cannot move
+  — collapsing the reserved Skip slot to height 0, the exact 44px jump the slot
+  prevents, passed it; now asserted on the `PageView` and the illustration.
+  `MonetaButton` was using the deprecated invented spacing scale, the risk
+  `design.md` named and left to review. `border-strong` and `body/lg` were used
+  in shipped UI for a whole change without a row in `figma-tokens.md`, whose own
+  first line requires one; a typography test comment claimed four missing styles
+  were recorded there and they were not. `figma-map.md` still carried the "no
+  screen frames" claim and still listed `text-secondary` as not observed. The
+  unused `readBoolOr` and its 20 lines of tests are gone. `design.md` named two
+  test files that do not exist. A new section lists every value in code with no
+  recorded Figma inspection, rather than implying all of them are transcriptions.
+
+**Not fixed, deliberately:** slides 2 and 3 still unverified on device (5.2);
+`_Spinner` is a static ring rather than an animation; no test at a surface size
+other than 393×852; `transaction_providers.dart` sits at 12.5% coverage after
+this change edited it; and the values listed in `figma-map.md` under "no recorded
+inspection" have not been re-read from Figma.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moneta/design_system/molecules/onboarding_illustration.dart';
 import 'package:moneta/design_system/molecules/pagination_dots.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/features/onboarding/domain/onboarding_slide.dart';
@@ -61,15 +62,38 @@ void main() {
       expect(find.byKey(OnboardingScreen.skipKey), findsNothing);
     });
 
-    testWidgets('the forward action keeps its place when Skip disappears', (
+    testWidgets('the frame does not shift when Skip disappears', (
       tester,
     ) async {
+      // Asserted on the PageView, not on the forward button. The button sits
+      // below an Expanded and so is pinned to the bottom — it cannot move
+      // whatever happens above it. That version of this test passed even with
+      // the reserved Skip slot collapsed to height 0, which is exactly the
+      // 44px jump the slot exists to prevent.
       await pumpOnboarding(tester);
-      final before = tester.getRect(find.byKey(OnboardingScreen.forwardKey));
+      final page = tester.getRect(find.byType(PageView));
+      final illustration = tester.getRect(
+        find.byType(OnboardingIllustration).first,
+      );
+
       await tapNext(tester);
       await tapNext(tester);
-      final after = tester.getRect(find.byKey(OnboardingScreen.forwardKey));
-      expect(after, before, reason: 'the frame must not shift between slides');
+
+      expect(
+        tester.getRect(find.byType(PageView)),
+        page,
+        reason: 'the slide area moved when Skip went away',
+      );
+      expect(
+        tester.getRect(find.byType(OnboardingIllustration).first).top,
+        illustration.top,
+        reason: 'the illustration jumped on the last slide',
+      );
+      // And the button still holds its place, which was the original claim.
+      expect(
+        tester.getRect(find.byKey(OnboardingScreen.forwardKey)).top,
+        greaterThan(page.bottom - 1),
+      );
     });
   });
 

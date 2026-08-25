@@ -6,11 +6,13 @@ import 'package:moneta/design_system/atoms/moneta_button.dart';
 import 'package:moneta/design_system/atoms/moneta_icon.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/tokens/colors.dart';
+import 'package:moneta/design_system/tokens/typography.dart';
 
 import '../../support/pump.dart';
 
 void main() {
   const colors = MonetaColors.dark();
+  final text = MonetaTypography.figma();
 
   Future<void> pumpButton(
     WidgetTester tester, {
@@ -21,6 +23,7 @@ void main() {
     VoidCallback? onPressed,
     bool expand = false,
     MonetaIconName? leading,
+    MonetaIconName? trailing,
   }) {
     return pumpMonetaWidget(
       tester,
@@ -34,10 +37,24 @@ void main() {
           onPressed: onPressed,
           expand: expand,
           leadingIcon: leading,
+          trailingIcon: trailing,
         ),
       ),
       surfaceSize: const Size(420, 300),
     );
+  }
+
+  /// The style actually applied to the rendered label.
+  ///
+  /// The foreground and label-style tests below went through
+  /// `MonetaButton.foregroundFor(...)` and `size.labelStyle(...)` — the pure
+  /// lookup tables — and never through the widget. Both tables were correct and
+  /// neither was wired to anything a test could see: swapping the label colour
+  /// for `colors.income`, and `lg`'s style from `titleMd` to `labelSm`, each
+  /// passed the whole suite. This reads the render tree instead.
+  TextStyle labelStyleOf(WidgetTester tester, {String label = 'Next'}) {
+    final text = tester.widget<Text>(find.text(label));
+    return text.style!;
   }
 
   BoxDecoration decorationOf(WidgetTester tester) {
@@ -70,6 +87,30 @@ void main() {
               tester.getSize(find.byType(MonetaButton)).height,
               size.height,
               reason: '${style.name}/${size.name}/${state.name} height',
+            );
+            // Background, foreground and label style asserted on the rendered
+            // widget, not on the lookup tables. tasks.md 2.1 claimed this loop
+            // already covered background and foreground; it covered neither.
+            final decoration = decorationOf(tester);
+            expect(
+              decoration.color,
+              MonetaButton.backgroundFor(style, state, colors),
+              reason: '${style.name}/${size.name}/${state.name} background',
+            );
+            final applied = labelStyleOf(tester);
+            expect(
+              applied.color,
+              MonetaButton.foregroundFor(style, state, colors),
+              reason: '${style.name}/${size.name}/${state.name} foreground',
+            );
+            expect(
+              (applied.fontSize, applied.fontWeight, applied.fontFamily),
+              (
+                size.labelStyle(text).fontSize,
+                size.labelStyle(text).fontWeight,
+                size.labelStyle(text).fontFamily,
+              ),
+              reason: '${style.name}/${size.name}/${state.name} label style',
             );
             built++;
           }
@@ -282,6 +323,37 @@ void main() {
       expect(icon.size, MonetaButtonSize.lg.iconSize);
     });
 
+    testWidgets('a trailing icon takes the icon size for that button size', (
+      tester,
+    ) async {
+      // This branch had no test at all and was the only uncovered code in the
+      // component.
+      await pumpButton(
+        tester,
+        size: MonetaButtonSize.sm,
+        trailing: MonetaIconName.chevronRight,
+      );
+      final icon = tester.widget<MonetaIcon>(find.byType(MonetaIcon));
+      expect(icon.size, MonetaButtonSize.sm.iconSize);
+    });
+
+    testWidgets('a leading and a trailing icon sit either side of the label', (
+      tester,
+    ) async {
+      await pumpButton(
+        tester,
+        leading: MonetaIconName.plus,
+        trailing: MonetaIconName.chevronRight,
+      );
+      final icons = tester.widgetList<MonetaIcon>(find.byType(MonetaIcon));
+      expect(icons, hasLength(2));
+      final label = tester.getRect(find.text('Next'));
+      final first = tester.getRect(find.byType(MonetaIcon).first);
+      final last = tester.getRect(find.byType(MonetaIcon).last);
+      expect(first.right, lessThanOrEqualTo(label.left));
+      expect(last.left, greaterThanOrEqualTo(label.right));
+    });
+
     testWidgets('expand fills the available width', (tester) async {
       await pumpButton(tester, expand: true);
       expect(tester.getSize(find.byType(MonetaButton)).width, 353);
@@ -301,6 +373,31 @@ void main() {
       await tester.tap(find.byType(MonetaButton));
       await tester.pump();
       expect(tester.takeException(), isNull);
+    });
+  });
+  group('label type scale', () {
+    test('the three sizes do not all share one label style', () {
+      // Figma authors lg with the title style and the smaller two with a label
+      // style. Collapsing the table onto a single style would go unnoticed
+      // otherwise — it was, until a mutation caught it.
+      final sm = MonetaButtonSize.sm.labelStyle(text);
+      final md = MonetaButtonSize.md.labelStyle(text);
+      final lg = MonetaButtonSize.lg.labelStyle(text);
+
+      expect(lg.fontSize, isNot(sm.fontSize));
+      expect(md.fontSize, sm.fontSize);
+      expect(lg.fontSize, 16, reason: 'lg is title/md at 16');
+      expect(sm.fontSize, 14, reason: 'sm and md are label/md at 14');
+    });
+
+    testWidgets('a lg button renders a visibly larger label than a sm one', (
+      tester,
+    ) async {
+      await pumpButton(tester, size: MonetaButtonSize.sm);
+      final small = labelStyleOf(tester).fontSize!;
+      await pumpButton(tester, size: MonetaButtonSize.lg);
+      final large = labelStyleOf(tester).fontSize!;
+      expect(large, greaterThan(small));
     });
   });
 }

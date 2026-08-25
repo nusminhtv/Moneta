@@ -59,7 +59,7 @@ lists what has not been. Nothing below should be read as "this is all there is".
 | --- | --- | --- | --- | --- |
 | StatusBar | `39:2` | — | | not started |
 | Button | `13:2` (Atoms) | 5 styles × 3 sizes × 3 states = 45 | `design_system/atoms/moneta_button.dart` | done |
-| PaginationDots | `70:223` | Active=1/2/3 | `design_system/molecules/pagination_dots.dart` | done |
+| PaginationDots | `70:223` | Active=1/2/3 | `design_system/molecules/pagination_dots.dart` | done — geometry (dot 7, active 22, gap 7) **not recorded against a node inspection**; see below |
 | OnboardingIllustration | `71:59` | themed per chart slot | `design_system/molecules/onboarding_illustration.dart` | done — drawn natively, all values are tokens |
 | AppBar | `39:112` | LargeTitle, TitleBack, TitleActions, Transparent | | not started |
 | BottomNav | `39:243` | Home, Transactions, Insights, Profile | `design_system/organisms/bottom_nav.dart` | done |
@@ -107,15 +107,36 @@ the `TextField`, `OtpField` and `Checkbox` sets, and an `AuthService` seam.
 
 ## Components with no Figma source
 
-Two components exist that Figma does not describe. They are listed separately so
-nobody mistakes them for transcriptions:
+One component exists that Figma does not describe:
 
-- **`TransactionRow`** — the file has no transaction row and no screen frames.
-  Its layout is a decision, scored against three alternatives in
-  [ADR 0003](../adr/0003-transaction-row-layout.md). When Figma gains a real row,
-  this is the thing to reconcile against it.
 - **`AmountSlot`** — purely internal layout machinery, introduced after the same
-  overflow defect appeared in two components. It has no visual identity of its own.
+  overflow defect appeared in two components. It has no visual identity of its own,
+  which is also why the gallery-completeness check exempts it by name.
+
+**`TransactionRow` was listed here and should not have been.** This said "the
+file has no transaction row and no screen frames". Both halves are false: node
+`29:70` is a transaction row with four variants, and `5:14` is twelve finished
+screens. [ADR 0003](../adr/0003-transaction-row-layout.md) scored three layout
+alternatives against a premise that did not hold, and is flagged accordingly.
+The implementation still diverges from `29:70` — disc 32 vs 40, height 56 vs ≥64,
+gutter 16 vs 20, no `· account` meta line, Transfer and Pending absent — and that
+reconciliation is outstanding, not done.
+
+## Values used in code with no recorded inspection
+
+These are implemented and asserted, but the assertions compare the code to
+literals in a test rather than to anything read from Figma and written down. That
+is the exact condition that produced the invented spacing scale — a plausible
+number, consistently applied, wrong.
+
+| Value | Where | Status |
+| --- | --- | --- |
+| `dotSize 7`, `activeDotWidth 22`, `gap 7` | `pagination_dots.dart` | no node inspection recorded |
+| Button paddings 14 / 20 / 24, icon sizes 16 / 20 / 24, heights 36 / 44 / 56 | `moneta_button.dart` | heights are quoted from `13:2`'s annotation in code; the paddings and icon sizes are not |
+| Illustration `bandHeight 268`, `haloSize 212`, `ringSize 262`, `glyphSize 72`, four dot positions | `onboarding_illustration.dart` | transcribed from the exported SVGs, not re-verified against `71:59` after the rewrite |
+
+Listing them is not the same as fixing them. Re-reading these nodes is
+outstanding work.
 
 ## Recorded deviations and resolved ambiguities
 
@@ -125,7 +146,7 @@ nobody mistakes them for transcriptions:
 | 2 | The proposal said 51 icons | The page holds **50**. Corrected in the proposal, spec and tasks rather than shipping a catalogue that quietly disagreed with the spec. |
 | 3 | `brand-google` carries four colours; every other icon is monochrome | `MonetaIconName.preservesColour` marks it, and `MonetaIcon` skips tinting for it. Tinting would flatten Google's mark into one colour. |
 | 4 | Chart *base* colours are not emitted as Figma variables | Read from each exported glyph's `stroke` and visually confirmed against a screenshot of `33:311`, since a light-mode export would have given plausible-but-wrong values. |
-| 5 | Figma has no `radius-sm`, `elevation/1`, `elevation/2` or `text-secondary` on any node read | Left unimplemented rather than invented. |
+| 5 | Figma has no `radius-sm`, `elevation/1` or `elevation/2` on any node read | Left unimplemented rather than invented. **`text-secondary` was wrongly on this list**: it is authored at `107:75` and is now implemented and used throughout the onboarding screens. The entry recorded a search that had not looked in the right place, in the same way the page listing was mistaken for the file. |
 | 6 | BalanceCard's two stats are `shrink-0` in Figma | Made flexible with single-line ellipsis. The authored copy fits, but real balances vary in width and an overflowing row is a rendering bug, not an overflow. |
 | 7 | BudgetCard's amount column is `shrink-0` in Figma, which overflows the head row once an amount is wide enough | Capped at 55% of the row width, single line, ellipsised. A plain `Flexible` would have split the row evenly and truncated the category name for nothing. |
 | 8 | BottomNav tab icons are 23px in Figma, while the icon canvas is 24px everywhere else | Kept at 23 — reproducing the file rather than tidying it. Exposed as `MonetaBottomNav.tabIconSize` and asserted, so it reads as deliberate. |

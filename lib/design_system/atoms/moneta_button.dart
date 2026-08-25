@@ -3,6 +3,7 @@ import 'package:moneta/design_system/atoms/moneta_icon.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/design_system/tokens/colors.dart';
+import 'package:moneta/design_system/tokens/spacing.dart';
 import 'package:moneta/design_system/tokens/typography.dart';
 
 /// Visual weight, from Figma node `13:2`.
@@ -199,7 +200,7 @@ class MonetaButton extends StatelessWidget {
       children: [
         if (leadingIcon != null) ...[
           MonetaIcon(leadingIcon!, size: size.iconSize, color: foreground),
-          SizedBox(width: theme.spacing.md),
+          const SizedBox(width: MonetaSpacing.spaceSm),
         ],
         Flexible(
           child: Opacity(
@@ -215,7 +216,7 @@ class MonetaButton extends StatelessWidget {
           ),
         ),
         if (trailingIcon != null) ...[
-          SizedBox(width: theme.spacing.md),
+          const SizedBox(width: MonetaSpacing.spaceSm),
           MonetaIcon(trailingIcon!, size: size.iconSize, color: foreground),
         ],
       ],
@@ -271,6 +272,10 @@ class _Spinner extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
+          // design-token-ignore: the ring's stroke weight. No border-width
+          // token exists — Figma authors 13:2's loading indicator as a 2px
+          // stroke and nothing else in the file uses a second value, so there
+          // is nothing to promote to the token layer yet.
           border: Border.all(color: color, width: 2),
         ),
       ),

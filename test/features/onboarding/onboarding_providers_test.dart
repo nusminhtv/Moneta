@@ -105,6 +105,25 @@ void main() {
       await database.close();
     });
 
+    test('a store that cannot be built does not trap the caller', () async {
+      // Distinct from the case below: there the store exists and its database is
+      // closed, so writeBool returns Err. Here the store cannot be built at all
+      // and preferencesStoreProvider throws. That escaped an async navigation
+      // callback and left the user on the last slide with nothing happening.
+      final c = ProviderContainer(
+        overrides: [
+          preferencesStoreProvider.overrideWith(
+            (ref) => throw StateError('cannot open'),
+          ),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      await expectLater(c.read(completeOnboardingProvider)(), completes);
+      // And the fallback still applies: unrecorded means show it again.
+      expect(await c.read(shouldShowOnboardingProvider.future), isTrue);
+    });
+
     test('a failed write does not crash the caller', () async {
       final c = await container(storeFails: true);
       await expectLater(c.read(completeOnboardingProvider)(), completes);

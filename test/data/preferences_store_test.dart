@@ -99,37 +99,6 @@ void main() {
       expect(read.valueOrNull, isNull);
       await database.close();
     });
-
-    test(
-      'readBoolOr supplies the caller fallback and writes nothing',
-      () async {
-        final (database, store) = await open();
-        final db = (await database.open()).valueOrNull!;
-
-        expect(
-          (await store.readBoolOr(
-            PreferenceKey.onboardingComplete,
-            orElse: true,
-          )).valueOrNull,
-          isTrue,
-        );
-        expect(await db.query(PreferencesStore.table), isEmpty);
-        await database.close();
-      },
-    );
-
-    test('a stored value beats the fallback', () async {
-      final (database, store) = await open();
-      await store.writeBool(PreferenceKey.onboardingComplete, value: false);
-      expect(
-        (await store.readBoolOr(
-          PreferenceKey.onboardingComplete,
-          orElse: true,
-        )).valueOrNull,
-        isFalse,
-      );
-      await database.close();
-    });
   });
 
   group('malformed values are failures, not defaults', () {
@@ -153,23 +122,6 @@ void main() {
         await database.close();
       });
     }
-
-    test('readBoolOr does not collapse a failure into the fallback', () async {
-      // Absence gets the fallback; corruption does not.
-      final (database, store) = await open();
-      final db = (await database.open()).valueOrNull!;
-      await db.insert(PreferencesStore.table, {
-        'key': PreferenceKey.onboardingComplete.storedName,
-        'value': 'maybe',
-      });
-
-      final read = await store.readBoolOr(
-        PreferenceKey.onboardingComplete,
-        orElse: false,
-      );
-      expect(read.isOk, isFalse);
-      await database.close();
-    });
   });
 
   group('failures are reported', () {

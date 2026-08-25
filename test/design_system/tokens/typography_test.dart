@@ -134,8 +134,16 @@ void main() {
 
   group('the scale as a whole', () {
     test('has the styles Figma defines that we have transcribed', () {
-      // Figma has 13; nine are implemented. The missing four are recorded in
-      // docs/design-system/figma-tokens.md rather than silently absent.
+      // Figma has 13; nine are implemented. This comment used to claim the
+      // missing four were recorded in docs/design-system/figma-tokens.md. They
+      // were not — and neither were two of the nine. That file now carries
+      // body/lg and border-strong, and says plainly that four styles are
+      // unimplemented and unlisted because no surface has needed them.
+      //
+      // The count itself: this was edited from 8 to 9 to make the suite pass
+      // when body/lg was added, while the requirement still said "exactly the
+      // eight". That is a gate moved to fit the code. The requirement no longer
+      // states a count; see the tokens spec delta in onboarding-flow.
       expect(type.all, hasLength(9));
     });
 
