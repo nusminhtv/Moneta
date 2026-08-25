@@ -45,10 +45,13 @@ Method note for anyone extending this map: **query nodes, do not enumerate pages
 | --- | --- | --- |
 | `🎨 Foundations / Iconography` | `5:7` | 50 icons (24×24, stroke weight 1.75, incl. `brand-google`, `brand-apple`) + sizing/colour/swapping rules |
 | `🧩 Components / Organisms` | `5:11` | 14 component sets, listed below |
+| `📱 01 Onboarding & Auth` | `5:14` | 12 screens, each with a sibling annotation frame |
+| `📊 02 Budgets` | `5:17` | 7 screens |
+| — | `29:70` | `TransactionRow`, 4 variants — a component the Organisms page does not list |
+| — | `107:75` | the real `space/*` variable collection, 12 values |
 
-**No screen frames are reachable from the three visible pages** — but the file
-contains 74 screens according to its own Cover. Screen layouts recorded as
-"decisions" in this project were decided without access to designs that exist.
+Only a fraction of the file has been inspected. The `📁 Screen Index` at `5:24`
+lists what has not been. Nothing below should be read as "this is all there is".
 
 ## Component sets in Figma
 
@@ -73,8 +76,24 @@ contains 74 screens according to its own Cover. Screen layouts recorded as
 | Banner | `42:329` | Warning, Danger, Info, Success | | not started |
 | BottomSheet | `59:211` | — | | not started |
 | Logo | `70:205` | — | | not started |
-| PaginationDots | `70:223` | 1, 2, 3 | | not started |
 | OtpField | `70:263` | Empty, Partial, Complete | | not started |
+
+## Screens implemented
+
+From `📱 01 Onboarding & Auth` (`5:14`). Copy, glyph and chart slot were
+transcribed from the frame, not invented; each slide's annotation frame was read
+first.
+
+| Screen | Node | Implementation | Status |
+| --- | --- | --- | --- |
+| Splash | `71:2` | `features/onboarding/presentation/splash_screen.dart` | done |
+| Onboarding 1 — "Every account in one place" | `71:37` | `onboarding_slide.dart` + `onboarding_screen.dart` | done |
+| Onboarding 2 — "Budgets that warn you early" | `71:103` | same | done |
+| Onboarding 3 — "Save for what matters" | `71:162` | same | done |
+
+The remaining eight screens on that page — sign-in, sign-up, forgot password, OTP,
+PIN set, PIN confirm, PIN unlock, biometric — are **not implemented**. They need
+the `TextField`, `OtpField` and `Checkbox` sets, and an `AuthService` seam.
 
 ## Foundations
 
@@ -129,6 +148,40 @@ second screenshot showed all of them. Checking before "fixing" avoided a change
 that would have made the code worse.
 
 ## Verified on device
+
+### The introduction shows once — `onboarding-flow`
+
+Three screenshots from an iPhone 16 Pro simulator (iOS 18.6), taken around a
+deliberate uninstall so the first launch was a genuine first run:
+
+| Screenshot | What it shows |
+| --- | --- |
+| `splash-ios.png` | `71:2` — the brand splash on a fresh install |
+| `onboarding-slide-1-ios.png` | `71:37` — slide 1, with Skip, the illustration, the indicator and `Next` |
+| `second-launch-home-ios.png` | the second launch going straight to Home, no introduction |
+
+The sequence, with what each step proved:
+
+1. `simctl uninstall` then install and launch. `PRAGMA user_version` on the app's
+   own SQLite file read **2**, and `sqlite_master` listed `settings` alongside
+   `transactions` — the real platform plugin applied migration v2, which the VM
+   test suite (`sqflite_common_ffi`) cannot demonstrate.
+2. `SELECT * FROM settings` returned **no rows** while the introduction was on
+   screen. Nothing is recorded before the user finishes.
+3. Wrote `onboarding_complete='true'` into that table externally, killed the
+   process and relaunched. It went to Home. The flag is read from durable storage
+   at startup, not from anything held in memory.
+
+**What these screenshots do not show:** slides 2 and 3 on device. Tap injection
+was unavailable on this machine — the native simulator integration needs
+`sudo xcode-select -s`, and the AppleScript fallback needs assistive access, and
+neither is something this session could grant itself. Slides 2 and 3 are covered
+by `onboarding_screen_test.dart` (the indicator following both taps and swipes,
+Skip disappearing on the last slide, the label becoming `Get started`) but their
+type and spacing have **not** been compared against `71:103` and `71:162` on a
+real device. Recording this rather than implying three verified slides.
+
+### Transactions list
 
 `docs/design-system/screenshots/transactions-ios.png` — the transactions list on
 an iPhone 16 Pro simulator (iOS 18.6), reading rows written directly into the
