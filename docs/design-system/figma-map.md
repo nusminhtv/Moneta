@@ -55,6 +55,9 @@ contains 74 screens according to its own Cover. Screen layouts recorded as
 | Component | Node | Variants | Widget | Status |
 | --- | --- | --- | --- | --- |
 | StatusBar | `39:2` | — | | not started |
+| Button | `13:2` (Atoms) | 5 styles × 3 sizes × 3 states = 45 | `design_system/atoms/moneta_button.dart` | done |
+| PaginationDots | `70:223` | Active=1/2/3 | `design_system/molecules/pagination_dots.dart` | done |
+| OnboardingIllustration | `71:59` | themed per chart slot | `design_system/molecules/onboarding_illustration.dart` | done — drawn natively, all values are tokens |
 | AppBar | `39:112` | LargeTitle, TitleBack, TitleActions, Transparent | | not started |
 | BottomNav | `39:243` | Home, Transactions, Insights, Profile | `design_system/organisms/bottom_nav.dart` | done |
 | BalanceCard | `40:161` | Default, Masked (`40:137`) | `design_system/organisms/balance_card.dart` | done |

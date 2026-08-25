@@ -25,6 +25,29 @@ void main() {
       expect(colors.textOnBrand, const Color(0xFFFFFFFF));
     });
 
+    test('secondary text is the value read from 107:75', () {
+      expect(colors.textSecondary, const Color(0xFF9AA3B4));
+    });
+
+    test('the three text tones are ordered by prominence', () {
+      // primary brightest, tertiary dimmest — a reader should be able to tell
+      // which is which without looking up the hex.
+      expect(
+        colors.textPrimary.computeLuminance(),
+        greaterThan(colors.textSecondary.computeLuminance()),
+      );
+      expect(
+        colors.textSecondary.computeLuminance(),
+        greaterThan(colors.textTertiary.computeLuminance()),
+      );
+    });
+
+    test('strong border is white at 18%, and stronger than subtle', () {
+      expect(colors.borderStrong.r, 1.0);
+      expect(colors.borderStrong.a, closeTo(0.18, 0.003));
+      expect(colors.borderStrong.a, greaterThan(colors.borderSubtle.a));
+    });
+
     test('subtle border is white at 6% opacity', () {
       expect(colors.borderSubtle.r, 1.0);
       expect(colors.borderSubtle.g, 1.0);
@@ -198,7 +221,9 @@ void main() {
         surfaceRaised: white,
         track: white,
         borderSubtle: white,
+        borderStrong: white,
         textPrimary: white,
+        textSecondary: white,
         textTertiary: white,
         textOnBrand: white,
         brand: white,

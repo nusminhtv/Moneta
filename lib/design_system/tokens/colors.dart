@@ -95,7 +95,9 @@ final class MonetaColors {
     required this.surfaceRaised,
     required this.track,
     required this.borderSubtle,
+    required this.borderStrong,
     required this.textPrimary,
+    required this.textSecondary,
     required this.textTertiary,
     required this.textOnBrand,
     required this.brand,
@@ -119,7 +121,10 @@ final class MonetaColors {
       track = const Color(0xFF232935),
       // Figma: rgba(255,255,255,0.06). 0.06 × 255 = 15.3 → 0x0F.
       borderSubtle = const Color(0x0FFFFFFF),
+      // Figma: rgba(255,255,255,0.18). 0.18 × 255 = 45.9 → 0x2E.
+      borderStrong = const Color(0x2EFFFFFF),
       textPrimary = const Color(0xFFF6F8FB),
+      textSecondary = const Color(0xFF9AA3B4),
       textTertiary = const Color(0xFF7C8595),
       textOnBrand = const Color(0xFFFFFFFF),
       brand = violet500,
@@ -194,8 +199,14 @@ final class MonetaColors {
   /// Hairline border on surfaces.
   final Color borderSubtle;
 
+  /// Stronger border — inactive pagination dots, dividers that must be seen.
+  final Color borderStrong;
+
   /// Primary body and heading text.
   final Color textPrimary;
+
+  /// Secondary body copy — one step down from primary, above tertiary.
+  final Color textSecondary;
 
   /// De-emphasised text and inactive icons.
   final Color textTertiary;
@@ -244,7 +255,9 @@ final class MonetaColors {
       surfaceRaised: Color.lerp(surfaceRaised, other.surfaceRaised, t)!,
       track: Color.lerp(track, other.track, t)!,
       borderSubtle: Color.lerp(borderSubtle, other.borderSubtle, t)!,
+      borderStrong: Color.lerp(borderStrong, other.borderStrong, t)!,
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
+      textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
       textTertiary: Color.lerp(textTertiary, other.textTertiary, t)!,
       textOnBrand: Color.lerp(textOnBrand, other.textOnBrand, t)!,
       brand: Color.lerp(brand, other.brand, t)!,

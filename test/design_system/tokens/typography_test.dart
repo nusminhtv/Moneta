@@ -81,6 +81,16 @@ void main() {
       );
     });
 
+    test('body-lg is 16/24 regular', () {
+      expectStyle(
+        type.bodyLg,
+        family: 'Inter',
+        weight: FontWeight.w400,
+        size: 16,
+        lineHeightPx: 24,
+      );
+    });
+
     test('body-md is 14/20 regular', () {
       expectStyle(
         type.bodyMd,
@@ -123,8 +133,10 @@ void main() {
   });
 
   group('the scale as a whole', () {
-    test('has exactly the eight styles Figma defines', () {
-      expect(type.all, hasLength(8));
+    test('has the styles Figma defines that we have transcribed', () {
+      // Figma has 13; nine are implemented. The missing four are recorded in
+      // docs/design-system/figma-tokens.md rather than silently absent.
+      expect(type.all, hasLength(9));
     });
 
     test('uses only the two declared families', () {
@@ -161,6 +173,7 @@ void main() {
       expect(type.headingH1.fontSize! > type.amountMd.fontSize!, isTrue);
       expect(type.amountMd.fontSize! > type.titleMd.fontSize!, isTrue);
       expect(type.titleMd.fontSize! > type.labelSm.fontSize!, isTrue);
+      expect(type.bodyLg.fontSize! > type.bodyMd.fontSize!, isTrue);
     });
   });
 
@@ -171,6 +184,7 @@ void main() {
         amountMd: TextStyle(fontSize: 10),
         headingH1: TextStyle(fontSize: 10),
         titleMd: TextStyle(fontSize: 10),
+        bodyLg: TextStyle(fontSize: 10),
         bodyMd: TextStyle(fontSize: 10),
         labelMd: TextStyle(fontSize: 10),
         labelSm: TextStyle(fontSize: 10),

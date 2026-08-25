@@ -24,6 +24,7 @@ final class MonetaTypography {
     required this.amountMd,
     required this.headingH1,
     required this.titleMd,
+    required this.bodyLg,
     required this.bodyMd,
     required this.labelMd,
     required this.labelSm,
@@ -57,6 +58,12 @@ final class MonetaTypography {
         weight: FontWeight.w600,
         size: 16,
         lineHeightPx: 22,
+      ),
+      bodyLg = _style(
+        family: MonetaFontFamily.text,
+        weight: FontWeight.w400,
+        size: 16,
+        lineHeightPx: 24,
       ),
       bodyMd = _style(
         family: MonetaFontFamily.text,
@@ -95,6 +102,9 @@ final class MonetaTypography {
   /// `title/md` — card and section titles.
   final TextStyle titleMd;
 
+  /// `body/lg` — prominent running text, e.g. onboarding body copy.
+  final TextStyle bodyLg;
+
   /// `body/md` — running text.
   final TextStyle bodyMd;
 
@@ -113,6 +123,7 @@ final class MonetaTypography {
     amountMd,
     headingH1,
     titleMd,
+    bodyLg,
     bodyMd,
     labelMd,
     labelSm,
@@ -145,6 +156,7 @@ final class MonetaTypography {
       amountMd: TextStyle.lerp(amountMd, other.amountMd, t)!,
       headingH1: TextStyle.lerp(headingH1, other.headingH1, t)!,
       titleMd: TextStyle.lerp(titleMd, other.titleMd, t)!,
+      bodyLg: TextStyle.lerp(bodyLg, other.bodyLg, t)!,
       bodyMd: TextStyle.lerp(bodyMd, other.bodyMd, t)!,
       labelMd: TextStyle.lerp(labelMd, other.labelMd, t)!,
       labelSm: TextStyle.lerp(labelSm, other.labelSm, t)!,

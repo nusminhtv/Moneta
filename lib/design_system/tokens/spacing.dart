@@ -2,14 +2,19 @@ import 'package:meta/meta.dart';
 
 /// The spacing scale.
 ///
-/// **Not read from a Figma variable collection.** No named spacing variables
-/// appear in any node this project has read; padding and gap values are literal
-/// in the components. The steps below are the distinct observed values, in
-/// ascending order, with the node each was seen in recorded in
-/// docs/design-system/figma-tokens.md.
+/// **Two scales live here, deliberately and temporarily.**
 ///
-/// If a spacing variable collection turns up in the file, this scale should be
-/// replaced by it rather than extended.
+/// The Figma set — [space0] through [space5xl] — is read from the real variable
+/// collection at node `107:75` and is the only one new code may use.
+///
+/// The older set — [xxs] through [x6l] — was reverse-engineered from literal gaps
+/// in component nodes before the collection was found. Its names are bound to the
+/// wrong values: `sm` is 6 where Figma's `space/sm` is 8, `lg` is 10 where
+/// Figma's is 20. Four of its steps (6, 10, 14, 28) are not in the collection at
+/// all. It stays only so existing widgets keep compiling; each member names its
+/// replacement. Migrating them is a follow-up change.
+///
+/// See docs/design-system/figma-tokens.md for the full comparison.
 @immutable
 final class MonetaSpacing {
   /// Creates a spacing scale from explicit steps.
@@ -41,40 +46,100 @@ final class MonetaSpacing {
       x5l = 24,
       x6l = 28;
 
-  /// 2 — tightest gap, between a title and its note.
+  /// 2 — tightest gap. **Deprecated:** use [space2xs] (also 2).
   final double xxs;
 
-  /// 4 — icon-to-label gap in a nav tab.
+  /// 4 — icon-to-label gap. **Deprecated:** use [spaceXs] (also 4).
   final double xs;
 
-  /// 6 — gap between rows inside a card.
+  /// 6. **Deprecated and wrong:** Figma's `space/sm` is 8 ([spaceSm]). 6 is not
+  /// in the spacing collection at all — it is `radius-xs`.
   final double sm;
 
-  /// 8 — nav tab row padding.
+  /// 8. **Deprecated and wrong:** this is Figma's `space/sm` ([spaceSm]).
+  /// Figma's `space/md` is 12 ([spaceMd]).
   final double md;
 
-  /// 10 — card content gap; progress bar height.
+  /// 10. **Deprecated and wrong:** Figma's `space/lg` is 20 ([spaceLg]). 10 is
+  /// not in the spacing collection — it is `radius-sm`.
   final double lg;
 
-  /// 12 — card head gap; banner vertical padding.
+  /// 12. **Deprecated and wrong:** this is Figma's `space/md` ([spaceMd]).
+  /// Figma's `space/xl` is 24 ([spaceXl]).
   final double xl;
 
-  /// 14 — banner horizontal padding.
+  /// 14. **Deprecated and wrong:** not in the spacing collection — it is
+  /// `radius-md`.
   final double xxl;
 
-  /// 16 — card padding.
+  /// 16 — card padding. **Deprecated:** use [spaceBase] (also 16).
   final double x3l;
 
-  /// 20 — hero card padding; stats gap.
+  /// 20 — screen gutter. **Deprecated:** use [spaceLg] (also 20).
   final double x4l;
 
-  /// 24 — app bar trailing padding.
+  /// 24. **Deprecated:** use [spaceXl] (also 24).
   final double x5l;
 
-  /// 28 — status bar leading padding.
+  /// 28. **Deprecated and wrong:** not in the spacing collection.
   final double x6l;
 
-  /// Every step, ascending. Used by tests and the gallery.
+  // ── Figma's real collection, node 107:75 ──────────────────────────────
+  // Names and values exactly as authored, with Figma's stated purpose.
+
+  /// 0 — reset only.
+  static const double space0 = 0;
+
+  /// 2 — icon to label inside a chip.
+  static const double space2xs = 2;
+
+  /// 4 — label to value in a stat tile.
+  static const double spaceXs = 4;
+
+  /// 8 — between rows in a dense list.
+  static const double spaceSm = 8;
+
+  /// 12 — default vertical rhythm on a screen.
+  static const double spaceMd = 12;
+
+  /// 16 — card inner padding.
+  static const double spaceBase = 16;
+
+  /// 20 — screen horizontal gutter.
+  static const double spaceLg = 20;
+
+  /// 24 — between sections.
+  static const double spaceXl = 24;
+
+  /// 32 — above a section header.
+  static const double space2xl = 32;
+
+  /// 40 — hero block padding.
+  static const double space3xl = 40;
+
+  /// 48 — empty-state breathing room.
+  static const double space4xl = 48;
+
+  /// 64 — full-screen state centring.
+  static const double space5xl = 64;
+
+  /// Figma's collection in ascending order, for tests and the gallery.
+  static const List<double> figmaScale = [
+    space0,
+    space2xs,
+    spaceXs,
+    spaceSm,
+    spaceMd,
+    spaceBase,
+    spaceLg,
+    spaceXl,
+    space2xl,
+    space3xl,
+    space4xl,
+    space5xl,
+  ];
+
+  /// Every step of the **deprecated** scale, ascending.
   List<double> get all => [
     xxs,
     xs,
