@@ -10,6 +10,8 @@ void main() {
     const radii = MonetaRadii.figma();
 
     test('match the Figma set', () {
+      expect(radii.xs, 6);
+      expect(radii.sm, 10);
       expect(radii.md, 14);
       expect(radii.lg, 18);
       expect(radii.xl, 24);
@@ -17,12 +19,16 @@ void main() {
     });
 
     test('ascend, so a larger name is never a smaller radius', () {
+      expect(radii.xs < radii.sm, isTrue);
+      expect(radii.sm < radii.md, isTrue);
       expect(radii.md < radii.lg, isTrue);
       expect(radii.lg < radii.xl, isTrue);
       expect(radii.xl < radii.pill, isTrue);
     });
 
     test('expose BorderRadius helpers with the same values', () {
+      expect(radii.borderXs, BorderRadius.circular(6));
+      expect(radii.borderSm, BorderRadius.circular(10));
       expect(radii.borderMd, BorderRadius.circular(14));
       expect(radii.borderLg, BorderRadius.circular(18));
       expect(radii.borderXl, BorderRadius.circular(24));

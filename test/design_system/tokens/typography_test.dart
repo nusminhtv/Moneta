@@ -144,7 +144,12 @@ void main() {
       // when body/lg was added, while the requirement still said "exactly the
       // eight". That is a gate moved to fit the code. The requirement no longer
       // states a count; see the tokens spec delta in onboarding-flow.
-      expect(type.all, hasLength(10));
+      //
+      // Raised to 11 by budget-components, which transcribed heading/h2 from
+      // `36:76`. That is a real style with a real node and a row in
+      // figma-tokens.md, not a number moved to make a suite pass — the
+      // difference being that the provenance test would reject it otherwise.
+      expect(type.all, hasLength(11));
     });
 
     test('uses only the two declared families', () {
@@ -185,12 +190,33 @@ void main() {
     });
   });
 
+  group('heading/h2, from 36:76', () {
+    test('transcribes the Figma definition', () {
+      // Transcription, not a tautology: this is the one layer where checking
+      // the value against the design file is the whole point.
+      final h2 = MonetaTypography.figma().headingH2;
+      expect(h2.fontFamily, MonetaFontFamily.display);
+      expect(h2.fontWeight, FontWeight.w600);
+      expect(h2.fontSize, 22);
+      expect(h2.height, closeTo(28 / 22, 1e-9));
+      // Figma authors -0.5% of 22px; the emitted CSS says -0.11px.
+      expect(h2.letterSpacing, closeTo(-0.11, 1e-9));
+    });
+
+    test('is not a copy of h1 or h3', () {
+      final t = MonetaTypography.figma();
+      expect(t.headingH2.fontSize, isNot(t.headingH1.fontSize));
+      expect(t.headingH2.fontSize, isNot(t.headingH3.fontSize));
+    });
+  });
+
   group('lerp', () {
     test('reaches the target at t=1', () {
       const target = MonetaTypography(
         amountXl: TextStyle(fontSize: 10),
         amountMd: TextStyle(fontSize: 10),
         headingH1: TextStyle(fontSize: 10),
+        headingH2: TextStyle(fontSize: 10),
         headingH3: TextStyle(fontSize: 10),
         titleMd: TextStyle(fontSize: 10),
         bodyLg: TextStyle(fontSize: 10),

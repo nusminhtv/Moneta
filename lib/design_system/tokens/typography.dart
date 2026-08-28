@@ -23,6 +23,7 @@ final class MonetaTypography {
     required this.amountXl,
     required this.amountMd,
     required this.headingH1,
+    required this.headingH2,
     required this.headingH3,
     required this.titleMd,
     required this.bodyLg,
@@ -53,6 +54,13 @@ final class MonetaTypography {
         size: 28,
         lineHeightPx: 34,
         trackingPercent: -1,
+      ),
+      headingH2 = _style(
+        family: MonetaFontFamily.display,
+        weight: FontWeight.w600,
+        size: 22,
+        lineHeightPx: 28,
+        trackingPercent: -0.5,
       ),
       headingH3 = _style(
         family: MonetaFontFamily.display,
@@ -106,6 +114,9 @@ final class MonetaTypography {
   /// `heading/h1` — large screen titles.
   final TextStyle headingH1;
 
+  /// `heading/h2` — the currency glyph beside a hero amount, from `36:76`.
+  final TextStyle headingH2;
+
   /// Level-3 heading. The compact app-bar title, from `39:58`.
   final TextStyle headingH3;
 
@@ -132,6 +143,7 @@ final class MonetaTypography {
     amountXl,
     amountMd,
     headingH1,
+    headingH2,
     headingH3,
     titleMd,
     bodyLg,
@@ -166,6 +178,7 @@ final class MonetaTypography {
       amountXl: TextStyle.lerp(amountXl, other.amountXl, t)!,
       amountMd: TextStyle.lerp(amountMd, other.amountMd, t)!,
       headingH1: TextStyle.lerp(headingH1, other.headingH1, t)!,
+      headingH2: TextStyle.lerp(headingH2, other.headingH2, t)!,
       headingH3: TextStyle.lerp(headingH3, other.headingH3, t)!,
       titleMd: TextStyle.lerp(titleMd, other.titleMd, t)!,
       bodyLg: TextStyle.lerp(bodyLg, other.bodyLg, t)!,

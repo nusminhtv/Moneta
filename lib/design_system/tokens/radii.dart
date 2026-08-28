@@ -3,14 +3,18 @@ import 'package:meta/meta.dart';
 
 /// Corner radii from Figma.
 ///
-/// `radius-sm` is deliberately absent: it does not appear in any node read, and
-/// inventing it would put a value in the design system that the design file has
-/// never seen.
+/// `radius-sm` was documented here as deliberately absent — "it does not appear
+/// in any node read" — which was true of the nodes read at the time: the balance
+/// card, the banner and the checkbox. Reading `36:167` for the segmented control
+/// found it bound there, so the value is now transcribed rather than invented.
+/// The note stays because the reasoning is still right: a radius with no node
+/// behind it does not belong in this file.
 @immutable
 final class MonetaRadii {
   /// Creates a radius set from explicit values.
   const MonetaRadii({
     required this.xs,
+    required this.sm,
     required this.md,
     required this.lg,
     required this.xl,
@@ -18,10 +22,19 @@ final class MonetaRadii {
   });
 
   /// The radii read from Figma.
-  const MonetaRadii.figma() : xs = 6, md = 14, lg = 18, xl = 24, pill = 999;
+  const MonetaRadii.figma()
+    : xs = 6,
+      sm = 10,
+      md = 14,
+      lg = 18,
+      xl = 24,
+      pill = 999;
 
   /// 6 — the checkbox box. Verified at `107:79`.
   final double xs;
+
+  /// 10 — the segment of a segmented control. Verified at `36:167`.
+  final double sm;
 
   /// 14 — banners and inline notices.
   final double md;
@@ -37,6 +50,9 @@ final class MonetaRadii {
 
   /// [xs] as a [BorderRadius].
   BorderRadius get borderXs => BorderRadius.circular(xs);
+
+  /// [sm] as a [BorderRadius].
+  BorderRadius get borderSm => BorderRadius.circular(sm);
 
   /// [md] as a [BorderRadius].
   BorderRadius get borderMd => BorderRadius.circular(md);

@@ -117,10 +117,11 @@ Two families: **Inter** (text) and **Plus Jakarta Sans** (display/headings).
 | `label/md` | Inter | 500 | 14 | 18 | 0 | `40:161`, `39:8` |
 | `label/sm` | Inter | 500 | 12 | 16 | 0 | `39:243` |
 | `caption/md` | Inter | 400 | 12 | 16 | 0 | `40:161`, `40:256` |
+| `heading/h2` | Plus Jakarta Sans | 600 | 22 | 28 | −0.5% → −0.11 | `36:76` AmountInput currency glyph |
 | `heading/h3` | Plus Jakarta Sans | 600 | 18 | 24 | 0 | `39:58` AppBar TitleActions |
 | `body/lg` | Inter | 400 | 16 | 24 | 0 | `71:37`, `71:103`, `71:162` slide bodies; `71:2` splash tagline |
 
-Nine styles are implemented of the thirteen Figma defines. The four not
+Ten styles are implemented of the thirteen Figma defines. The three not
 implemented are not listed above because no surface has needed them; adding one
 means adding its row here first. `border-strong` and `body/lg` were both used in
 shipped UI for a whole change before either appeared in this table — the file's
@@ -148,7 +149,7 @@ both styles visibly too tight.
 | `radius-xl` | 24 | `40:161` BalanceCard |
 | `radius-pill` | 999 | `21:139`, `33:311`, `39:243` |
 | `radius-xs` | 6 | verified `107:79` (`rounded-[var(--radius-xs,6px)]`) |
-| `radius-sm` | *reported as 10, not yet verified by us* | — |
+| `radius-sm` | 10 | `36:167` SegmentedItem, both variants — verified 2026-08-28. Carried here as *"reported as 10, not yet verified by us"* until then. |
 
 ## Elevation and effects
 
