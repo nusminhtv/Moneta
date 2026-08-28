@@ -27,19 +27,19 @@
 
 ## 4. StatTile — `35:137`
 
-- [ ] 4.1 `lib/design_system/molecules/stat_tile.dart`: 3 directions, takes
+- [x] 4.1 `lib/design_system/molecules/stat_tile.dart`: 3 directions, takes
       `Money`, arrow **and** colour.
-- [ ] 4.2 Tests: each direction's arrow and colour, a mutation removing the
+- [x] 4.2 Tests: each direction's arrow and colour, a mutation removing the
       arrow fails, two tiles fit 353 with a 12 gap, long value does not clip.
-- [ ] 4.3 Gallery: 3 variants.
+- [x] 4.3 Gallery: 3 variants.
 
 ## 5. AmountInput — `36:76`
 
-- [ ] 5.1 `lib/design_system/molecules/amount_input.dart`: both states, tabular
+- [x] 5.1 `lib/design_system/molecules/amount_input.dart`: both states, tabular
       figures, error requires a message by type, caret excluded from semantics.
-- [ ] 5.2 Tests: error carries a message, width stable across digit changes,
+- [x] 5.2 Tests: error carries a message, width stable across digit changes,
       currency glyph per `Money`, caret absent from the semantics tree.
-- [ ] 5.3 Gallery: 2 variants.
+- [x] 5.3 Gallery: 2 variants.
 
 ## 6. Record what was found
 

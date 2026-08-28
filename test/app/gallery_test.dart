@@ -534,6 +534,20 @@ void main() {
     });
   });
 
+  group('StatTile and AmountInput are registered in full', () {
+    test('all three directions of 35:137 and both states of 36:76', () {
+      final tile = galleryCatalog.singleWhere((s) => s.component == 'StatTile');
+      expect(tile.figmaNodeId, '35:137');
+      expect(tile.variants, hasLength(3));
+
+      final input = galleryCatalog.singleWhere(
+        (s) => s.component == 'AmountInput',
+      );
+      expect(input.figmaNodeId, '36:76');
+      expect(input.variants, hasLength(2));
+    });
+  });
+
   group('SegmentedItem is registered in full', () {
     test('both variants of 36:167 are present', () {
       final section = galleryCatalog.singleWhere(

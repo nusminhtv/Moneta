@@ -108,6 +108,17 @@ final class Money extends Equatable implements Comparable<Money> {
     return text;
   }
 
+  /// The grouped digits alone, with no currency symbol — `1,250,000`.
+  ///
+  /// The hero amount entry on `36:76` draws the digits and the currency glyph
+  /// as two separate pieces of type, at different sizes and colours. Slicing the
+  /// symbol off [format]'s output would break on any locale that puts it last,
+  /// or uses a non-breaking space, so the number is formatted without one.
+  String digits({String? locale}) => NumberFormat.decimalPatternDigits(
+    locale: locale ?? currency.defaultLocale,
+    decimalDigits: currency.decimals,
+  ).format(minorUnits / currency.scale);
+
   @override
   List<Object?> get props => [minorUnits, currency];
 

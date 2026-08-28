@@ -1,6 +1,9 @@
 import 'package:moneta/app/gallery/gallery_catalog.dart';
+import 'package:moneta/core/money.dart';
 import 'package:moneta/design_system/atoms/moneta_circular_progress.dart';
+import 'package:moneta/design_system/molecules/amount_input.dart';
 import 'package:moneta/design_system/molecules/moneta_segmented_control.dart';
+import 'package:moneta/design_system/molecules/stat_tile.dart';
 
 /// Gallery sections for 📱 04 Budgets.
 ///
@@ -55,6 +58,62 @@ final List<GallerySection> budgetSections = [
         (_) => MonetaSegmentedControl(
           labels: const ['Weekly', 'Monthly', 'Yearly'],
           selectedIndex: 1,
+        ),
+      ),
+    ],
+  ),
+  GallerySection(
+    component: 'StatTile',
+    figmaNodeId: '35:137',
+    variants: [
+      GalleryVariant(
+        'Direction=Up',
+        (_) => const StatTile(
+          label: 'Spent this month',
+          value: Money(12480000, Currency.vnd),
+          delta: StatDelta.up,
+          deltaLabel: '+12.4% vs last month',
+        ),
+      ),
+      GalleryVariant(
+        'Direction=Down',
+        (_) => const StatTile(
+          label: 'Spent this month',
+          value: Money(9120000, Currency.vnd),
+          delta: StatDelta.down,
+          deltaLabel: '-8.2% vs last month',
+        ),
+      ),
+      GalleryVariant(
+        'Direction=Flat',
+        (_) => const StatTile(
+          label: 'Spent this month',
+          value: Money(10400000, Currency.vnd),
+          delta: StatDelta.flat,
+          deltaLabel: 'Level with last month',
+        ),
+      ),
+    ],
+  ),
+  GallerySection(
+    component: 'AmountInput',
+    figmaNodeId: '36:76',
+    variants: [
+      GalleryVariant(
+        'State=Default',
+        (_) => const AmountInput(
+          amount: Money(620000, Currency.vnd),
+          helper: 'Tap a category below to continue',
+        ),
+      ),
+      GalleryVariant(
+        'State=Error',
+        (_) => const AmountInput.error(
+          amount: Money(620000, Currency.vnd),
+          // Figma leaves both variants sharing one merged helper string,
+          // because Amount / Currency / Helper are TEXT properties. Its own
+          // description says to set the real message per instance.
+          message: 'That is more than this budget has left',
         ),
       ),
     ],

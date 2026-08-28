@@ -154,4 +154,44 @@ void main() {
       expect(Currency.fromCode('XXX'), Currency.vnd);
     });
   });
+
+  group('digits, for the hero amount entry', () {
+    test('groups without a currency symbol', () {
+      // VND's default locale is vi_VN, which groups with dots. Figma draws
+      // "620,000" because the design file is written in English; the app is
+      // not, and the number follows the money's locale rather than the mockup.
+      const m = Money(1250000, Currency.vnd);
+      expect(m.digits(), '1.250.000');
+      expect(m.digits(), isNot(contains(Currency.vnd.symbol)));
+    });
+
+    test('respects the currency decimals', () {
+      // VND has none, USD has two. A shared "strip the symbol off format()"
+      // would get one of these wrong.
+      expect(const Money(1234, Currency.usd).digits(), '12.34');
+      expect(const Money(1234, Currency.vnd).digits(), '1.234');
+    });
+
+    test('zero and negative render', () {
+      expect(const Money(0, Currency.vnd).digits(), '0');
+      expect(const Money(-45000, Currency.vnd).digits(), contains('45.000'));
+    });
+
+    test('a very large amount groups all the way up', () {
+      expect(
+        const Money(999999999999999, Currency.vnd).digits(),
+        '999.999.999.999.999',
+      );
+    });
+
+    test('an explicit locale changes the grouping', () {
+      // The point of not slicing the symbol off format(): grouping and symbol
+      // placement are locale-dependent and move independently.
+      final grouped = const Money(
+        1250000,
+        Currency.vnd,
+      ).digits(locale: 'en_US');
+      expect(grouped, '1,250,000');
+    });
+  });
 }

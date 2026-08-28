@@ -1,7 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:moneta/design_system/atoms/moneta_circular_progress.dart';
+import 'package:moneta/design_system/molecules/amount_input.dart';
 import 'package:moneta/design_system/molecules/budget_status.dart';
 import 'package:moneta/design_system/molecules/moneta_segmented_control.dart';
+import 'package:moneta/design_system/molecules/stat_tile.dart';
 
 /// Describes gallery variants for 📱 04 Budgets.
 ///
@@ -23,6 +25,10 @@ String? describeBudgets(Widget widget) => switch (widget) {
     'SegmentedItem($selected,$label)',
   MonetaSegmentedControl(:final labels, :final selectedIndex) =>
     'SegmentedControl(default,${labels.join("|")},$selectedIndex)',
+  StatTile(:final delta, :final label, :final deltaLabel) =>
+    'StatTile(${delta.name},$label,$deltaLabel)',
+  AmountInput(:final hasError, :final amount) =>
+    'AmountInput(${hasError ? "error" : "default"},${amount.digits()})',
   _ => null,
 };
 
