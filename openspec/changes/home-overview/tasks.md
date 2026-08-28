@@ -24,7 +24,7 @@
 
 ## 3. Home-Only Components
 
-- [ ] 3.1 Implement `DateGroupHeader` (`29:71`) and register its single variant.
+- [x] 3.1 Implement `DateGroupHeader` (`29:71`) and register its single variant.
   Verify: `test/design_system/molecules/date_group_header_test.dart`.
 - [ ] 3.2 Implement `EmptyState` (`35:166`) with `HasAction=true` and
   `HasAction=false`. Register both variants. Verify:

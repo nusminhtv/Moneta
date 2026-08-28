@@ -1,5 +1,6 @@
 import 'package:moneta/app/gallery/gallery_catalog.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
+import 'package:moneta/design_system/molecules/date_group_header.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/molecules/section_header.dart';
 
@@ -13,6 +14,18 @@ import 'package:moneta/design_system/molecules/section_header.dart';
 /// registered here, in every variant Figma authors.
 final List<GallerySection> homeSections = [
   // --- HOME: add below ---
+  GallerySection(
+    component: 'DateGroupHeader',
+    figmaNodeId: '29:71',
+    variants: [
+      GalleryVariant(
+        'Variant=Default',
+        (_) => DateGroupHeader(
+          date: DateTime.utc(2026, DateTime.august, 28, 17),
+        ),
+      ),
+    ],
+  ),
   GallerySection(
     component: 'ListRow',
     figmaNodeId: '35:113',

@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:moneta/design_system/molecules/date_group_header.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/molecules/section_header.dart';
 
@@ -12,6 +13,7 @@ import 'package:moneta/design_system/molecules/section_header.dart';
 /// only see what the description mentions.
 String? describeHome(Widget widget) => switch (widget) {
   // --- HOME: add cases below ---
+  DateGroupHeader(:final date) => 'DateGroupHeader(default,$date)',
   ListRow(
     :final title,
     :final subtitle,
