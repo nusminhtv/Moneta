@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:moneta/core/money.dart';
 import 'package:moneta/core/result.dart';
 import 'package:moneta/core/spend_category.dart';
+import 'package:moneta/design_system/molecules/moneta_select.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/features/transactions/domain/transaction.dart';
 import 'package:moneta/features/transactions/presentation/transaction_list_controller.dart';
@@ -96,6 +98,9 @@ class AddTransactionSheet extends ConsumerStatefulWidget {
   static const Key amountFieldKey = Key('AddTransactionSheet.amount');
 
   /// Key on the note field.
+  /// Identifies the date field in tests.
+  static const Key dateFieldKey = Key('AddTransactionSheet.date');
+
   static const Key noteFieldKey = Key('AddTransactionSheet.note');
 
   /// Key on the submit button.
@@ -126,18 +131,44 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     super.dispose();
   }
 
+  Future<void> _pickDate() async {
+    final now = ref.read(clockProvider).nowUtc().toLocal();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _occurredAt?.toLocal() ?? now,
+      firstDate: DateTime(now.year - 5),
+      // Today is the latest selectable date. A transaction that has not
+      // happened yet is not a transaction, and the form rejects one anyway —
+      // better to make it unreachable than to explain it after the fact.
+      lastDate: now,
+    );
+    if (picked == null) return;
+    setState(() => _occurredAt = picked.toUtc());
+  }
+
   Future<void> _submit() async {
     final clock = ref.read(clockProvider);
     final currency = ref.read(walletCurrencyProvider);
     final ids = ref.read(idGeneratorProvider);
 
-    final form = AddTransactionForm(currency: currency, now: clock.nowUtc());
+    // Read once. This used to call `clock.nowUtc()` twice — once for the
+    // validator's "now" and once for the instant — so the instant was always a
+    // few microseconds *after* now and `validateInstant` rejected it. Every
+    // submission failed with "Pick a date that is not in the future", on a form
+    // that had no date field to pick one with.
+    //
+    // The whole suite was green: every test used `FixedClock`, which returns
+    // the same value on both reads, so the comparison could not fail.
+    // `TickingClock` exists now for exactly this shape of bug.
+    final now = clock.nowUtc();
+
+    final form = AddTransactionForm(currency: currency, now: now);
     final built = form.build(
       id: ids.next(),
       rawAmount: _amountController.text,
       direction: _direction,
       category: _category,
-      occurredAt: _occurredAt ?? clock.nowUtc(),
+      occurredAt: _occurredAt ?? now,
       note: _noteController.text,
     );
 
@@ -219,6 +250,14 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
             ],
             onChanged: (category) =>
                 setState(() => _category = category ?? _category),
+          ),
+          SizedBox(height: theme.spacing.x3l),
+          MonetaSelect<DateTime>(
+            key: AddTransactionSheet.dateFieldKey,
+            value: _occurredAt,
+            labelOf: (date) => DateFormat('d MMMM y').format(date.toLocal()),
+            placeholder: 'Today',
+            onTap: _pickDate,
           ),
           SizedBox(height: theme.spacing.x3l),
           TextField(
