@@ -1,143 +1,92 @@
 ## Why
 
-Home is the last placeholder destination — it currently renders the words "Not
-built yet". It is also where the two most finished components in the design
-system have been sitting unused: `BalanceCard`, which Figma explicitly calls the
-"Home hero", and `TransactionRow`. The data they need already exists, stored and
-summarised, since `transactions-local-store`.
+The Home tab and notifications flow have real Figma screens. The previous
+`home-overview` proposal was frozen because it said the opposite and then planned
+database, preference and layout work from that false premise.
 
-Home is also the first screen that needs data it does not own, so it is the first
-real test of the rule that a feature may not import another feature. That tension
-is decided in [ADR 0004](../../../docs/adr/0004-cross-feature-overview-screens.md).
+This revision is based on the Screen Index at node `5:24`, which lists six
+screens for `📱 02 Home & Dashboard`:
 
-The user-visible outcome: opening the app shows this month's balance,
-safe-to-spend, income and expenses on the gradient hero card, with the five most
-recent transactions below it; recording a transaction updates both without a
-manual refresh; and hiding the amounts with the eye control keeps them hidden
-after the app is closed and reopened.
+| ID | Screen | Node | Priority |
+| --- | --- | --- | --- |
+| 02.01 | Home -- default | `52:2` | P0 |
+| 02.02 | Home -- empty | `52:372` | P0 |
+| 02.03 | Home -- loading | `52:547` | P0 |
+| 02.04 | Home -- over-budget alert | `57:414` | P0 |
+| 02.05 | Notifications -- list | `57:622` | P1 |
+| 02.06 | Notifications -- empty | `57:840` | P1 |
 
-## Prerequisite
+Each screen has a sibling annotation frame in Figma that must be read before its
+layout is implemented. This repository does not currently contain those
+annotation contents, and this session has no callable Figma inspection tool; the
+node ids above are the exact queries required before final screen construction.
 
-This change is **blocked** on a separate change, `design-system-corrections`,
-which must land first. Two design-system components need API changes that are not
-Home's to make:
-
-- `BalanceCard` currently takes `safeToSpendUntil` as a **pre-formatted `String`**
-  (`balance_card.dart:40`), which violates `CLAUDE.md`'s "design-system widgets
-  take domain types, not pre-formatted strings". It must take a date and format it
-  itself. This was introduced in `design-system-foundation` and is a correction,
-  not a feature.
-- `TransactionRow` has no masked form. Masking the hero card while the row below
-  it still reads "−1,250,000 ₫" defeats the purpose, so the row needs the same
-  treatment the card already has.
-
-Both are `MODIFIED` deltas on `design-system/components` and belong to that
-change, not this one.
+The user-visible outcome is a Home tab that matches the four Home states, a
+notifications route that matches the two notification states, and a gallery that
+shows every home-owned component variant.
 
 ## What Changes
 
-- **Schema migration v2**: a `settings` key/value table, and a `PreferencesStore`
-  in `lib/data`. This is the first migration this project applies to a database
-  that already contains rows, which the v1 tests could only simulate.
-- **Shared providers move out of the transactions feature.** `clockProvider`,
-  `idGeneratorProvider`, `walletCurrencyProvider` and `appDatabaseProvider`
-  currently live in `features/transactions/presentation/transaction_providers.dart`.
-  Home needs three of them and may not import another feature, so they move to
-  `lib/data/app_providers.dart`. This is a pre-existing misplacement that Home is
-  the first caller to expose.
-- **New capability `home`** as a feature slice:
-  - `domain/`: `HomePeriod` (month bounds), `RecentEntry` (a recent transaction
-    expressed only in shared types), and `HomeSnapshot` (balance, period income
-    and expenses, recent entries, with safe-to-spend derived and floored at zero).
-    No data-source interface — see ADR 0004.
-  - `presentation/`: a controller and `HomeScreen`, composing `BalanceCard` and
-    the recent list, with distinct empty and error states.
-- **New assembler in `lib/app`**: a provider that reads `TransactionRepository`,
-  maps `Transaction` to `RecentEntry`, and builds the `HomeSnapshot`. `lib/app` is
-  the only layer allowed to see both features, and it holds translation only.
-- **Balance semantics pinned**: total balance is the net of everything that has
-  **already occurred** — future-dated transactions are excluded, matching the
-  reason the `transactions` capability gives for rejecting them. Period income and
-  expenses cover the displayed month only.
-- **Masking covers every amount on screen**, hero card and recent list alike, and
-  the choice survives a restart.
+- Implement these home-owned design-system component sets in full:
+  - `DateGroupHeader` (`29:71`), 1 variant.
+  - `EmptyState` (`35:166`), 2 variants: `HasAction=true` and `HasAction=false`.
+  - `Skeleton` (`38:139`), 4 variants: `Line`, `Circle`, `Card`, `Row`.
+  - `ListRow` (`35:113`), 5 variants: `Chevron`, `Value`, `Toggle`, `Badge`,
+    `None`.
+  - `SectionHeader` (`55:107`), 1 variant.
+  - `Banner` (`42:329`), 4 variants: `Warning`, `Danger`, `Info`, `Success`.
+- Register every variant in `lib/app/gallery/gallery_catalog_home.dart` and teach
+  `test/app/gallery_describe_home.dart` how to distinguish them.
+- Implement `lib/features/home` for the four Home screens listed above, using the
+  existing `BalanceCard`, `BudgetCard`, `BottomNav` and `TransactionRow` widgets
+  where the Figma Screen Index names them.
+- Implement `lib/features/notifications` for the notifications list and empty
+  screens, using `ListRow`, `SectionHeader`, `EmptyState`, `BottomNav` and the
+  shared `AppBar` once the auth branch lands it.
+- Add routes only in the `HOME` marker block: `/` remains the Home tab and
+  `/notifications` is the notifications route.
+- Reconcile ADR 0004 against the actual screens: the old database-backed
+  cross-feature overview decision no longer applies to this change.
 
 ## Capabilities
 
 ### New Capabilities
-- `home`: what the overview shows, how its period is bounded, how balance and
-  safe-to-spend are derived, what masking covers, and what happens when reads
-  fail.
-- `storage/preferences`: durable key/value settings — absence versus value, the
-  single stored boolean form, overwrite semantics, and declared keys.
+
+- `home`: Home default, empty, loading and over-budget alert states from nodes
+  `52:2`, `52:372`, `52:547` and `57:414`.
+- `notifications`: notification list and empty states from nodes `57:622` and
+  `57:840`.
 
 ### Modified Capabilities
-None. Two earlier drafts of this proposal listed
-`storage/local-database`; the requirement they wanted — that rows survive an
-upgrade — is **already owned** by that capability
-(`openspec/specs/storage/local-database/spec.md`, "rows written before the upgrade
-are still readable afterwards"). What was missing was a test against a populated
-database, not a requirement. That test is task 1.1.
+
+- `design-system/components`: adds full variant coverage for `DateGroupHeader`,
+  `EmptyState`, `Skeleton`, `ListRow`, `SectionHeader` and `Banner`.
 
 ## Non-goals
 
-- **No budgets on Home.** `BudgetCard` stays without a caller. Budgets need their
-  own table, limits and period rollover; a fixture-driven budget card on a screen
-  otherwise showing real data would be worse than leaving it off.
-- **No month switching.** Current month only. `HomePeriod` takes an arbitrary
-  range so the control is additive later.
-- **No accounts**, no `AccountCard`, no account breakdown.
-- **No Insights or Profile screens.** Still placeholders.
-- **No charts.** The `chart/1..8` tokens stay unused here.
-- **No pull-to-refresh and no background refresh.** Home refreshes when a
-  transaction is recorded, which is a different requirement and is specified.
-- **No multi-currency.** Still VND only. Home *refuses* a mixed-currency figure
-  rather than adding unlike amounts, but nothing converts between currencies.
-- **No fix for the summary bug this change surfaced.** `TransactionDao.summarise`
-  sums `amount_minor` with no currency predicate and stamps the wallet currency on
-  the result, so a mixed store yields a silently wrong total. That is a defect in
-  already-archived code and is tracked as its own change.
+- No database schema changes, migrations, preferences table or persistence work.
+- No notification read-state until the user explicitly approves a persistence
+  design.
+- No changes under `lib/features/auth`, `lib/data/database`, auth-owned
+  design-system files, `gallery_catalog_auth.dart` or
+  `gallery_describe_auth.dart`.
+- No completion of `TransactionRow`'s missing `Transfer` or `Pending` variants.
+  If nodes `52:2` or `57:414` require either one, this change stops for a domain
+  decision instead of inventing it.
+- No widening, weakening or bypassing verification gates.
 
 ## Impact
 
-- **Modules touched:** `lib/data` (migration v2, preferences, relocated
-  providers), `lib/features/home` (new), `lib/app` (assembler, mapper, route),
-  and — correcting an earlier claim in this proposal —
-  **`lib/features/transactions/presentation` is modified**, because the shared
-  providers move out of it, along with every test that overrides them. Riverpod
-  binds overrides by object identity rather than by library, so those overrides
-  keep working with only their imports changed — verified against the three call
-  sites.
-- **Dependencies:** none added. `intl` is already present for date formatting.
-- **Schema migration:** yes, v2, applied to a database that may hold user data.
-- **Gates affected:** `features/home/domain`, `lib/data/preferences` **and
-  `lib/data/app_providers.dart`** come under the 85% coverage threshold — the last
-  of those because `coverage_critical.txt` matches the bare substring `/data/`, so
-  simply moving a provider into `lib/data` subjects it to a threshold it does not
-  currently meet. Measured at 37.5% from the committed `lcov.info`, which is why
-  the move ships with a test rather than only with import edits. `HomeScreen` is the first new screen layout since
-  the token checker became load-bearing, so `EdgeInsets`/`BorderRadius` literals
-  are the likeliest gate failure; `design.md` says how that is avoided.
-- **Figma nodes consumed:** `40:161` (`BalanceCard`, already implemented, both
-  variants). No new nodes — Figma has no Home frame, so the screen's arrangement
-  is a recorded decision.
-
-## Audit history
-
-Two `spec-auditor` passes, both `NOT READY`, recorded in
-`docs/ai-workflow/audits/`. The second narrowed from eleven findings to four and
-confirmed the structural work — the architecture problem solved rather than
-asserted away, the duplication removed, ADR 0004's argument made honest. What it
-caught the second time was subtler and worth naming: three of the four product
-decisions were stated correctly in prose while the *requirement* still let two
-implementations disagree, and one task could not pass its own coverage gate.
-
-The first pass's two blocking findings were that this proposal's claim
-"`lib/features/transactions` is not modified" was false, and that ADR 0004's
-deciding argument did not survive contact with `tool/coverage_critical.txt`. Both
-are corrected above and in ADR 0004. A third pass found one remaining problem of
-the same shape — a requirement stated correctly while its verification signal
-could not detect the wrong implementation, because it depended on a time zone
-nothing established. That is fixed by `tool/check_timezone.dart`, now a gate.
-
-The audits are kept rather than superseded.
+- **Modules touched:** home-owned design-system components, `lib/features/home`,
+  `lib/features/notifications`, home gallery catalog/describer, Home marker
+  blocks in app routing and gallery tests, and `openspec/changes/home-overview`.
+- **Dependencies:** none expected.
+- **Schema migration:** none. The database schema remains single-writer for the
+  auth branch.
+- **Gates affected:** design-token checks for new UI code, gallery completeness,
+  architecture, tests and coverage through `bash tool/verify.sh --change
+  home-overview`.
+- **Figma nodes consumed so far:** Screen Index `5:24` as recorded in
+  `docs/ai-workflow/parallel-brief-home-dashboard.md` and component inventory in
+  `docs/design-system/figma-map.md`. The six sibling annotation frames still need
+  live Figma access before implementation can claim visual fidelity.

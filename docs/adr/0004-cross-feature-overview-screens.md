@@ -1,13 +1,16 @@
 # 0004. Where a cross-feature overview screen lives
 
-> **⚠️ PREMISE SUSPECT — 2026-08-25.** This ADR and the `home-overview` change
-> rest on "Figma contains no screen frames". The file contains 74 screens
-> across pages the project never queried. A Home page almost certainly exists.
-> The architecture reasoning may survive; the premise does not. Pending
-> reconciliation by the `figma-fidelity` agent.
+> **SUPERSEDED FOR `home-overview` — 2026-08-28.** This ADR was written for a
+> data-derived overview planned before the project opened the real `📱 02 Home &
+> Dashboard` screens. The Screen Index at node `5:24` lists concrete Home nodes
+> `52:2`, `52:372`, `52:547` and `57:414`, plus notifications nodes `57:622` and
+> `57:840`. The revised `home-overview` change implements those authored screen
+> states and its owned design-system components; it does not add database-backed
+> aggregation, provider relocation, migrations or preferences. Keep this ADR for
+> a future live-data overview, but do not use it to direct the current branch.
 
 
-- **Status:** Accepted (v2.2 — revised twice after audit; see *Revision history*)
+- **Status:** Superseded for `home-overview` (v2.3 — see *Revision history*)
 - **Date:** 2026-08-24
 - **Change:** home-overview
 
@@ -210,3 +213,8 @@ should be read as such.
 - **v2.2, 2026-08-24** — a third pass found the *Revisit when* trigger already
   tripped at birth: it fired on the assembler making "any" decision, and the
   assembler is born with three. Reworded to a fourth. No decision changed.
+- **v2.3, 2026-08-28** — reconciled after the parallel foundation commit showed
+  the real Home and notifications screen nodes. The current `home-overview`
+  branch implements Figma-authored screen states and owned design-system
+  components, so the data-backed overview decision no longer applies here. No
+  database or `lib/data` work is required by this change.
