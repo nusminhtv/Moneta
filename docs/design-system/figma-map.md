@@ -46,7 +46,7 @@ Method note for anyone extending this map: **query nodes, do not enumerate pages
 | `🎨 Foundations / Iconography` | `5:7` | 50 icons (24×24, stroke weight 1.75, incl. `brand-google`, `brand-apple`) + sizing/colour/swapping rules |
 | `🧩 Components / Organisms` | `5:11` | 14 component sets, listed below |
 | `📱 01 Onboarding & Auth` | `5:14` | 12 screens, each with a sibling annotation frame |
-| `📊 02 Budgets` | `5:17` | 7 screens |
+| `📱 04 Budgets` | `5:17` | 7 screens, `04.01`–`04.07`. Listed here as *02* until 2026-08-28; the frames inside are named `04.xx`, so the page number was wrong, not the node id. |
 | — | `29:70` | `TransactionRow`, 4 variants — a component the Organisms page does not list |
 | — | `107:75` | the real `space/*` variable collection, 12 values |
 
@@ -323,3 +323,22 @@ What that screenshot confirms beyond what the test suite can:
   sky, food amber, salary mint, shopping violet.
 - The note fallback works: the salary row has no note and shows `Salary`.
 - Times render in the device's local zone while storage is UTC.
+
+
+## What Budgets needs before it can be built
+
+Queried `5:17` on 2026-08-28. Its seven screens instance five components the
+design system does not have:
+
+| Component | Seen on | Note |
+| --- | --- | --- |
+| `SegmentedItem` | `04.01`, `04.04` | period switcher, 3 up in a 44px track |
+| `CircularProgress` | `04.01` (72), `04.05`/`04.06` (120) | two sizes |
+| `StatTile` | `04.05`, `04.06` | 170.5 x 98, two per row |
+| `AmountInput` | `04.04` | 353 x 116 |
+| `BarChart` | `04.07` | 337 x 223 |
+
+None appear on `🧩 Components / Organisms`, which is consistent with the rest of
+the file: the library is larger than that page shows. There is also no budget
+domain, no table and no repository — Budgets is a feature to build, not a set of
+screens to draw.
