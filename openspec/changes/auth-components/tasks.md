@@ -84,6 +84,15 @@ Each names the mutations to run **at that checkpoint**, not in a pass at the end
   *This task exists because "tell the user" is not a work product. Its output is
   two edited files, which is checkable.*
 
+- [x] 1.5 **Gallery frame fixed** (unplanned, found by screenshot). `GalleryScreen`
+  wrapped every variant in a fixed-width `SizedBox`, so `IconButton` sm rendered
+  353 wide instead of 36 — and so had every small `Button` since the gallery
+  existed. Extracted `GalleryVariantFrame` with a max width and left alignment.
+  Verify: two tests render the frame itself; reverting it to a fixed width fails,
+  and removing the max width fails too. My first attempt asserted an
+  `Align + ConstrainedBox` the test had built itself, so the mutation survived —
+  fixed by testing the real widget.
+
 ## 2. Input components
 
 - [ ] 2.1 **`TextField`** from `27:44` — five states, all **derived** (D5), body

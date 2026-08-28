@@ -87,14 +87,43 @@ class _Section extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: theme.spacing.md),
-                  SizedBox(
-                    width: MonetaLayout.contentWidth,
-                    child: variant.build(context),
-                  ),
+                  GalleryVariantFrame(child: variant.build(context)),
                 ],
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// The box a single gallery variant is rendered in.
+///
+/// A *max* width, not a fixed one, and left-aligned. This was
+/// `SizedBox(width: contentWidth)`, which forces a **tight** constraint on every
+/// variant — so an `IconButton` that is 36x36 in Figma rendered 353 wide, and so
+/// did every small `Button`. Nothing caught it: each component's own tests pump
+/// it inside a `Center`, where constraints are loose and stretching cannot
+/// happen, and the first version of the gallery test asserted a wrapper it had
+/// built itself rather than this one.
+///
+/// The gallery is the surface a reviewer compares against the canvas, so
+/// stretching a component misrepresents the one thing it exists to show.
+/// Full-width components are unaffected: they take the max.
+class GalleryVariantFrame extends StatelessWidget {
+  /// Creates the frame.
+  const GalleryVariantFrame({required this.child, super.key});
+
+  /// The variant being shown.
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: MonetaLayout.contentWidth),
+        child: child,
       ),
     );
   }

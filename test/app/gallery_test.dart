@@ -7,6 +7,7 @@ import 'package:moneta/app/gallery/gallery_screen.dart';
 import 'package:moneta/core/spend_category.dart';
 import 'package:moneta/design_system/atoms/moneta_button.dart';
 import 'package:moneta/design_system/atoms/moneta_icon.dart';
+import 'package:moneta/design_system/atoms/moneta_icon_button.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/molecules/budget_status.dart';
 import 'package:moneta/design_system/molecules/category_icon.dart';
@@ -18,6 +19,7 @@ import 'package:moneta/design_system/organisms/balance_card.dart';
 import 'package:moneta/design_system/organisms/bottom_nav.dart';
 import 'package:moneta/design_system/organisms/budget_card.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
+import 'package:moneta/design_system/tokens/spacing.dart';
 import 'package:moneta/features/onboarding/domain/onboarding_slide.dart';
 import 'package:moneta/features/transactions/domain/transaction.dart';
 
@@ -438,6 +440,65 @@ void main() {
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a small component is not stretched to the content width', (
+      tester,
+    ) async {
+      // Renders the gallery's OWN frame, not one this test builds. The first
+      // version of this test hand-rolled an Align + ConstrainedBox and asserted
+      // that — so reverting the gallery to its fixed-width SizedBox left it
+      // green. It asserted its own fix, which is the self-referential trap this
+      // repo keeps falling into.
+      await tester.binding.setSurfaceSize(const Size(420, 400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: MonetaTheme.dark().toThemeData(),
+          home: const Scaffold(
+            body: GalleryVariantFrame(
+              child: MonetaIconButton(
+                icon: MonetaIconName.search,
+                semanticLabel: 'Search',
+                style: MonetaIconButtonStyle.filled,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        tester.getSize(find.byType(MonetaIconButton)).width,
+        MonetaIconButtonSize.md.box,
+        reason: 'the gallery frame stretched a fixed-size component',
+      );
+    });
+
+    testWidgets('a full-width component still fills the content width', (
+      tester,
+    ) async {
+      // The other direction: the frame must not shrink-wrap something that is
+      // meant to span. Without this, "stop stretching" could be satisfied by a
+      // frame that starves every card of width.
+      await tester.binding.setSurfaceSize(const Size(420, 400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: MonetaTheme.dark().toThemeData(),
+          home: const Scaffold(
+            body: GalleryVariantFrame(
+              child: SizedBox(width: double.infinity, height: 40),
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        tester.getSize(find.byType(SizedBox).first).width,
+        MonetaLayout.contentWidth,
+      );
     });
 
     testWidgets('every variant builds without throwing', (tester) async {

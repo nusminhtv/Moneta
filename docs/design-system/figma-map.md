@@ -280,6 +280,32 @@ Skip disappearing on the last slide, the label becoming `Get started`) but their
 type and spacing have **not** been compared against `71:103` and `71:162` on a
 real device. Recording this rather than implying three verified slides.
 
+### The gallery was stretching every fixed-size component
+
+`gallery-stretch-before-ios.png` and `gallery-stretch-after-ios.png`, iPhone 16
+Pro simulator, launched straight into `/gallery` with
+`--dart-define=MONETA_INITIAL_ROUTE=/gallery`.
+
+`GalleryScreen` wrapped every variant in `SizedBox(width: contentWidth)` — a
+**tight** constraint. So `IconButton` sm, which is 36×36 in `20:114`, rendered
+353 wide, and so had every small `Button` since the gallery was built. The
+before shot is the first render of `IconButton` after it was implemented; the
+defect is in the component the gallery exists to display accurately.
+
+Nothing caught it, for two reasons worth keeping:
+
+1. Every component's own test pumps it through `pumpMonetaWidget`, which wraps
+   the child in a `Center`. Constraints there are **loose**, so stretching cannot
+   occur — the harness made the defect unreachable.
+2. The first fix was worse than no fix. The test hand-rolled an
+   `Align + ConstrainedBox` and asserted *that*, so reverting `gallery_screen`
+   to its fixed width left the suite green. It asserted its own fix. The frame is
+   now `GalleryVariantFrame`, a real widget the test renders, and both
+   directions are mutated: a fixed width fails, and removing the max width fails
+   too (which would starve full-width cards).
+
+Found by taking a screenshot, not by the 711 tests that were passing at the time.
+
 ### Transactions list
 
 `docs/design-system/screenshots/transactions-ios.png` — the transactions list on
