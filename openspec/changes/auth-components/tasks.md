@@ -95,7 +95,7 @@ Each names the mutations to run **at that checkpoint**, not in a pass at the end
 
 ## 2. Input components
 
-- [ ] 2.1 **`TextField`** from `27:44` — five states, all **derived** (D5), body
+- [x] 2.1 **`TextField`** from `27:44` — five states, all **derived** (D5), body
   52px.
   Verify: `text_field_test.dart` asserts the 52px body; that error changes border
   colour **and** border width and the helper token, and that width alone
@@ -110,7 +110,7 @@ Each names the mutations to run **at that checkpoint**, not in a pass at the end
   derivation test fails; use `textPrimary` at opacity for disabled → the token
   test fails.
 
-- [ ] 2.2 **`OtpField`** from `70:263` — Empty, Partial, Complete, length a
+- [x] 2.2 **`OtpField`** from `70:263` — Empty, Partial, Complete, length a
   parameter.
   Verify: `otp_field_test.dart` asserts filled-ness is derived from the code and
   cannot be passed; that a filled position renders its character and an empty one
@@ -119,7 +119,7 @@ Each names the mutations to run **at that checkpoint**, not in a pass at the end
   Mutations: report complete for a short code → the derivation test fails;
   truncate an over-long code silently → the validation test fails.
 
-- [ ] 2.3 **`Select`** from `38:131` — Placeholder, Value; renders closed and
+- [x] 2.3 **`Select`** from `38:131` — Placeholder, Value; renders closed and
   delegates activation (D7).
   Verify: `select_test.dart` asserts placeholder and value use different text
   tokens; that it takes a value plus a label function, not a formatted string;
@@ -129,7 +129,7 @@ Each names the mutations to run **at that checkpoint**, not in a pass at the end
 
 ## 3. Remaining atoms
 
-- [ ] 3.1 **`Checkbox`** from `25:229` — 3 states × enabled/disabled.
+- [x] 3.1 **`Checkbox`** from `25:229` — 3 states × enabled/disabled.
   Indeterminate draws a bar natively; if `25:219` instances an icon the set lacks,
   **raise it before implementing** (D4) — adding an icon changes the count
   `moneta_icon_test.dart` pins at 50 and is a rule-5 gate change.
@@ -139,14 +139,14 @@ Each names the mutations to run **at that checkpoint**, not in a pass at the end
   Mutations: render indeterminate with the check glyph → the distinct-mark test
   fails; shrink the hit area to the drawn box → the touch-target test fails.
 
-- [ ] 3.2 **`Divider`** from `21:126` — 2 orientations × 2 tones.
+- [x] 3.2 **`Divider`** from `21:126` — 2 orientations × 2 tones.
   Verify: `divider_test.dart` asserts which dimension is the hairline per
   orientation; that the tones resolve to different border tokens; that a
   horizontal divider in an unbounded-width parent renders rather than throwing.
   Mutations: give both tones the same token → the tone test fails; use
   `double.infinity` on the cross axis → the unbounded test fails.
 
-- [ ] 3.3 **`Logo`** from `70:205` — mark alone and mark with wordmark (D8).
+- [x] 3.3 **`Logo`** from `70:205` — mark alone and mark with wordmark (D8).
   Drawn natively; no asset, no `pubspec.yaml` change.
   Verify: `logo_test.dart` asserts both forms render the mark and differ by the
   wordmark's presence; that the mark stays square when resized; that exactly one

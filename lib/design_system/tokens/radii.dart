@@ -10,6 +10,7 @@ import 'package:meta/meta.dart';
 final class MonetaRadii {
   /// Creates a radius set from explicit values.
   const MonetaRadii({
+    required this.xs,
     required this.md,
     required this.lg,
     required this.xl,
@@ -17,7 +18,10 @@ final class MonetaRadii {
   });
 
   /// The radii read from Figma.
-  const MonetaRadii.figma() : md = 14, lg = 18, xl = 24, pill = 999;
+  const MonetaRadii.figma() : xs = 6, md = 14, lg = 18, xl = 24, pill = 999;
+
+  /// 6 — the checkbox box. Verified at `107:79`.
+  final double xs;
 
   /// 14 — banners and inline notices.
   final double md;
@@ -30,6 +34,9 @@ final class MonetaRadii {
 
   /// Fully rounded — pills, avatars, progress tracks.
   final double pill;
+
+  /// [xs] as a [BorderRadius].
+  BorderRadius get borderXs => BorderRadius.circular(xs);
 
   /// [md] as a [BorderRadius].
   BorderRadius get borderMd => BorderRadius.circular(md);

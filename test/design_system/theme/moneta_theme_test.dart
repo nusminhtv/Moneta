@@ -193,7 +193,7 @@ void main() {
       final a = MonetaTheme.dark();
       final b = a.copyWith(
         spacing: const MonetaSpacing.figma(),
-        radii: const MonetaRadii(md: 1, lg: 2, xl: 3, pill: 4),
+        radii: const MonetaRadii(xs: 0, md: 1, lg: 2, xl: 3, pill: 4),
       );
 
       // Below the midpoint, structural tokens stay on the source side...
