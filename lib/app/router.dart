@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:moneta/app/auth_routes.dart';
 import 'package:moneta/app/gallery/gallery_screen.dart';
 import 'package:moneta/app/home_route_screen.dart';
 import 'package:moneta/app/shell.dart';
@@ -77,7 +78,44 @@ GoRouter buildRouter({String initialLocation = defaultInitialRoute}) {
 
       // Outside the shell: the gallery is a development surface, not a
       // destination, and showing it with a nav bar would imply otherwise.
-      // --- AUTH: add routes below (owner: the auth agent) ---
+      // --- AUTH: 01.05 – 01.12 ---
+      GoRoute(
+        path: AuthRoutes.signUp,
+        builder: (context, state) => const SignUpRoute(),
+      ),
+      GoRoute(
+        path: AuthRoutes.logIn,
+        builder: (context, state) => const LogInRoute(),
+      ),
+      GoRoute(
+        path: AuthRoutes.forgotPassword,
+        builder: (context, state) => const ForgotPasswordRoute(),
+      ),
+      GoRoute(
+        path: AuthRoutes.verify,
+        builder: (context, state) => VerifyCodeRoute(
+          email: state.uri.queryParameters['email'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: AuthRoutes.resetDone,
+        builder: (context, state) => const ResetSuccessRoute(),
+      ),
+      GoRoute(
+        path: AuthRoutes.setupCurrency,
+        builder: (context, state) => const SetupCurrencyRoute(),
+      ),
+      GoRoute(
+        path: AuthRoutes.setupBiometric,
+        builder: (context, state) => const SetupBiometricRoute(),
+      ),
+      GoRoute(
+        path: AuthRoutes.setupAccount,
+        builder: (context, state) => SetupLinkAccountRoute(
+          onFinished: () =>
+              context.go(DestinationRoutes.paths[MonetaDestination.home]!),
+        ),
+      ),
       // --- AUTH: end ---
 
       // --- HOME: add routes below (owner: the home agent) ---
