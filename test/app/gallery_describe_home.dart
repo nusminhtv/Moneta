@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:moneta/design_system/molecules/date_group_header.dart';
+import 'package:moneta/design_system/molecules/empty_state.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/molecules/section_header.dart';
 
@@ -14,6 +15,8 @@ import 'package:moneta/design_system/molecules/section_header.dart';
 String? describeHome(Widget widget) => switch (widget) {
   // --- HOME: add cases below ---
   DateGroupHeader(:final date) => 'DateGroupHeader(default,$date)',
+  EmptyState(:final title, :final icon, :final hasAction) =>
+    'EmptyState($hasAction,$title,${icon.figmaName})',
   ListRow(
     :final title,
     :final subtitle,

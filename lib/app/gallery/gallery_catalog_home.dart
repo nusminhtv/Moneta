@@ -1,6 +1,7 @@
 import 'package:moneta/app/gallery/gallery_catalog.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/molecules/date_group_header.dart';
+import 'package:moneta/design_system/molecules/empty_state.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/molecules/section_header.dart';
 
@@ -22,6 +23,28 @@ final List<GallerySection> homeSections = [
         'Variant=Default',
         (_) => DateGroupHeader(
           date: DateTime.utc(2026, DateTime.august, 28, 17),
+        ),
+      ),
+    ],
+  ),
+  GallerySection(
+    component: 'EmptyState',
+    figmaNodeId: '35:166',
+    variants: [
+      GalleryVariant(
+        'HasAction=true',
+        (_) => const EmptyState(
+          title: 'No transactions yet',
+          message: 'Add your first record to start tracking your month.',
+          actionLabel: 'Add transaction',
+        ),
+      ),
+      GalleryVariant(
+        'HasAction=false',
+        (_) => const EmptyState(
+          title: 'No notifications',
+          message: 'Important account updates will appear here.',
+          icon: MonetaIconName.bell,
         ),
       ),
     ],

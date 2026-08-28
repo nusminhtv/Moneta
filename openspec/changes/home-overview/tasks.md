@@ -26,7 +26,7 @@
 
 - [x] 3.1 Implement `DateGroupHeader` (`29:71`) and register its single variant.
   Verify: `test/design_system/molecules/date_group_header_test.dart`.
-- [ ] 3.2 Implement `EmptyState` (`35:166`) with `HasAction=true` and
+- [x] 3.2 Implement `EmptyState` (`35:166`) with `HasAction=true` and
   `HasAction=false`. Register both variants. Verify:
   `test/design_system/molecules/empty_state_test.dart`.
 - [ ] 3.3 Implement `Skeleton` (`38:139`) with `Line`, `Circle`, `Card` and
