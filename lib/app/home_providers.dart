@@ -10,7 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moneta/core/money.dart';
 import 'package:moneta/features/home/domain/home_snapshot.dart';
 import 'package:moneta/features/transactions/domain/transaction.dart';
-import 'package:moneta/features/transactions/domain/transaction_query.dart';
+import 'package:moneta/features/transactions/presentation/transaction_list_controller.dart';
 import 'package:moneta/features/transactions/presentation/transaction_providers.dart';
 
 /// How many entries Home's recent list shows.
@@ -70,17 +70,24 @@ HomeSnapshot buildSnapshot({
   );
 }
 
-/// Home's data, read once per build.
-final homeSnapshotProvider = FutureProvider<HomeSnapshot>((ref) async {
+/// Home's data.
+///
+/// Derived from `transactionListControllerProvider`, **not** from a second read
+/// of the repository. It used to do its own `repository.list(...)`, which made
+/// two sources of truth: adding a transaction updated the controller's state
+/// and left Home's future untouched, so the Transactions tab showed the new row
+/// and Home did not until the app restarted.
+///
+/// Watching the controller means every mutation it knows about — add, delete,
+/// undo — reaches Home for free, and there is no invalidation to remember.
+final homeSnapshotProvider = Provider<AsyncValue<HomeSnapshot>>((ref) {
   final currency = ref.watch(walletCurrencyProvider);
-  final repository = await ref.watch(transactionRepositoryProvider.future);
-  final result = await repository.list(TransactionQuery.all);
+  final list = ref.watch(transactionListControllerProvider);
 
-  // A read failure shows an empty wallet rather than an error screen. Home is a
-  // summary; the transactions tab is where a failure is actionable, and it
-  // reports one there.
-  return result.when(
-    ok: (all) => buildSnapshot(all: all, currency: currency),
-    err: (_) => HomeSnapshot.empty(currency),
+  return list.whenData(
+    (state) => buildSnapshot(
+      all: [for (final day in state.days) ...day.transactions],
+      currency: currency,
+    ),
   );
 });
