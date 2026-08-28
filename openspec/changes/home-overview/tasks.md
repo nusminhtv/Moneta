@@ -29,7 +29,7 @@
 - [x] 3.2 Implement `EmptyState` (`35:166`) with `HasAction=true` and
   `HasAction=false`. Register both variants. Verify:
   `test/design_system/molecules/empty_state_test.dart`.
-- [ ] 3.3 Implement `Skeleton` (`38:139`) with `Line`, `Circle`, `Card` and
+- [x] 3.3 Implement `Skeleton` (`38:139`) with `Line`, `Circle`, `Card` and
   `Row` variants. Register every variant. Verify:
   `test/design_system/molecules/skeleton_test.dart`.
 - [ ] 3.4 Implement `Banner` (`42:329`) with `Warning`, `Danger`, `Info` and

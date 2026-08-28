@@ -3,6 +3,7 @@ import 'package:moneta/design_system/molecules/date_group_header.dart';
 import 'package:moneta/design_system/molecules/empty_state.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/molecules/section_header.dart';
+import 'package:moneta/design_system/molecules/skeleton.dart';
 
 /// Describes gallery variants for 📱 02 Home & Dashboard.
 ///
@@ -17,6 +18,7 @@ String? describeHome(Widget widget) => switch (widget) {
   DateGroupHeader(:final date) => 'DateGroupHeader(default,$date)',
   EmptyState(:final title, :final icon, :final hasAction) =>
     'EmptyState($hasAction,$title,${icon.figmaName})',
+  Skeleton(:final shape) => 'Skeleton(${shape.name})',
   ListRow(
     :final title,
     :final subtitle,

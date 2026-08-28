@@ -4,6 +4,7 @@ import 'package:moneta/design_system/molecules/date_group_header.dart';
 import 'package:moneta/design_system/molecules/empty_state.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/molecules/section_header.dart';
+import 'package:moneta/design_system/molecules/skeleton.dart';
 
 /// Gallery sections for 📱 02 Home & Dashboard.
 ///
@@ -25,6 +26,17 @@ final List<GallerySection> homeSections = [
           date: DateTime.utc(2026, DateTime.august, 28, 17),
         ),
       ),
+    ],
+  ),
+  GallerySection(
+    component: 'Skeleton',
+    figmaNodeId: '38:139',
+    variants: [
+      for (final shape in SkeletonShape.values)
+        GalleryVariant(
+          'Shape=${shape.name[0].toUpperCase()}${shape.name.substring(1)}',
+          (_) => Skeleton(shape: shape),
+        ),
     ],
   ),
   GallerySection(
