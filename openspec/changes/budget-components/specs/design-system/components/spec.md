@@ -151,10 +151,20 @@ The caret is decorative. It SHALL be hidden from assistive technology.
 ### Requirement: Every new component is in the gallery
 
 Each component added by this change SHALL be registered in the gallery in every
-variant Figma authors, with `expectedVariants` matching the Figma count.
+variant Figma authors, and one test per component SHALL assert its variant count
+against the Figma count.
+
+This is the existing per-component pattern, not the generic `expectedVariants`
+field. `auth-components` proposed that field and stopped at 10 of 14 tasks, so
+the gallery still cannot catch a *shortfall* generically: a component registered
+with 2 of its 18 variants passes the whole gate. Nine of the twenty-four
+sections registered today are short of Figma. Closing that is a design-system
+audit spanning every component, which does not belong inside a change about
+Budgets — it is recorded as open in `docs/design-system/figma-map.md` and left
+for its own change.
 
 #### Scenario: The variant counts match Figma
-- **WHEN** the gallery's sections are checked against their `expectedVariants`
+- **WHEN** each new section is checked
 - **THEN** circular progress has 9, the segment item 2, the stat tile 3 and the
   amount input 2
-- **AND** registering any of them with fewer variants fails the gate
+- **AND** registering any of them with fewer variants fails its test

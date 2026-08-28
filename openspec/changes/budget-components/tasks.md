@@ -7,14 +7,14 @@
 
 ## 2. CircularProgress — `25:272`
 
-- [ ] 2.1 `lib/design_system/atoms/moneta_circular_progress.dart`: 3 sizes × 3
+- [x] 2.1 `lib/design_system/atoms/moneta_circular_progress.dart`: 3 sizes × 3
       states, state derived through `BudgetStatus.fromFraction`, label derived
       from the same fraction, no label parameter. Painted natively — an arc is
       a `CustomPainter`, not an asset.
-- [ ] 2.2 Tests: colour parity with `MonetaProgressBar` at the same fractions,
+- [x] 2.2 Tests: colour parity with `MonetaProgressBar` at the same fractions,
       the three diameters, `Sm` has no label, over-budget caps the sweep and
       still reports the true percentage, NaN/-inf/negative do not throw.
-- [ ] 2.3 Gallery: 9 variants.
+- [x] 2.3 Gallery: 9 variants.
 
 ## 3. SegmentedControl — `36:167` / `36:168`
 

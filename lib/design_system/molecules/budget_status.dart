@@ -1,4 +1,6 @@
+import 'package:flutter/painting.dart';
 import 'package:moneta/core/money.dart';
+import 'package:moneta/design_system/tokens/colors.dart';
 
 /// How a budget is doing, derived from spend rather than chosen.
 ///
@@ -59,4 +61,14 @@ enum BudgetStatus {
     if (limit.minorUnits == 0) return 0;
     return spent.minorUnits / limit.minorUnits;
   }
+
+  /// The colour this status paints in.
+  ///
+  /// Lives on the status, not on each widget, so the bar and the ring cannot
+  /// end up with two thresholds tables that drift apart.
+  Color colorIn(MonetaColors colors) => switch (this) {
+    BudgetStatus.onTrack => colors.income,
+    BudgetStatus.nearLimit => colors.warning,
+    BudgetStatus.over => colors.expense,
+  };
 }

@@ -24,6 +24,7 @@ import 'package:moneta/features/onboarding/domain/onboarding_slide.dart';
 import 'package:moneta/features/transactions/domain/transaction.dart';
 
 import 'gallery_describe_auth.dart';
+import 'gallery_describe_budgets.dart';
 import 'gallery_describe_home.dart';
 
 /// The gallery's builders take a `BuildContext` and none of them reads it, so a
@@ -532,6 +533,25 @@ void main() {
       }
     });
   });
+
+  group('CircularProgress is registered in full', () {
+    test('all nine variants of 25:272 are present', () {
+      // 3 states x 3 sizes. The generic checks above catch a duplicate or a
+      // missing component but never a shortfall, so this count is the only
+      // thing standing between the gallery and a component registered with the
+      // one variant the first screen happened to need.
+      final section = galleryCatalog.singleWhere(
+        (s) => s.component == 'CircularProgress',
+      );
+      expect(section.figmaNodeId, '25:272');
+      expect(section.variants, hasLength(9));
+      expect(
+        section.variants.map((v) => v.label).toSet(),
+        hasLength(9),
+        reason: 'two variants share a label, so one of the nine is missing',
+      );
+    });
+  });
 }
 
 /// The checkable claims a variant label makes, lowercased.
@@ -585,9 +605,10 @@ String _describe(Widget widget) =>
     _describeCore(widget) ??
     describeAuth(widget) ??
     describeHome(widget) ??
+    describeBudgets(widget) ??
     (throw UnsupportedError(
       'No describer knows ${widget.runtimeType}. Add a case to the file you own '
-      '(gallery_describe_auth.dart or gallery_describe_home.dart), so the '
+      '(gallery_describe_auth.dart, _budgets.dart or _home.dart), so the '
       'variant-distinctness check keeps covering every section.',
     ));
 

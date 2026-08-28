@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:moneta/design_system/molecules/budget_status.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
+import 'package:moneta/design_system/tokens/colors.dart';
 
 /// Height variants from Figma node `21:139`.
 enum MonetaProgressBarSize {
@@ -48,15 +49,17 @@ class MonetaProgressBar extends StatelessWidget {
   /// Key on the filled portion, so tests can measure it.
   static const Key fillKey = Key('MonetaProgressBar.fill');
 
+  /// The fill colour for a fraction.
+  ///
+  /// Exposed so the ring can be tested against it: two widgets showing one
+  /// budget must not disagree about whether it is over.
+  static Color fillColorFor(double fraction, MonetaColors colors) =>
+      BudgetStatus.fromFraction(fraction).colorIn(colors);
+
   @override
   Widget build(BuildContext context) {
     final theme = context.moneta;
-    final status = BudgetStatus.fromFraction(fraction);
-    final fillColor = switch (status) {
-      BudgetStatus.onTrack => theme.colors.income,
-      BudgetStatus.nearLimit => theme.colors.warning,
-      BudgetStatus.over => theme.colors.expense,
-    };
+    final fillColor = fillColorFor(fraction, theme.colors);
 
     final clamped = fraction.isNaN ? 0.0 : fraction.clamp(0.0, 1.0);
 
