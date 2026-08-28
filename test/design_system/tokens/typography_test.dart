@@ -144,7 +144,7 @@ void main() {
       // when body/lg was added, while the requirement still said "exactly the
       // eight". That is a gate moved to fit the code. The requirement no longer
       // states a count; see the tokens spec delta in onboarding-flow.
-      expect(type.all, hasLength(9));
+      expect(type.all, hasLength(10));
     });
 
     test('uses only the two declared families', () {
@@ -191,6 +191,7 @@ void main() {
         amountXl: TextStyle(fontSize: 10),
         amountMd: TextStyle(fontSize: 10),
         headingH1: TextStyle(fontSize: 10),
+        headingH3: TextStyle(fontSize: 10),
         titleMd: TextStyle(fontSize: 10),
         bodyLg: TextStyle(fontSize: 10),
         bodyMd: TextStyle(fontSize: 10),

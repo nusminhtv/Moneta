@@ -96,9 +96,12 @@ final class MonetaColors {
     required this.track,
     required this.borderSubtle,
     required this.borderStrong,
+    required this.borderDefault,
+    required this.borderFocus,
     required this.textPrimary,
     required this.textSecondary,
     required this.textTertiary,
+    required this.textDisabled,
     required this.textOnBrand,
     required this.brand,
     required this.brandOnSurface,
@@ -123,9 +126,13 @@ final class MonetaColors {
       borderSubtle = const Color(0x0FFFFFFF),
       // Figma: rgba(255,255,255,0.18). 0.18 × 255 = 45.9 → 0x2E.
       borderStrong = const Color(0x2EFFFFFF),
+      // Figma: rgba(255,255,255,0.10). 0.10 × 255 = 25.5 → 0x1A.
+      borderDefault = const Color(0x1AFFFFFF),
+      borderFocus = const Color(0xFF9A83FB),
       textPrimary = const Color(0xFFF6F8FB),
       textSecondary = const Color(0xFF9AA3B4),
       textTertiary = const Color(0xFF7C8595),
+      textDisabled = const Color(0xFF3D4553),
       textOnBrand = const Color(0xFFFFFFFF),
       brand = violet500,
       brandOnSurface = const Color(0xFF876BF9),
@@ -150,6 +157,11 @@ final class MonetaColors {
 
   /// Mid brand violet — gradient stop 1, and the brand base colour.
   static const Color violet500 = Color(0xFF7A5AF8);
+
+  /// Brand mint, one step lighter than [mint600]. The mark gradient's second
+  /// stop, and numerically the same value the [income] semantic token carries —
+  /// named separately because one is a palette entry and the other is a meaning.
+  static const Color mint500 = Color(0xFF22D19A);
 
   /// Brand mint — gradient stop 2.
   static const Color mint600 = Color(0xFF12A87A);
@@ -184,6 +196,27 @@ final class MonetaColors {
     );
   }
 
+  /// Angle of the brand mark's gradient, in degrees, as authored in Figma.
+  static const double markGradientAngleDegrees = 128.4801994866932;
+
+  /// The brand mark's gradient, from `70:206`.
+  ///
+  /// The second and last hardcoded gradient in this system — Figma's own note on
+  /// `70:205` says so, and the tokens spec bounds it at two. Its stops read the
+  /// palette constants rather than fresh literals, so a palette change
+  /// propagates.
+  static LinearGradient get markGradient {
+    const radians = markGradientAngleDegrees * math.pi / 180;
+    final dx = math.sin(radians);
+    final dy = -math.cos(radians);
+    return LinearGradient(
+      begin: Alignment(-dx, -dy),
+      end: Alignment(dx, dy),
+      colors: const [violet500, mint500],
+      stops: const [0.14286, 0.85714],
+    );
+  }
+
   /// App background, behind every surface.
   final Color canvas;
 
@@ -202,6 +235,15 @@ final class MonetaColors {
   /// Stronger border — inactive pagination dots, dividers that must be seen.
   final Color borderStrong;
 
+  /// The resting border of an input. From `27:5`.
+  final Color borderDefault;
+
+  /// The border of a focused input. From `27:18`.
+  ///
+  /// Focus is never signalled by this colour alone: the border width changes
+  /// too, so the state survives greyscale.
+  final Color borderFocus;
+
   /// Primary body and heading text.
   final Color textPrimary;
 
@@ -210,6 +252,14 @@ final class MonetaColors {
 
   /// De-emphasised text and inactive icons.
   final Color textTertiary;
+
+  /// Text in a disabled control. From `27:38`.
+  ///
+  /// Its own opaque value, not [textPrimary] at reduced opacity: an
+  /// opacity-derived colour composites differently against `surface` than
+  /// against `surfaceRaised`, so the same disabled control would differ between
+  /// two screens.
+  final Color textDisabled;
 
   /// Text and icons drawn on the brand gradient.
   final Color textOnBrand;
@@ -247,6 +297,37 @@ final class MonetaColors {
   /// The eight-slot categorical palette.
   final MonetaChartPalette chart;
 
+  /// Every top-level colour this set carries, for checks that must cover all of
+  /// them rather than a remembered few.
+  ///
+  /// [chart] is excluded: it is a palette with its own accessors, and
+  /// [MonetaChartPalette] exposes its own members.
+  List<Color> get all => [
+    canvas,
+    surface,
+    surfaceRaised,
+    track,
+    borderSubtle,
+    borderStrong,
+    borderDefault,
+    borderFocus,
+    textPrimary,
+    textSecondary,
+    textTertiary,
+    textDisabled,
+    textOnBrand,
+    brand,
+    brandOnSurface,
+    income,
+    incomeSubtle,
+    expense,
+    expenseSubtle,
+    warning,
+    warningSubtle,
+    info,
+    infoSubtle,
+  ];
+
   /// Linearly interpolates between two colour sets.
   MonetaColors lerp(MonetaColors other, double t) {
     return MonetaColors(
@@ -256,9 +337,12 @@ final class MonetaColors {
       track: Color.lerp(track, other.track, t)!,
       borderSubtle: Color.lerp(borderSubtle, other.borderSubtle, t)!,
       borderStrong: Color.lerp(borderStrong, other.borderStrong, t)!,
+      borderDefault: Color.lerp(borderDefault, other.borderDefault, t)!,
+      borderFocus: Color.lerp(borderFocus, other.borderFocus, t)!,
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
       textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
       textTertiary: Color.lerp(textTertiary, other.textTertiary, t)!,
+      textDisabled: Color.lerp(textDisabled, other.textDisabled, t)!,
       textOnBrand: Color.lerp(textOnBrand, other.textOnBrand, t)!,
       brand: Color.lerp(brand, other.brand, t)!,
       brandOnSurface: Color.lerp(brandOnSurface, other.brandOnSurface, t)!,

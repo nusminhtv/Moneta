@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'dart:math' as math;
 
 import 'package:flutter/painting.dart';
@@ -222,8 +224,11 @@ void main() {
         track: white,
         borderSubtle: white,
         borderStrong: white,
+        borderDefault: white,
+        borderFocus: white,
         textPrimary: white,
         textSecondary: white,
+        textDisabled: white,
         textTertiary: white,
         textOnBrand: white,
         brand: white,
@@ -242,10 +247,55 @@ void main() {
         ),
       );
       final mid = colors.lerp(target, 1);
-      expect(mid.canvas, white);
-      expect(mid.income, white);
+
+      // Every colour, not three remembered ones. The previous version asserted
+      // canvas, income and one chart slot, so a field left out of `lerp`
+      // entirely was silent — dropping `borderFocus` from it passed. `all` is
+      // asserted to be complete by the test below, so this cannot narrow again.
+      expect(
+        mid.all,
+        everyElement(white),
+        reason: 'a colour was not interpolated — is it missing from lerp?',
+      );
       expect(mid.chart.base(5), white);
       expect(mid.chart.subtle(5), white);
+    });
+  });
+
+  group('the colour set is enumerable', () {
+    test('`all` lists every declared colour field', () {
+      // The guard on the guard. `all` drives the lerp check above, so a field
+      // missing from `all` would make that check narrow silently — the exact
+      // shape of defect that let three remembered assertions stand in for
+      // twenty-three colours.
+      //
+      // A plain test(), not testWidgets: file I/O in a FakeAsync zone never
+      // completes and would hang rather than fail. See CLAUDE.md.
+      final source = File(
+        'lib/design_system/tokens/colors.dart',
+      ).readAsStringSync();
+      final declared = RegExp(
+        r'^  final Color (\w+);',
+        multiLine: true,
+      ).allMatches(source).map((m) => m.group(1)!).toSet();
+      final block = source.substring(
+        source.indexOf('List<Color> get all => ['),
+      );
+      final listed = RegExp(r'^    (\w+),', multiLine: true)
+          .allMatches(block.substring(0, block.indexOf('];')))
+          .map((m) => m.group(1)!)
+          .toSet();
+
+      expect(
+        declared,
+        isNotEmpty,
+        reason: 'parsed no fields — check is vacuous',
+      );
+      expect(
+        listed,
+        declared,
+        reason: 'a declared colour is missing from `all`, or vice versa',
+      );
     });
   });
 }

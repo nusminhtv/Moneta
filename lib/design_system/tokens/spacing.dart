@@ -198,6 +198,25 @@ abstract final class MonetaLayout {
   /// Stroke weight the icon set is drawn at.
   static const double iconStrokeWidth = 1.75;
 
+  /// Resting border width on an input. From `27:5`.
+  ///
+  /// Border widths live here, beside [iconStrokeWidth], rather than in a new
+  /// token file. `tool/check_design_tokens.dart` cannot see a raw
+  /// `BorderSide(width: 2)` — its rules match colours, text styles, insets and
+  /// radii only — so the only thing between these and a hardcoded literal is the
+  /// provenance check, and that check reads *this* file. A new file would have
+  /// sat outside it until someone remembered to add it.
+  static const double borderWidthHairline = 1;
+
+  /// Border width that marks an error. From `27:32`.
+  ///
+  /// Different from [borderWidthHairline] on purpose: an error is signalled by
+  /// width as well as colour, so it survives greyscale.
+  static const double borderWidthEmphasis = 1.5;
+
+  /// Border width of a focused control. From `27:18`.
+  static const double borderWidthFocus = 2;
+
   /// Progress bar height.
   static const double progressBarHeight = 10;
 

@@ -28,6 +28,9 @@ deliberately **not implemented**, rather than guessed.
 | `text-tertiary` | `#7C8595` | `40:256`, `39:243` |
 | `text-on-brand` | `#FFFFFF` | `40:161` BalanceCard |
 | `text-secondary` | `#9AA3B4` | verified `107:75` (row descriptions) — was wrongly recorded as not observed |
+| `border-default` | `rgba(255,255,255,0.10)` | `27:5` TextField field body — the resting border of an input |
+| `border-focus` | `#9A83FB` | `27:18` TextField focused |
+| `text-disabled` | `#3D4553` | `27:38` TextField disabled label |
 | `border-strong` | `rgba(255,255,255,0.18)` | `13:2` Button/Tertiary border, `70:223` inactive dot — added in `onboarding-flow` and, until the pre-archive review, not recorded here at all |
 
 ## Colour — brand
@@ -61,6 +64,7 @@ semantic tokens, so they get their own rows — the provenance check reads every
 | Token | Value | Source node |
 | --- | --- | --- |
 | `violet600` | `#6541EA` | `40:113` gradient stop 1 |
+| `mint500` | `#22D19A` | `70:206` Logo mark, gradient stop 2. Numerically equal to `income-base`; named separately because one is a palette entry and the other a meaning |
 | `violet500` | `#7A5AF8` | `40:113` gradient stop 2, and `brand-base` |
 | `mint600` | `#12A87A` | `40:113` gradient stop 3 |
 | `violet900-canvas` | `#06070A` | `39:8`, the same value as `bg-canvas` |
@@ -113,6 +117,7 @@ Two families: **Inter** (text) and **Plus Jakarta Sans** (display/headings).
 | `label/md` | Inter | 500 | 14 | 18 | 0 | `40:161`, `39:8` |
 | `label/sm` | Inter | 500 | 12 | 16 | 0 | `39:243` |
 | `caption/md` | Inter | 400 | 12 | 16 | 0 | `40:161`, `40:256` |
+| `heading/h3` | Plus Jakarta Sans | 600 | 18 | 24 | 0 | `39:58` AppBar TitleActions |
 | `body/lg` | Inter | 400 | 16 | 24 | 0 | `71:37`, `71:103`, `71:162` slide bodies; `71:2` splash tagline |
 
 Nine styles are implemented of the thirteen Figma defines. The four not
@@ -241,6 +246,9 @@ at all.
 | `icon-size` | 24 | icon canvas | `5:7` and every icon note |
 | `icon-stroke-width` | 1.75 | icon stroke | `5:7` |
 | `progress-bar-height` | 10 | with `radius-pill` | `21:139` |
+| `border-width-hairline` | 1 | resting input border | `27:5` |
+| `border-width-emphasis` | 1.5 | error border — width as well as colour | `27:32` |
+| `border-width-focus` | 2 | focused border | `27:18` |
 | `min-touch-target` | 44 | minimum for icon actions | `20:90` IconButton note |
 
 Category icon sizes (Sm 32 / glyph 16 · Md 40 / glyph 20 · Lg 48 / glyph 24) come

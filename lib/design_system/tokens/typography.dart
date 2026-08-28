@@ -23,6 +23,7 @@ final class MonetaTypography {
     required this.amountXl,
     required this.amountMd,
     required this.headingH1,
+    required this.headingH3,
     required this.titleMd,
     required this.bodyLg,
     required this.bodyMd,
@@ -52,6 +53,12 @@ final class MonetaTypography {
         size: 28,
         lineHeightPx: 34,
         trackingPercent: -1,
+      ),
+      headingH3 = _style(
+        family: MonetaFontFamily.display,
+        weight: FontWeight.w600,
+        size: 18,
+        lineHeightPx: 24,
       ),
       titleMd = _style(
         family: MonetaFontFamily.text,
@@ -99,6 +106,9 @@ final class MonetaTypography {
   /// `heading/h1` — large screen titles.
   final TextStyle headingH1;
 
+  /// Level-3 heading. The compact app-bar title, from `39:58`.
+  final TextStyle headingH3;
+
   /// `title/md` — card and section titles.
   final TextStyle titleMd;
 
@@ -122,6 +132,7 @@ final class MonetaTypography {
     amountXl,
     amountMd,
     headingH1,
+    headingH3,
     titleMd,
     bodyLg,
     bodyMd,
@@ -155,6 +166,7 @@ final class MonetaTypography {
       amountXl: TextStyle.lerp(amountXl, other.amountXl, t)!,
       amountMd: TextStyle.lerp(amountMd, other.amountMd, t)!,
       headingH1: TextStyle.lerp(headingH1, other.headingH1, t)!,
+      headingH3: TextStyle.lerp(headingH3, other.headingH3, t)!,
       titleMd: TextStyle.lerp(titleMd, other.titleMd, t)!,
       bodyLg: TextStyle.lerp(bodyLg, other.bodyLg, t)!,
       bodyMd: TextStyle.lerp(bodyMd, other.bodyMd, t)!,

@@ -15,16 +15,25 @@ Each names the mutations to run **at that checkpoint**, not in a pass at the end
   *Do this first: it edits the shared `gallery_catalog.dart` while the parallel
   agent's section list is still empty.*
 
-- [ ] 1.2 **Eight tokens with provenance** (D2). Add `heading/h3`;
+- [x] 1.2 **Eight tokens with provenance** (D2). Add `heading/h3`;
   `border-default`, `border-focus`, `text-disabled`; `border-width/hairline`,
   `/emphasis`, `/focus`; `gradient/mark`. Add a `figma-tokens.md` row for each
   naming its node (`39:58`, `27:5`, `27:18`, `27:38`, `27:5`, `27:32`, `27:18`,
   `70:206`). Extend `MonetaColors`' constructor, its `lerp`, and the
   `colors_test.dart` construction.
   Verify: `token_provenance_test.dart`, `colors_test.dart`, `typography_test.dart`.
-  Mutations: delete any one `figma-tokens.md` row → provenance fails; omit one new
-  colour from `lerp` → the lerp test must fail (if it does not, the lerp test is
-  the defect and gets fixed here).
+  Mutations run: deleting the `border-focus` doc row → provenance fails, correct.
+  Dropping `borderFocus` from `lerp` → **survived**, so the lerp test was the
+  defect, exactly as this task anticipated: it asserted canvas, income and one
+  chart slot, three remembered fields standing in for twenty-three. `MonetaColors`
+  now exposes `all`, the lerp check asserts every entry reaches the target, and a
+  second test parses the source so `all` cannot silently omit a field. Both
+  mutations now fail, plus a third (removing a field from `all`).
+
+  Border widths went into `MonetaLayout` beside `iconStrokeWidth` rather than a
+  new token file — design.md said "border-width tokens" without saying where, and
+  a new file would have sat outside the provenance check until someone remembered
+  to add it, which is the hand-enumerated hole this project keeps falling into.
 
 - [ ] 1.3 **`IconButton`** from `20:114` — 3 styles × 3 sizes × 2 states.
   Dimensions on the size enum (D3). Register all 18.
