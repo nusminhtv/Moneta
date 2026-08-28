@@ -79,7 +79,7 @@ returns only three pages; `5:9` and `5:10` are not among them.
 | Toggle | `25:198` | 4 |
 | Checkbox | `25:229` | 6 (3 states × disabled) |
 | Radio | `25:238` | 4 |
-| CircularProgress | `25:272` | 9 (3 states × 3 sizes) |
+| CircularProgress | `25:272` | 9 (3 states × 3 sizes) — **done** |
 | CategoryIcon | `33:311` | 24 (8 categories × 3 sizes) — **done** |
 | GoalRing | `94:132` | 8 percentages |
 
@@ -92,13 +92,13 @@ returns only three pages; `5:9` and `5:10` are not among them.
 | DateGroupHeader | `29:71` | 1 |
 | SearchField | `35:38` | 2 |
 | ListRow | `35:113` | 5 (Chevron, Value, Toggle, Badge, None) |
-| StatTile | `35:137` | 3 directions |
+| StatTile | `35:137` | 3 directions — **done** |
 | EmptyState | `35:166` | 2 (HasAction true/false) |
-| AmountInput | `36:76` | 2 |
+| AmountInput | `36:76` | 2 — **done** |
 | NumpadKey | `36:91` | 4 |
 | Numpad | `36:92` | 1 |
-| SegmentedItem | `36:167` | 2 |
-| SegmentedControl | `36:168` | 1 |
+| SegmentedItem | `36:167` | 2 — **done** |
+| SegmentedControl | `36:168` | 1 — **done** |
 | TabItem | `38:109` | 4 (2 styles × selected) |
 | Tabs | `38:110` | 1 |
 | Select | `38:131` | 2 |
@@ -211,6 +211,7 @@ number, consistently applied, wrong.
 | `dotSize 7`, `activeDotWidth 22`, `gap 7` | `pagination_dots.dart` | no node inspection recorded |
 | `fabSlotWidth 72` | `spacing.dart` (`MonetaLayout`) | **not observed — derived**, and now labelled as such in both the code and `figma-tokens.md`. Figma authors the FAB and the bar but no slot width. Found by the provenance check on its fourth revision. |
 | Button paddings 14 / 20 / 24, icon sizes 16 / 20 / 24, heights 36 / 44 / 56 | `moneta_button.dart` | heights are quoted from `13:2`'s annotation in code; the paddings and icon sizes are not |
+| CircularProgress stroke widths 6 (Md) and 10 (Lg) | `moneta_circular_progress.dart` | **not observed — derived**. Figma exports the arcs as SVG assets, so the diameters are readable from the node and the stroke widths are not. The ratio matches the exported arcs by eye; nothing was measured. |
 | Illustration `bandHeight 268`, `haloSize 212`, `ringSize 262`, `glyphSize 72`, the ring/halo/glyph placements (45.5/3, 70.5/28, 140.5/98) and the four dot positions | `onboarding_illustration.dart` | transcribed from the exported SVGs, not re-verified against `71:59` after the rewrite |
 
 Listing them is not the same as fixing them. Re-reading these nodes is
@@ -342,3 +343,28 @@ None appear on `🧩 Components / Organisms`, which is consistent with the rest 
 the file: the library is larger than that page shows. There is also no budget
 domain, no table and no repository — Budgets is a feature to build, not a set of
 screens to draw.
+
+### Added by `budget-components`, 2026-08-28
+
+| # | What | Resolution |
+| --- | --- | --- |
+| I10 | `CircularProgress` has no TEXT property; its 62% / 88% / 100% are typed onto each instance. Annotation `04.01` names this as ledger entry I10 — one of the file's own recorded deviations. | Not copied. The Dart component takes a fraction and derives the arc, the colour and the label, and exposes no way to set the label. A ring whose number contradicts its sweep is not expressible. |
+| 11 | `AmountInput`'s own Figma description says the error variant *"differs by colour only"*. | Not reproduced. `AmountInput.error` requires a message, so the type makes "error with no message" unrepresentable. Colour alone fails greyscale and fails a red-green viewer. |
+| 12 | `StatTile`'s `Direction=Up` maps to income green, and its own sample reads "Spent this month / +12.4% vs last month" in green — spending more, coloured as good news. | Mapping kept as authored: direction is the caller's choice, and income up in green is correct. Changing it would make every correct use wrong to fix one wrong sample. **Candidate for the file's twelve deliberate mistakes**; not verified against the answer key at `🔧 Utilities / Known Deviations`. |
+| 13 | Figma's `CircularProgress` `State=Over` sample is labelled **100%**. Under this system's rule — `BudgetStatus.fromFraction`, where exactly 1.0 is the limit *reached*, not exceeded — 100% classifies as `NearLimit`. | The gallery's label-versus-widget check caught it: a 1.0 fixture rendered the warning colour under an "Over" label. The gallery fixture is 1.12. Whether Figma's sample is a mistake or a different threshold rule is **not resolved** — the answer key has not been read. |
+| 14 | `StatTile` is described as 170 wide with a 13px gap, and placed on screens as 170.5 wide with a 12px gap. | The tile takes the width it is given; the screen sets the gap. Neither number is pinned in the component. |
+| 15 | `radius-sm` was documented in `radii.dart` as appearing in no node read. | True of the nodes read at the time — balance card, banner, checkbox. `36:167` binds it at 10. Transcribed; the note kept and corrected rather than deleted. |
+
+## Still open
+
+- **The gallery cannot catch a variant shortfall.** `auth-components` proposed a
+  generic `expectedVariants` field and stopped at 10 of 14 tasks. Today the
+  guard is one hand-written count test per component, and nine of the
+  twenty-four registered sections carry fewer variants than Figma authors —
+  Checkbox 1 of 6, Divider 1 of 4, ProgressBar 1 of 6, CategoryIcon 1 of 24,
+  Skeleton 1 of 4, PaginationDots 1 of 3, TransactionRow 2 of 4, TextField 4 of
+  5, IconButton and AppBar registered through loops that were not counted.
+  Closing this is a design-system-wide audit and needs its own change.
+- **`BarChart`** is instanced on `04.07` (`67:712`) but appears on none of the
+  three component pages. Either it is a screen-local frame or it lives on a page
+  not yet queried. Budgets history is blocked on finding out.

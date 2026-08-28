@@ -43,7 +43,7 @@
 
 ## 6. Record what was found
 
-- [ ] 6.1 `docs/design-system/figma-map.md`: mark the five components done with
+- [x] 6.1 `docs/design-system/figma-map.md`: mark the five components done with
       their nodes, and record the three authored-but-not-copied decisions
       (I10 label overrides, colour-only error, `Direction=Up` green on a
       spending tile) in the deviations table with what was observed.
