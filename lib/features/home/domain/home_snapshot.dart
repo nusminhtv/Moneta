@@ -84,8 +84,18 @@ final class HomeSnapshot extends Equatable {
   /// The most recent entries, newest first.
   final List<RecentEntry> recent;
 
-  /// Whether there is nothing at all to show.
+  /// Whether there is nothing recent to list.
   bool get isEmpty => recent.isEmpty;
+
+  /// Whether this wallet has never held anything.
+  ///
+  /// Distinct from [isEmpty] on purpose. An empty `recent` list is not first
+  /// run: a wallet can hold a balance whose transactions have all scrolled past
+  /// the recent limit, and swapping that for the setup checklist would hide
+  /// real money behind "Link an account". First run means every figure is zero
+  /// as well.
+  bool get isFirstRun =>
+      recent.isEmpty && totalBalance.isZero && income.isZero && expenses.isZero;
 
   @override
   List<Object?> get props => [totalBalance, income, expenses, recent];

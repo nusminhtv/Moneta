@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_button.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/molecules/date_group_header.dart';
+import 'package:moneta/design_system/molecules/empty_state.dart';
+import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/molecules/section_header.dart';
 import 'package:moneta/design_system/molecules/transaction_row.dart';
 import 'package:moneta/design_system/organisms/balance_card.dart';
@@ -31,6 +33,10 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({
     required this.snapshot,
     required this.greeting,
+    required this.now,
+    this.onLinkAccount,
+    this.onLogFirstExpense,
+    this.onSetBudget,
     this.masked = false,
     this.onToggleMask,
     this.onSeeAllTransactions,
@@ -43,6 +49,22 @@ class HomeScreen extends StatelessWidget {
 
   /// The app bar title — `Hi, Minh` in the design.
   final String greeting;
+
+  /// Now, in UTC, injected from the app's `Clock`.
+  ///
+  /// A screen calling `DateTime.now()` cannot be tested at a chosen date and
+  /// quietly disagrees with the rest of the app, which reads the injected
+  /// clock. This screen used to.
+  final DateTime now;
+
+  /// First-run checklist: link an account. Null while Accounts does not exist.
+  final VoidCallback? onLinkAccount;
+
+  /// First-run checklist: log the first expense.
+  final VoidCallback? onLogFirstExpense;
+
+  /// First-run checklist: set one budget. Null while Budgets does not exist.
+  final VoidCallback? onSetBudget;
 
   /// Whether the balance figures are hidden.
   final bool masked;
@@ -86,53 +108,121 @@ class HomeScreen extends StatelessWidget {
         children: [
           MonetaAppBar(title: greeting),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                MonetaSpacing.spaceLg,
-                MonetaSpacing.spaceXs,
-                MonetaSpacing.spaceLg,
-                MonetaSpacing.spaceBase,
-              ),
-              children: [
-                BalanceCard(
-                  totalBalance: snapshot.totalBalance,
-                  safeToSpend: snapshot.totalBalance,
-                  income: snapshot.income,
-                  expenses: snapshot.expenses,
-                  safeToSpendUntil: _monthEndLabel(),
-                  masked: masked,
-                  onToggleMask: onToggleMask,
-                ),
-                if (quickActions.isNotEmpty) ...[
-                  const SizedBox(height: MonetaSpacing.spaceBase),
-                  _QuickActions(actions: quickActions),
-                ],
-                const SizedBox(height: MonetaSpacing.spaceBase),
-                SectionHeader(
-                  title: 'Recent transactions',
-                  actionLabel: snapshot.isEmpty ? null : 'See all',
-                  onAction: snapshot.isEmpty ? null : onSeeAllTransactions,
-                ),
-                if (snapshot.isEmpty)
-                  _NothingYet()
-                else
-                  for (final group in groups) ...[
-                    DateGroupHeader(date: group.day),
-                    for (final entry in group.entries)
-                      TransactionRow(
-                        key: ValueKey(entry.id),
-                        title: entry.title,
-                        amount: entry.amount,
-                        direction: entry.direction,
-                        category: entry.category,
-                        occurredAt: entry.occurredAt,
+            child: snapshot.isFirstRun
+                ? _firstRun(context)
+                : ListView(
+                    padding: const EdgeInsets.fromLTRB(
+                      MonetaSpacing.spaceLg,
+                      MonetaSpacing.spaceXs,
+                      MonetaSpacing.spaceLg,
+                      MonetaSpacing.spaceBase,
+                    ),
+                    children: [
+                      BalanceCard(
+                        totalBalance: snapshot.totalBalance,
+                        safeToSpend: snapshot.totalBalance,
+                        income: snapshot.income,
+                        expenses: snapshot.expenses,
+                        safeToSpendUntil: _monthEndLabel(),
+                        masked: masked,
+                        onToggleMask: onToggleMask,
                       ),
-                  ],
-              ],
-            ),
+                      if (quickActions.isNotEmpty) ...[
+                        const SizedBox(height: MonetaSpacing.spaceBase),
+                        _QuickActions(actions: quickActions),
+                      ],
+                      const SizedBox(height: MonetaSpacing.spaceBase),
+                      SectionHeader(
+                        title: 'Recent transactions',
+                        actionLabel: 'See all',
+                        onAction: onSeeAllTransactions,
+                      ),
+                      for (final group in groups) ...[
+                        DateGroupHeader(date: group.day),
+                        for (final entry in group.entries)
+                          TransactionRow(
+                            key: ValueKey(entry.id),
+                            title: entry.title,
+                            amount: entry.amount,
+                            direction: entry.direction,
+                            category: entry.category,
+                            occurredAt: entry.occurredAt,
+                          ),
+                      ],
+                    ],
+                  ),
           ),
         ],
       ),
+    );
+  }
+
+  /// Home before there is anything to show, from Figma `52:372`.
+  ///
+  /// A different screen, not the normal one with a blank middle: no balance
+  /// card over zero, no quick actions to nowhere. An empty state with one real
+  /// action, then the three things that make the app useful — which is what
+  /// `35:138` means by *"an empty state without a primary action is a dead
+  /// end"*.
+  Widget _firstRun(BuildContext context) {
+    final theme = context.moneta;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+        MonetaSpacing.spaceLg,
+        MonetaSpacing.spaceXs,
+        MonetaSpacing.spaceLg,
+        MonetaSpacing.spaceBase,
+      ),
+      children: [
+        EmptyState(
+          icon: MonetaIconName.shoppingBag,
+          title: "Let's set up your money",
+          message:
+              'Add an account and log one transaction. Moneta needs about a '
+              'week of data before budgets get useful.',
+          actionLabel: 'Link an account',
+          onAction: onLinkAccount,
+        ),
+        const SizedBox(height: MonetaSpacing.spaceMd),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: theme.colors.surfaceRaised,
+            borderRadius: theme.radii.borderLg,
+            border: Border.all(color: theme.colors.borderSubtle),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: MonetaSpacing.spaceBase,
+              vertical: MonetaSpacing.spaceXs,
+            ),
+            child: Column(
+              children: [
+                ListRow(
+                  title: 'Link an account',
+                  subtitle: 'Bank, cash or e-wallet',
+                  leadingIcon: MonetaIconName.creditCard,
+                  accessory: ListRowAccessory.chevron,
+                  onTap: onLinkAccount,
+                ),
+                ListRow(
+                  title: 'Log your first expense',
+                  subtitle: 'Takes about five seconds',
+                  leadingIcon: MonetaIconName.plus,
+                  accessory: ListRowAccessory.chevron,
+                  onTap: onLogFirstExpense,
+                ),
+                ListRow(
+                  title: 'Set one budget',
+                  subtitle: 'Start with your biggest category',
+                  leadingIcon: MonetaIconName.target,
+                  accessory: ListRowAccessory.chevron,
+                  onTap: onSetBudget,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -142,8 +232,8 @@ class HomeScreen extends StatelessWidget {
   /// so claiming one would be inventing a number. It names the end of the
   /// current local month, which is true.
   String _monthEndLabel() {
-    final now = DateTime.now();
-    final end = DateTime(now.year, now.month + 1, 0);
+    final local = now.toLocal();
+    final end = DateTime(local.year, local.month + 1, 0);
     const months = [
       'Jan',
       'Feb',
@@ -195,21 +285,6 @@ class _QuickActions extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _NothingYet extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = context.moneta;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: MonetaSpacing.space2xl),
-      child: Text(
-        'Nothing recorded yet. Tap + to add your first transaction.',
-        textAlign: TextAlign.center,
-        style: theme.text.bodyMd.copyWith(color: theme.colors.textTertiary),
-      ),
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:moneta/app/home_providers.dart';
 import 'package:moneta/app/router.dart';
 import 'package:moneta/app/shell.dart';
+import 'package:moneta/data/app_providers.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/molecules/skeleton.dart';
 import 'package:moneta/design_system/organisms/bottom_nav.dart';
@@ -41,6 +42,11 @@ class _HomeRouteScreenState extends ConsumerState<HomeRouteScreen> {
       data: (data) => HomeScreen(
         snapshot: data,
         greeting: 'Hi there',
+        now: ref.watch(clockProvider).nowUtc(),
+        // Accounts and Budgets are not built yet. A row that goes nowhere is
+        // worse than a row that plainly does not respond, so these stay null
+        // until those features exist.
+        onLogFirstExpense: () => showAddTransactionSheet(context),
         masked: _masked,
         onToggleMask: () => setState(() => _masked = !_masked),
         onSeeAllTransactions: () => context.go(

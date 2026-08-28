@@ -4,6 +4,8 @@ import 'package:moneta/core/money.dart';
 import 'package:moneta/core/spend_category.dart';
 import 'package:moneta/core/transaction_direction.dart';
 import 'package:moneta/design_system/molecules/date_group_header.dart';
+import 'package:moneta/design_system/molecules/empty_state.dart';
+import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/molecules/transaction_row.dart';
 import 'package:moneta/design_system/organisms/balance_card.dart';
 import 'package:moneta/design_system/organisms/moneta_app_bar.dart';
@@ -42,7 +44,11 @@ void main() {
         SizedBox(
           width: 393,
           height: 852,
-          child: HomeScreen(snapshot: snapshot, greeting: 'Hi there'),
+          child: HomeScreen(
+            snapshot: snapshot,
+            greeting: 'Hi there',
+            now: DateTime.utc(2026, 8, 20, 3),
+          ),
         ),
         surfaceSize: const Size(393, 852),
       );
@@ -76,15 +82,64 @@ void main() {
       expect(card.expenses, const Money(123000, vnd));
     });
 
-    testWidgets('an empty wallet says so instead of showing a bare list', (
+    testWidgets('an empty wallet gets the first-run screen, not a gap', (
+      tester,
+    ) async {
+      // Figma 52:372 is a different screen, not the normal one with a hole in
+      // the middle: no balance card reading zero, no quick actions to nowhere,
+      // no "See all" pointing at an empty list.
+      await pumpHome(tester, HomeSnapshot.empty(vnd));
+
+      expect(find.byType(TransactionRow), findsNothing);
+      expect(find.byType(DateGroupHeader), findsNothing);
+      expect(find.byType(BalanceCard), findsNothing);
+      expect(find.text('See all'), findsNothing);
+      expect(find.text('Recent transactions'), findsNothing);
+
+      expect(find.byType(EmptyState), findsOneWidget);
+      expect(find.text("Let's set up your money"), findsOneWidget);
+    });
+
+    testWidgets('the first-run screen offers the three setup steps', (
       tester,
     ) async {
       await pumpHome(tester, HomeSnapshot.empty(vnd));
-      expect(find.byType(TransactionRow), findsNothing);
-      expect(find.byType(DateGroupHeader), findsNothing);
-      expect(find.textContaining('Nothing recorded yet'), findsOneWidget);
-      // No "See all" either: a link to an empty list is a dead end.
-      expect(find.text('See all'), findsNothing);
+
+      final rows = tester.widgetList<ListRow>(find.byType(ListRow)).toList();
+      expect(rows.map((r) => r.title), [
+        'Link an account',
+        'Log your first expense',
+        'Set one budget',
+      ]);
+      // `35:138`: an empty state with no primary action is a dead end.
+      expect(
+        tester.widget<EmptyState>(find.byType(EmptyState)).hasAction,
+        isTrue,
+      );
+    });
+
+    testWidgets('a wallet with one transaction is not the first-run screen', (
+      tester,
+    ) async {
+      await pumpHome(
+        tester,
+        snapshotWith([entry(id: 'a', at: DateTime.utc(2026, 8, 20, 3))]),
+      );
+      expect(find.byType(EmptyState), findsNothing);
+      expect(find.byType(BalanceCard), findsOneWidget);
+    });
+
+    testWidgets('a balance with no recent rows still shows the balance', (
+      tester,
+    ) async {
+      // Money with nothing recent is not first run. Showing the setup
+      // checklist here would hide a real balance behind "Link an account".
+      await pumpHome(tester, snapshotWith([]));
+      expect(find.byType(EmptyState), findsNothing);
+      expect(
+        tester.widget<BalanceCard>(find.byType(BalanceCard)).totalBalance,
+        const Money(31877000, vnd),
+      );
     });
 
     testWidgets('the bottom navigation is not part of the screen', (
@@ -152,6 +207,7 @@ void main() {
           width: 393,
           height: 852,
           child: HomeScreen(
+            now: DateTime.utc(2026, 8, 20, 3),
             snapshot: snapshotWith([]),
             greeting: 'Hi there',
             masked: true,
