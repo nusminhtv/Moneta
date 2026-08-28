@@ -1,4 +1,7 @@
 import 'package:moneta/app/gallery/gallery_catalog.dart';
+import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
+import 'package:moneta/design_system/molecules/list_row.dart';
+import 'package:moneta/design_system/molecules/section_header.dart';
 
 /// Gallery sections for 📱 02 Home & Dashboard.
 ///
@@ -10,4 +13,69 @@ import 'package:moneta/app/gallery/gallery_catalog.dart';
 /// registered here, in every variant Figma authors.
 final List<GallerySection> homeSections = [
   // --- HOME: add below ---
+  GallerySection(
+    component: 'ListRow',
+    figmaNodeId: '35:113',
+    variants: [
+      GalleryVariant(
+        'Accessory=Chevron',
+        (_) => const ListRow(
+          title: 'Notifications',
+          subtitle: 'Manage account alerts',
+          leadingIcon: MonetaIconName.bell,
+          accessory: ListRowAccessory.chevron,
+        ),
+      ),
+      GalleryVariant(
+        'Accessory=Value',
+        (_) => const ListRow(
+          title: 'Currency',
+          leadingIcon: MonetaIconName.dollarSign,
+          accessory: ListRowAccessory.value,
+          value: 'VND',
+        ),
+      ),
+      GalleryVariant(
+        'Accessory=Toggle',
+        (_) => const ListRow(
+          title: 'Budget alerts',
+          subtitle: 'Warn before limits are reached',
+          leadingIcon: MonetaIconName.alertTriangle,
+          accessory: ListRowAccessory.toggle,
+          toggled: true,
+        ),
+      ),
+      GalleryVariant(
+        'Accessory=Badge',
+        (_) => const ListRow(
+          title: 'Inbox',
+          leadingIcon: MonetaIconName.mail,
+          accessory: ListRowAccessory.badge,
+          badgeLabel: '3 new',
+        ),
+      ),
+      GalleryVariant(
+        'Accessory=None',
+        (_) => const ListRow(
+          title: 'App version',
+          subtitle: 'Moneta 1.0',
+          leadingIcon: MonetaIconName.smartphone,
+          accessory: ListRowAccessory.none,
+        ),
+      ),
+    ],
+  ),
+  GallerySection(
+    component: 'SectionHeader',
+    figmaNodeId: '55:107',
+    variants: [
+      GalleryVariant(
+        'Variant=Default',
+        (_) => const SectionHeader(
+          title: 'Recent activity',
+          actionLabel: 'See all',
+        ),
+      ),
+    ],
+  ),
 ];

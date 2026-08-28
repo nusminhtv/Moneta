@@ -11,13 +11,13 @@
 
 ## 2. Shared Home Components
 
-- [ ] 2.1 Implement `ListRow` (`35:113`) with all five variants: `Chevron`,
+- [x] 2.1 Implement `ListRow` (`35:113`) with all five variants: `Chevron`,
   `Value`, `Toggle`, `Badge` and `None`. Register every variant in
   `gallery_catalog_home.dart` and describe the distinguishing properties in
   `gallery_describe_home.dart`. Verify:
   `test/design_system/molecules/list_row_test.dart` and
   `test/app/gallery_test.dart`.
-- [ ] 2.2 Implement `SectionHeader` (`55:107`) and register it in the home
+- [x] 2.2 Implement `SectionHeader` (`55:107`) and register it in the home
   gallery files. Verify:
   `test/design_system/molecules/section_header_test.dart` and
   `test/app/gallery_test.dart`.

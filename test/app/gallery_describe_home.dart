@@ -1,4 +1,6 @@
 import 'package:flutter/widgets.dart';
+import 'package:moneta/design_system/molecules/list_row.dart';
+import 'package:moneta/design_system/molecules/section_header.dart';
 
 /// Describes gallery variants for 📱 02 Home & Dashboard.
 ///
@@ -10,5 +12,18 @@ import 'package:flutter/widgets.dart';
 /// only see what the description mentions.
 String? describeHome(Widget widget) => switch (widget) {
   // --- HOME: add cases below ---
+  ListRow(
+    :final title,
+    :final subtitle,
+    :final leadingIcon,
+    :final accessory,
+    :final value,
+    :final badgeLabel,
+    :final toggled,
+  ) =>
+    'ListRow(${accessory.name},$title,$subtitle,'
+        '${leadingIcon?.figmaName},$value,$badgeLabel,$toggled)',
+  SectionHeader(:final title, :final actionLabel) =>
+    'SectionHeader(default,$title,$actionLabel)',
   _ => null,
 };
