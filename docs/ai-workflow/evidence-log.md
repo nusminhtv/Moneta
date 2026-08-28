@@ -228,3 +228,62 @@ fixed"): slides 2–3 on device; no test at any surface size but 393×852;
 `coverage_critical.txt`; the 16 chart-palette colours provenance-unchecked;
 `TransactionRow` at 2 of `29:70`'s 4 variants; BottomNav 59 vs 64; Light mode
 never investigated.
+
+## auth-components — in progress, tasks 1.2–1.4 on `main` 2026-08-28
+
+Parallel work with a second agent (Codex) on `📱 02 Home & Dashboard`. Handing off
+`AppBar` (`bd94c44`) and `IconButton` (`6187c6b`) plus eight tokens (`cbe0d69`),
+which all six of their screens were blocked on. Gate green on `main`:
+`docs/ai-workflow/verify-runs/2026-08-28T04-45-15Z_auth-components.md`, 710 tests.
+
+**Two agents were sharing one working tree and neither had noticed.** `git branch`
+showed this session standing on `home-dashboard` — Codex's branch — while `ps`
+showed Codex actively editing `openspec/changes/home-overview/`. A `git checkout`
+had already switched the branch under it. Nothing was lost, but it would have
+been: two agents in one tree overwrite each other in real time, and a checkout
+yanks files from under the other. Split into `git worktree`s —
+`/Moneta` for Codex, `/Moneta-auth` for this session — sharing one object store.
+
+**`spec-auditor` returned NOT READY on the first plan, and was right on all eight
+points I checked.** Three were claims I had made about existing code that were
+false: that `gallery_test` enforces every variant (it does not — the counts are
+one hand-written test per component, so registering `IconButton` with 2 of 18
+would have passed); that the design-token gate would force any Figma value to
+become a token (it matches colours, text styles, insets and radii only, so a raw
+`BorderSide(width: 2)` passes); and a scenario demanding "no test asserts a
+hardcoded 59" while `spacing.dart` already ships `safeAreaTop = 59` with a test
+pinning it — read literally, that asked for a passing test to be deleted, which is
+exactly what `b8e8091` did in `onboarding-flow`.
+
+The audit also caught the ordering backwards: `AppBar`'s back control is an
+`IconButton`, so `AppBar` depends on it.
+
+**Reading the nodes changed the scope three times**, each time in a direction
+guessing would have missed:
+
+- `Logo` is two variants, not one, and needs no asset — so `pubspec.yaml` stays
+  untouched. It also needs a *second* brand gradient, which the tokens spec
+  forbade with "no other gradient is defined anywhere in the application". Figma's
+  own note on `70:205` calls it "the second and last hardcoded gradient in this
+  system": the design always had two and the requirement recorded one.
+- The token count went from the one I claimed to eight.
+- `IconButton`'s glyph colours are **not** `MonetaButton`'s mapping. Disabled is
+  `text-disabled` where the button's is `text-tertiary`, and ghost is
+  `text-secondary` where the button's is `text-primary`. One `get_variable_defs`
+  call avoided two invented values.
+
+**One mutation survived and found a real defect.** Dropping `borderFocus` from
+`MonetaColors.lerp` passed the suite, because the lerp test asserted canvas,
+income and one chart slot — three remembered fields standing in for twenty-three.
+Fixed by exposing `MonetaColors.all`, asserting every entry reaches the target,
+and adding a source-parsing test so `all` cannot silently omit a field.
+
+Seventeen mutations run across the three tasks; sixteen failed on the first
+attempt and the seventeenth exposed the lerp gap above.
+
+**Known and unclosed:** the gallery still cannot catch variant *shortfall*. The
+plan had that as task 1.1 to be done "while the other agent's section list is
+empty"; by the time I started they had six sections, so adding a required
+`expectedVariants` would mean editing a file I do not own. Deferred to
+integration, and it remains a real hole: any component can be registered with
+fewer variants than Figma authors and the gate will not notice.

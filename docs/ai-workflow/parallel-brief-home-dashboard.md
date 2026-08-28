@@ -4,6 +4,36 @@ You are implementing **📱 02 Home & Dashboard** in the Moneta repository, in
 parallel with another agent who is implementing **📱 01 Onboarding & Auth**. This
 document is the contract between you. Read all of it before writing code.
 
+## STATUS — `AppBar` and `IconButton` are on `main`
+
+`git rebase origin/main` to pick them up. Both are the ones you were blocked on:
+
+- `MonetaAppBar` (`39:112`) — `lib/design_system/organisms/moneta_app_bar.dart`.
+  Four variants via `MonetaAppBarVariant`. It does **not** draw a status bar; it
+  reads `MediaQuery.padding.top`, so put it above your screen body and let it
+  take its own inset. Actions are a record typedef `MonetaAppBarAction`.
+- `MonetaIconButton` (`20:114`) — `lib/design_system/atoms/moneta_icon_button.dart`.
+  18 variants. `semanticLabel` is **required** and must describe the action, not
+  the glyph — a test asserts the glyph name does not leak into it.
+
+Two things that will bite you if you assume them:
+
+- The glyph colours are **not** the same mapping as `MonetaButton`. Disabled is
+  `text-disabled` (not `text-tertiary`) and ghost is `text-secondary` (not
+  `text-primary`). Read them from `MonetaIconButton.foregroundFor`, or from the
+  node with `get_variable_defs` — inferring from the button would have been wrong
+  twice.
+- Eight new tokens landed with them, including `heading/h3`, `border-default`,
+  `border-focus`, `text-disabled` and three border widths in `MonetaLayout`. If
+  you were about to hardcode a border width, use `MonetaLayout.borderWidth*` —
+  `check_design_tokens.dart` cannot see a raw `BorderSide(width: 2)`, so nothing
+  would have caught it.
+
+Still yours and still blocking the auth flow: `ListRow` (`35:113`, 5 variants)
+and `SectionHeader` (`55:107`). Auth screens 01.10 and 01.12 wait on them.
+
+---
+
 **Do not start until the parallel-foundation commit is on `main`.** Confirm with
 `git log --oneline --grep "parallel foundation" -1`. It does not build components
 — it creates the *seams* that let two agents add components without colliding:
