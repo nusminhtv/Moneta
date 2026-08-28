@@ -1,4 +1,6 @@
 import 'package:flutter/widgets.dart';
+import 'package:moneta/app/gallery/gallery_catalog_auth.dart';
+import 'package:moneta/app/gallery/gallery_catalog_home.dart';
 import 'package:moneta/core/money.dart';
 import 'package:moneta/core/spend_category.dart';
 import 'package:moneta/design_system/atoms/moneta_button.dart';
@@ -63,7 +65,21 @@ const _budgetLimit = Money(4000000, _vnd);
 /// This list is the gallery's contract: a test asserts each section's variant
 /// count against the enum that defines it, so adding a variant to a component
 /// without adding it here fails verification.
+/// Every design-system component, in every variant.
+///
+/// Split three ways so two agents can add components in parallel without
+/// colliding in this file. `coreSections` below is shared and changes rarely;
+/// `authSections` and `homeSections` live in their own files and each has one
+/// owner. Only the three spreads here are shared, and a spread is a one-line
+/// merge.
 final List<GallerySection> galleryCatalog = [
+  ...coreSections,
+  ...authSections,
+  ...homeSections,
+];
+
+/// Components that predate the auth/home split, or belong to neither.
+final List<GallerySection> coreSections = [
   GallerySection(
     component: 'Button',
     figmaNodeId: '13:2',

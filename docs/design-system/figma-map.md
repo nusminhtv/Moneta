@@ -50,8 +50,85 @@ Method note for anyone extending this map: **query nodes, do not enumerate pages
 | — | `29:70` | `TransactionRow`, 4 variants — a component the Organisms page does not list |
 | — | `107:75` | the real `space/*` variable collection, 12 values |
 
-Only a fraction of the file has been inspected. The `📁 Screen Index` at `5:24`
-lists what has not been. Nothing below should be read as "this is all there is".
+The `🗂 Screen Index` is at **`5:24`** and lists nine screen pages: 01 Onboarding
+& Auth (12), 02 Home & Dashboard (6), 03 Transactions (14), 04 Budgets (7),
+05 Accounts & Cards (6), 06 Goals (6), 07 Insights & Reports (6),
+08 Profile & Settings (11), 09 System States (6) — 74 screens, matching the
+Cover's claim. Each row gives the screen's node id, priority and the components
+it uses; read the table rather than guessing which components a screen needs.
+
+## The full component library, read 2026-08-25
+
+The three component pages, queried by node id. This closes the "~36 components
+unmapped" gap that this file carried since the first Figma pass — the pages were
+never missing, they were never queried. `get_metadata` with no `nodeId` still
+returns only three pages; `5:9` and `5:10` are not among them.
+
+**Atoms — page `5:9`**
+
+| Component | Node | Variants |
+| --- | --- | --- |
+| Button | `13:2` | 45 (5 styles × 3 sizes × 3 states) — **done** |
+| Badge | `17:32` | 10 (5 tones × 2 sizes) |
+| Chip | `17:65` | 6 (3 types × selected) |
+| IconButton | `20:114` | 18 (3 styles × 3 sizes × 2 states) |
+| FAB | `20:125` | 2 (Standard, Extended) |
+| Avatar | `21:121` | 12 (3 types × 4 sizes) |
+| Divider | `21:126` | 4 (2 orientations × 2 tones) |
+| ProgressBar | `21:139` | 6 (3 states × 2 sizes) — **done** |
+| Toggle | `25:198` | 4 |
+| Checkbox | `25:229` | 6 (3 states × disabled) |
+| Radio | `25:238` | 4 |
+| CircularProgress | `25:272` | 9 (3 states × 3 sizes) |
+| CategoryIcon | `33:311` | 24 (8 categories × 3 sizes) — **done** |
+| GoalRing | `94:132` | 8 percentages |
+
+**Molecules — page `5:10`**
+
+| Component | Node | Variants |
+| --- | --- | --- |
+| TextField | `27:44` | 5 states |
+| TransactionRow | `29:70` | 4 types (Expense, Income, **Transfer**, **Pending**) — 2 of 4 done |
+| DateGroupHeader | `29:71` | 1 |
+| SearchField | `35:38` | 2 |
+| ListRow | `35:113` | 5 (Chevron, Value, Toggle, Badge, None) |
+| StatTile | `35:137` | 3 directions |
+| EmptyState | `35:166` | 2 (HasAction true/false) |
+| AmountInput | `36:76` | 2 |
+| NumpadKey | `36:91` | 4 |
+| Numpad | `36:92` | 1 |
+| SegmentedItem | `36:167` | 2 |
+| SegmentedControl | `36:168` | 1 |
+| TabItem | `38:109` | 4 (2 styles × selected) |
+| Tabs | `38:110` | 1 |
+| Select | `38:131` | 2 |
+| Skeleton | `38:139` | 4 shapes (Line, Circle, Card, Row) |
+| SectionHeader | `55:107` | 1 |
+| AmountSlot | — | ours, no Figma source |
+
+**Organisms — page `5:11`**
+
+| Component | Node | Variants |
+| --- | --- | --- |
+| StatusBar | `39:2` | 1 |
+| AppBar | `39:112` | 4 (LargeTitle, TitleBack, TitleActions, Transparent) |
+| BottomNav | `39:243` | 4 — **done** |
+| BalanceCard | `40:161` | 2 — **done** |
+| AccountCard | `40:209` | 4 types |
+| BudgetCard | `40:256` | 3 — **done** |
+| GoalCard | `40:257` | 1 |
+| Dialog | `42:284` | 3 kinds |
+| Snackbar | `42:305` | 3 tones |
+| Banner | `42:329` | 4 tones |
+| BottomSheet | `59:211` | 1 |
+| Logo | `70:205` | 1 |
+| PaginationDots | `70:223` | 3 — **done** |
+| OtpField | `70:263` | 3 |
+| OnboardingIllustration | `71:59` | themed per slot — **done** |
+
+45 component sets. Seven are implemented. `TransactionRow` is implemented at 2 of
+its 4 authored variants, which `Full variant coverage` in the spec set does not
+allow — recorded as outstanding.
 
 ## Component sets in Figma
 

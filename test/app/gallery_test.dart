@@ -21,6 +21,9 @@ import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/features/onboarding/domain/onboarding_slide.dart';
 import 'package:moneta/features/transactions/domain/transaction.dart';
 
+import 'gallery_describe_auth.dart';
+import 'gallery_describe_home.dart';
+
 /// The gallery's builders take a `BuildContext` and none of them reads it, so a
 /// throwaway element is enough to invoke them outside a pump. If a builder ever
 /// starts reading the context this cast fails loudly rather than silently
@@ -505,7 +508,29 @@ Set<String> _claimsIn(String label) {
 /// expressible; the `_ =>` arm below is a runtime `UnsupportedError`. The gate
 /// still fails, so the effect is what was claimed — but the mechanism was not,
 /// and the mechanism was the load-bearing part of the argument.
-String _describe(Widget widget) => switch (widget) {
+/// What a gallery variant actually built, as a canonical string.
+///
+/// Delegates to one describer per owner so two agents can add components in
+/// parallel without both editing one switch — a switch is a compile-level
+/// collision, not a merge conflict. Each owner's file is theirs alone; only the
+/// two `??` operators here are shared.
+///
+/// Unknown types throw rather than degrading to a generic description, so adding
+/// a component without teaching a describer about it fails the two generic
+/// checks above instead of silently narrowing their coverage. It is **not** a
+/// compile error — `Widget` is not sealed, so an exhaustive switch over it is
+/// not expressible.
+String _describe(Widget widget) =>
+    _describeCore(widget) ??
+    describeAuth(widget) ??
+    describeHome(widget) ??
+    (throw UnsupportedError(
+      'No describer knows ${widget.runtimeType}. Add a case to the file you own '
+      '(gallery_describe_auth.dart or gallery_describe_home.dart), so the '
+      'variant-distinctness check keeps covering every section.',
+    ));
+
+String? _describeCore(Widget widget) => switch (widget) {
   MonetaButton(:final style, :final size, :final state, :final label) =>
     'Button(${style.name},${size.name},${state.name},$label)',
   // Figma labels positions 1-based (`Active=1`) while `activeIndex` is 0-based.
@@ -543,10 +568,7 @@ String _describe(Widget widget) => switch (widget) {
   // `figmaName` (`alert-triangle`), not `name` (`alertTriangle`): the label is
   // the Figma name, and the description has to be comparable to it.
   MonetaIcon(:final icon, :final size) => 'Icon(${icon.figmaName},$size)',
-  _ => throw UnsupportedError(
-    'gallery_test._describe does not know ${widget.runtimeType}. Add it, so the '
-    'variant-distinctness check keeps covering every section.',
-  ),
+  _ => null,
 };
 
 /// Minimal stand-in: every member throws, so any builder that actually reads the

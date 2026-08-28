@@ -74,8 +74,14 @@ GoRouter buildRouter({String initialLocation = defaultInitialRoute}) {
         path: OnboardingRoute.path,
         builder: (context, state) => const OnboardingRouteScreen(),
       ),
+
       // Outside the shell: the gallery is a development surface, not a
       // destination, and showing it with a nav bar would imply otherwise.
+      // --- AUTH: add routes below (owner: the auth agent) ---
+      // --- AUTH: end ---
+
+      // --- HOME: add routes below (owner: the home agent) ---
+      // --- HOME: end ---
       GoRoute(
         path: GalleryScreen.routePath,
         builder: (context, state) => const GalleryScreen(),
