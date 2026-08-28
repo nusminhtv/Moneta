@@ -18,12 +18,12 @@
 
 ## 3. SegmentedControl — `36:167` / `36:168`
 
-- [ ] 3.1 `lib/design_system/molecules/moneta_segmented_control.dart`: item in
+- [x] 3.1 `lib/design_system/molecules/moneta_segmented_control.dart`: item in
       both variants, control taking 2–4 labels and a selected index, equal
       widths, 44px hit target around a 36px segment.
-- [ ] 3.2 Tests: exactly one selected, equal widths independent of label length,
+- [x] 3.2 Tests: exactly one selected, equal widths independent of label length,
       `onChanged` index including re-selecting the current one, hit target.
-- [ ] 3.3 Gallery: 2 item variants plus the composed control.
+- [x] 3.3 Gallery: 2 item variants plus the composed control.
 
 ## 4. StatTile — `35:137`
 

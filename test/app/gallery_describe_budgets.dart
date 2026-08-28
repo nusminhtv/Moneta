@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:moneta/design_system/atoms/moneta_circular_progress.dart';
 import 'package:moneta/design_system/molecules/budget_status.dart';
+import 'package:moneta/design_system/molecules/moneta_segmented_control.dart';
 
 /// Describes gallery variants for 📱 04 Budgets.
 ///
@@ -18,6 +19,10 @@ String? describeBudgets(Widget widget) => switch (widget) {
   MonetaCircularProgress(:final fraction, :final size) =>
     'CircularProgress(${_figmaState(BudgetStatus.fromFraction(fraction))},'
         '${size.name},$fraction)',
+  MonetaSegmentedItem(:final label, :final selected) =>
+    'SegmentedItem($selected,$label)',
+  MonetaSegmentedControl(:final labels, :final selectedIndex) =>
+    'SegmentedControl(default,${labels.join("|")},$selectedIndex)',
   _ => null,
 };
 

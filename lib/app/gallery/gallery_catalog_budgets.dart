@@ -1,5 +1,6 @@
 import 'package:moneta/app/gallery/gallery_catalog.dart';
 import 'package:moneta/design_system/atoms/moneta_circular_progress.dart';
+import 'package:moneta/design_system/molecules/moneta_segmented_control.dart';
 
 /// Gallery sections for 📱 04 Budgets.
 ///
@@ -23,9 +24,39 @@ final List<GallerySection> budgetSections = [
       ])
         for (final size in MonetaCircularProgressSize.values)
           GalleryVariant(
-            'State=$state, Size=${size.name[0].toUpperCase()}${size.name.substring(1)}',
+            'State=$state, '
+            'Size=${size.name[0].toUpperCase()}${size.name.substring(1)}',
             (_) => MonetaCircularProgress(fraction: fraction, size: size),
           ),
+    ],
+  ),
+  GallerySection(
+    component: 'SegmentedItem',
+    figmaNodeId: '36:167',
+    variants: [
+      GalleryVariant(
+        'Selected=False',
+        (_) => const MonetaSegmentedItem(label: 'Monthly', selected: false),
+      ),
+      GalleryVariant(
+        'Selected=True',
+        (_) => const MonetaSegmentedItem(label: 'Monthly', selected: true),
+      ),
+    ],
+  ),
+  GallerySection(
+    component: 'SegmentedControl',
+    figmaNodeId: '36:168',
+    variants: [
+      GalleryVariant(
+        'Variant=Default',
+        // Not `const`: the 2..4 assert reads `labels.length`, which a constant
+        // expression cannot. The guard is worth more than the const.
+        (_) => MonetaSegmentedControl(
+          labels: const ['Weekly', 'Monthly', 'Yearly'],
+          selectedIndex: 1,
+        ),
+      ),
     ],
   ),
 ];

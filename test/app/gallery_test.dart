@@ -534,6 +534,16 @@ void main() {
     });
   });
 
+  group('SegmentedItem is registered in full', () {
+    test('both variants of 36:167 are present', () {
+      final section = galleryCatalog.singleWhere(
+        (s) => s.component == 'SegmentedItem',
+      );
+      expect(section.figmaNodeId, '36:167');
+      expect(section.variants, hasLength(2));
+    });
+  });
+
   group('CircularProgress is registered in full', () {
     test('all nine variants of 25:272 are present', () {
       // 3 states x 3 sizes. The generic checks above catch a duplicate or a
