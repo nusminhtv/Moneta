@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moneta/app/gallery/gallery_screen.dart';
+import 'package:moneta/app/home_route_screen.dart';
 import 'package:moneta/app/router.dart';
 import 'package:moneta/app/shell.dart';
 import 'package:moneta/design_system/organisms/bottom_nav.dart';
@@ -104,7 +105,10 @@ void main() {
   group('navigation', () {
     testWidgets('starts on home with Home active', (tester) async {
       await pumpApp(tester);
-      expect(find.text('Moneta'), findsOneWidget);
+      // Was `find.text('Moneta')`, which was the placeholder's title. Home is a
+      // real screen now, so the assertion is on the screen, not on the copy the
+      // placeholder happened to carry.
+      expect(find.byType(HomeRouteScreen), findsOneWidget);
       expect(
         tabColour(tester, MonetaDestination.home),
         colors.brandOnSurface,

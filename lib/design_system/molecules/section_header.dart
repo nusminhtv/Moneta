@@ -32,10 +32,11 @@ class SectionHeader extends StatelessWidget {
     final colors = theme.colors;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: MonetaSpacing.spaceBase,
-        vertical: MonetaSpacing.spaceSm,
-      ),
+      // Vertical only. Figma `55:107` is `py-8` at 353 wide with no horizontal
+      // inset — the screen supplies the gutter. The 16px each side this used to
+      // add left 321px for a title plus its action, which truncated
+      // "Recent transactions" on Home for no reason.
+      padding: const EdgeInsets.symmetric(vertical: MonetaSpacing.spaceSm),
       child: Row(
         children: [
           Expanded(
@@ -44,27 +45,34 @@ class SectionHeader extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               softWrap: false,
-              style: theme.text.titleMd.copyWith(color: colors.textPrimary),
+              // `heading/h3`, per `55:108`. This was `titleMd` because heading/h3 did
+              // not exist in the token layer when this component was built; it
+              // was added with the auth components.
+              style: theme.text.headingH3.copyWith(color: colors.textPrimary),
             ),
           ),
           if (actionLabel != null) ...[
             const SizedBox(width: MonetaSpacing.spaceMd),
-            Flexible(
-              child: GestureDetector(
-                key: actionKey,
-                onTap: onAction,
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: MonetaSpacing.spaceXs,
-                  ),
-                  child: Text(
-                    actionLabel!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    softWrap: false,
-                    style: theme.text.labelMd.copyWith(color: colors.brand),
-                  ),
+            // Not `Flexible`. `Flexible` defaults to `flex: 1`, so the row split
+            // its free space evenly between the title and the action — the
+            // title got half the width regardless of how little the action
+            // needed, and "Recent transactions" ellipsised on Home with 100px
+            // to spare. The action is laid out at its intrinsic size first and
+            // the title takes what is left.
+            GestureDetector(
+              key: actionKey,
+              onTap: onAction,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: MonetaSpacing.spaceXs,
+                ),
+                child: Text(
+                  actionLabel!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: theme.text.labelMd.copyWith(color: colors.brand),
                 ),
               ),
             ),
