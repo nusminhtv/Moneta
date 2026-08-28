@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:moneta/design_system/atoms/moneta_icon_button.dart';
 
 /// Describes gallery variants for 📱 01 Onboarding & Auth.
 ///
@@ -10,5 +11,7 @@ import 'package:flutter/widgets.dart';
 /// only see what the description mentions.
 String? describeAuth(Widget widget) => switch (widget) {
   // --- AUTH: add cases below ---
+  MonetaIconButton(:final style, :final size, :final state) =>
+    'IconButton(${style.name},${size.name},${state.name})',
   _ => null,
 };

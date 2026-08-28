@@ -35,16 +35,23 @@ Each names the mutations to run **at that checkpoint**, not in a pass at the end
   a new file would have sat outside the provenance check until someone remembered
   to add it, which is the hand-enumerated hole this project keeps falling into.
 
-- [ ] 1.3 **`IconButton`** from `20:114` — 3 styles × 3 sizes × 2 states.
+- [x] 1.3 **`IconButton`** from `20:114` — 3 styles × 3 sizes × 2 states.
   Dimensions on the size enum (D3). Register all 18.
   Verify: `test/design_system/atoms/icon_button_test.dart` asserts the **rendered**
   background, border and glyph colour per combination, **and** pins each table
   entry to a named token exhaustively over style × size × state; disabled is
   inert; the semantics node carries the caller's label and not the glyph name;
   sizes are 36/44/52.
-  Mutations: repoint one style's foreground to an unrelated token → the rendered
-  assertion fails; collapse `sm`'s size to `md`'s → the size test fails; pass the
-  glyph name as the semantic label → the label test fails.
+  Mutations run, all five caught: ghost glyph → textPrimary; disabled glyph →
+  textTertiary; sm box 36 → 44; semantic label → the glyph name; disabled still
+  calling its callback.
+
+  The glyph colours were read from the node's bound variables with
+  `get_variable_defs`, not inferred from `MonetaButton`'s mapping. That matters:
+  the inference would have been **wrong**. This component's disabled glyph is
+  `text-disabled` where the button's is `text-tertiary`, and ghost resolves to
+  `text-secondary` where the button's ghost is `text-primary`. Two invented values
+  avoided by one tool call.
 
 - [ ] 1.4 **`AppBar`** from `39:112` — LargeTitle, TitleBack, TitleActions,
   Transparent. Reads `MediaQuery.padding.top`, never `MonetaLayout.safeAreaTop`
