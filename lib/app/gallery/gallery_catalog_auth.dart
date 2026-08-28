@@ -1,6 +1,7 @@
 import 'package:moneta/app/gallery/gallery_catalog.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_button.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
+import 'package:moneta/design_system/organisms/moneta_app_bar.dart';
 
 /// Gallery sections for 📱 01 Onboarding & Auth.
 ///
@@ -12,6 +13,28 @@ import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 /// registered here, in every variant Figma authors.
 final List<GallerySection> authSections = [
   // --- AUTH: add below ---
+  GallerySection(
+    component: 'AppBar',
+    figmaNodeId: '39:112',
+    variants: [
+      for (final variant in MonetaAppBarVariant.values)
+        GalleryVariant(
+          'Variant=${variant.name}',
+          (_) => MonetaAppBar(
+            title: 'Transactions',
+            variant: variant,
+            onBack: () {},
+            actions: [
+              (
+                icon: MonetaIconName.search,
+                semanticLabel: 'Search',
+                onPressed: () {},
+              ),
+            ],
+          ),
+        ),
+    ],
+  ),
   GallerySection(
     component: 'IconButton',
     figmaNodeId: '20:114',

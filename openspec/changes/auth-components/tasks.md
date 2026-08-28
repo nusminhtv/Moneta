@@ -53,7 +53,7 @@ Each names the mutations to run **at that checkpoint**, not in a pass at the end
   `text-secondary` where the button's ghost is `text-primary`. Two invented values
   avoided by one tool call.
 
-- [ ] 1.4 **`AppBar`** from `39:112` — LargeTitle, TitleBack, TitleActions,
+- [x] 1.4 **`AppBar`** from `39:112` — LargeTitle, TitleBack, TitleActions,
   Transparent. Reads `MediaQuery.padding.top`, never `MonetaLayout.safeAreaTop`
   (D1). Register all four.
   Verify: `app_bar_test.dart` asserts 96/56 bar heights; that content begins at
@@ -61,9 +61,17 @@ Each names the mutations to run **at that checkpoint**, not in a pass at the end
   others paint canvas; that a back control ≥44×44 exists only on TitleBack and
   Transparent; that a long title ellipsises while the actions keep their
   rectangle; that an empty title keeps the height; and 0/1/2 actions.
-  Mutations: hardcode the top offset to 59 → both inset cases fail; hardcode it to
-  `MonetaLayout.safeAreaTop` → same; give Transparent a background → its test
-  fails; drop the ellipsis → the truncation test fails.
+  Mutations run, all six caught: reading `MonetaLayout.safeAreaTop` instead of the
+  inset; LargeTitle 96 → 56; Transparent painting a background; TitleActions using
+  h1 instead of h3; dropping the ellipsis; Transparent losing its back control.
+
+  The action control turned out to be a ghost/md `IconButton` — `get_variable_defs`
+  on `39:18` returns exactly `text-secondary` and `radius-pill`. That confirms the
+  dependency the audit found and this task order was changed for.
+
+  `MonetaAppBarAction` is a **record typedef**, not a class: a class under
+  `lib/design_system` must be in the gallery or exempted, and a value type that
+  renders nothing is neither. The record needs no exemption to explain away.
 
 - [ ] 1.5 **Hand off.** Append the two commit SHAs for 1.3 and 1.4 and the
   verify-run path to `docs/ai-workflow/evidence-log.md`, and update the status
