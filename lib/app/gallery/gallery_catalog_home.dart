@@ -5,6 +5,7 @@ import 'package:moneta/design_system/molecules/empty_state.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/molecules/section_header.dart';
 import 'package:moneta/design_system/molecules/skeleton.dart';
+import 'package:moneta/design_system/organisms/banner.dart';
 
 /// Gallery sections for 📱 02 Home & Dashboard.
 ///
@@ -24,6 +25,44 @@ final List<GallerySection> homeSections = [
         'Variant=Default',
         (_) => DateGroupHeader(
           date: DateTime.utc(2026, DateTime.august, 28, 17),
+        ),
+      ),
+    ],
+  ),
+  GallerySection(
+    component: 'Banner',
+    figmaNodeId: '42:329',
+    variants: [
+      GalleryVariant(
+        'Tone=Warning',
+        (_) => const MonetaBanner(
+          tone: BannerTone.warning,
+          title: 'Budget almost reached',
+          message: 'Food & drink is close to its monthly limit.',
+        ),
+      ),
+      GalleryVariant(
+        'Tone=Danger',
+        (_) => const MonetaBanner(
+          tone: BannerTone.danger,
+          title: 'Over budget',
+          message: 'Shopping has passed its monthly limit.',
+        ),
+      ),
+      GalleryVariant(
+        'Tone=Info',
+        (_) => const MonetaBanner(
+          tone: BannerTone.info,
+          title: 'New insight available',
+          message: 'Your weekly spending summary is ready.',
+        ),
+      ),
+      GalleryVariant(
+        'Tone=Success',
+        (_) => const MonetaBanner(
+          tone: BannerTone.success,
+          title: 'Goal updated',
+          message: 'You are ahead of this month savings pace.',
         ),
       ),
     ],

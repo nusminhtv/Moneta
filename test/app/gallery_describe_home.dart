@@ -4,6 +4,7 @@ import 'package:moneta/design_system/molecules/empty_state.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/molecules/section_header.dart';
 import 'package:moneta/design_system/molecules/skeleton.dart';
+import 'package:moneta/design_system/organisms/banner.dart';
 
 /// Describes gallery variants for 📱 02 Home & Dashboard.
 ///
@@ -19,6 +20,7 @@ String? describeHome(Widget widget) => switch (widget) {
   EmptyState(:final title, :final icon, :final hasAction) =>
     'EmptyState($hasAction,$title,${icon.figmaName})',
   Skeleton(:final shape) => 'Skeleton(${shape.name})',
+  MonetaBanner(:final tone, :final title) => 'Banner(${tone.name},$title)',
   ListRow(
     :final title,
     :final subtitle,

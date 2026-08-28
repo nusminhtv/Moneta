@@ -32,7 +32,7 @@
 - [x] 3.3 Implement `Skeleton` (`38:139`) with `Line`, `Circle`, `Card` and
   `Row` variants. Register every variant. Verify:
   `test/design_system/molecules/skeleton_test.dart`.
-- [ ] 3.4 Implement `Banner` (`42:329`) with `Warning`, `Danger`, `Info` and
+- [x] 3.4 Implement `Banner` (`42:329`) with `Warning`, `Danger`, `Info` and
   `Success` variants. Register every variant. Verify:
   `test/design_system/organisms/banner_test.dart`.
 
