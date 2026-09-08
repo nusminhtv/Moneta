@@ -19,6 +19,7 @@ class BudgetProgress extends Equatable {
     required this.carriedIn,
     required this.daysRemaining,
     required this.skippedForeignCurrency,
+    this.passedLimitOn,
   });
 
   /// Computes a budget's progress from [entries].
@@ -56,6 +57,18 @@ class BudgetProgress extends Equatable {
       carriedIn: _carryInto(window: window, budget: budget, entries: entries),
       daysRemaining: window.daysRemainingFrom(now),
       skippedForeignCurrency: skipped,
+      passedLimitOn: _crossingInstant(
+        budget: budget,
+        window: window,
+        entries: entries,
+        limitMinor:
+            budget.limit.minorUnits +
+            _carryInto(
+              window: window,
+              budget: budget,
+              entries: entries,
+            ).minorUnits,
+      ),
     );
   }
 
@@ -82,6 +95,12 @@ class BudgetProgress extends Equatable {
   /// currency, so a screen can say so instead of under-reporting silently.
   final int skippedForeignCurrency;
 
+  /// When spend first passed the effective limit, or null if it has not.
+  ///
+  /// Annotation `04.06`: *"It says WHEN the budget was passed, because 'you are
+  /// over' without a date gives the user nothing to act on."*
+  final DateTime? passedLimitOn;
+
   /// The limit actually in force: the budget's limit plus any carry.
   Money get effectiveLimit => Money(
     budget.limit.minorUnits + carriedIn.minorUnits,
@@ -104,6 +123,22 @@ class BudgetProgress extends Equatable {
     return Money(left < 0 ? 0 : left, budget.limit.currency);
   }
 
+  /// Whether [entry] is one of the entries counted in [spent].
+  ///
+  /// The four rules in one place, so a screen listing "what made this up"
+  /// cannot filter differently from the total it sits under.
+  bool counts(SpendEntry entry) =>
+      entry.category == budget.category &&
+      entry.direction == TransactionDirection.expense &&
+      window.contains(entry.occurredAt) &&
+      entry.amount.currency == budget.limit.currency;
+
+  /// How far past the effective limit, never negative.
+  Money get overBy {
+    final over = spent.minorUnits - effectiveLimit.minorUnits;
+    return Money(over > 0 ? over : 0, budget.limit.currency);
+  }
+
   /// `04.05`'s number: `(limit - spent) / days remaining`.
   ///
   /// Rounded **down**. An allowance rounded up is one the user cannot actually
@@ -111,6 +146,37 @@ class BudgetProgress extends Equatable {
   /// conservative. Zero when over budget — there is nothing to allow.
   Money get dailyAllowance =>
       Money(remaining.minorUnits ~/ daysRemaining, budget.limit.currency);
+
+  /// When cumulative spend first passed [limitMinor], or null.
+  ///
+  /// Entries are sorted by occurrence, not taken in the order they arrive: the
+  /// answer is a fact about when the money was spent, and a caller handing them
+  /// over in insertion order would otherwise get a different date.
+  static DateTime? _crossingInstant({
+    required Budget budget,
+    required BudgetWindow window,
+    required List<SpendEntry> entries,
+    required int limitMinor,
+  }) {
+    final currency = budget.limit.currency;
+    final counted = <SpendEntry>[
+      for (final t in entries)
+        if (t.category == budget.category &&
+            t.direction == TransactionDirection.expense &&
+            window.contains(t.occurredAt) &&
+            t.amount.currency == currency)
+          t,
+    ]..sort((a, b) => a.occurredAt.compareTo(b.occurredAt));
+
+    var running = 0;
+    for (final entry in counted) {
+      running += entry.amount.minorUnits;
+      // Strictly greater: exactly at the limit is the limit reached, not
+      // exceeded, which is the same rule BudgetStatus applies at 1.0.
+      if (running > limitMinor) return entry.occurredAt;
+    }
+    return null;
+  }
 
   /// The carry into [window] from the one before it.
   ///
@@ -152,6 +218,7 @@ class BudgetProgress extends Equatable {
     carriedIn,
     daysRemaining,
     skippedForeignCurrency,
+    passedLimitOn,
   ];
 }
 

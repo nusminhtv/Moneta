@@ -110,6 +110,20 @@ the limit alone does not tell them what they can spend today."*
 - **THEN** a banner appears above the ring, matching `67:548`
 - **AND** the ring uses the expense colour
 
+#### Scenario: The over-limit banner names the date
+- **WHEN** the banner is shown
+- **THEN** it states when the budget was passed
+- **AND** a banner that only says the budget is over fails this
+
+#### Scenario: The daily-allowance tile is replaced, not made negative
+- **WHEN** a budget is over its limit
+- **THEN** no daily-allowance tile is shown
+- **AND** a tile reading "Over by" with the amount takes its place
+
+Annotation `04.06`: *"there is no daily-allowance tile here — it would be
+negative and meaningless, so it is replaced by 'Over by'. Swapping a tile rather
+than showing a negative number is a deliberate choice."*
+
 #### Scenario: The listed transactions are the ones counted
 - **WHEN** the detail lists transactions
 - **THEN** every listed transaction is one that contributed to the spend

@@ -112,6 +112,39 @@ budget's.
 - **THEN** the allowance is rounded **down** to a whole minor unit, because an
   allowance rounded up is one the user cannot actually afford every day
 
+### Requirement: An over-limit budget reports when it was passed
+
+When spend exceeds the effective limit, `BudgetProgress` SHALL report the
+instant at which it happened and the amount by which it was exceeded.
+
+Annotation `04.06`: *"It says WHEN the budget was passed, because 'you are over'
+without a date gives the user nothing to act on."*
+
+#### Scenario: The crossing instant is the transaction that tipped it
+- **WHEN** a 1,000,000 ₫ budget receives 400,000 ₫ on the 3rd, 400,000 ₫ on the
+  7th and 400,000 ₫ on the 11th
+- **THEN** the reported instant is the 11th
+- **AND** it is not the 3rd, nor the last transaction in the window regardless
+  of date
+
+#### Scenario: Order of arrival does not matter, order of occurrence does
+- **WHEN** the same three transactions are supplied in any order
+- **THEN** the reported instant is the same
+
+#### Scenario: A single transaction that alone exceeds the limit
+- **WHEN** one 2,000,000 ₫ expense lands against a 1,000,000 ₫ budget
+- **THEN** the reported instant is that transaction's
+
+#### Scenario: A budget under its limit reports no crossing
+- **WHEN** spend is at or below the effective limit
+- **THEN** the reported instant is null
+- **AND** the amount over is zero, not a negative number
+
+#### Scenario: Exactly at the limit is not over
+- **WHEN** spend equals the effective limit
+- **THEN** no crossing is reported, consistent with `BudgetStatus` treating 1.0
+  as the limit reached rather than exceeded
+
 ### Requirement: Rollover carries one period, and says so
 
 When `rollsOver` is set, the effective limit for a window SHALL be the budget's

@@ -20,6 +20,15 @@ abstract final class BudgetRoutes {
   /// The overview.
   static const String overview = '/budgets';
 
+  /// One budget's detail. `:id` is the budget's identifier.
+  static const String detail = '/budgets/detail/:id';
+
+  /// The detail path for [id].
+  ///
+  /// A function, not string concatenation at each call site: one place that
+  /// knows the shape means one place to fix when it changes.
+  static String detailFor(String id) => '/budgets/detail/$id';
+
   /// Create, step 1 — the category grid.
   static const String createCategory = '/budgets/new';
 
@@ -59,6 +68,7 @@ class _BudgetsRouteScreenState extends ConsumerState<BudgetsRouteScreen> {
         currency: currency,
         onPeriodChanged: (period) => setState(() => _period = period),
         onAdd: () => context.go(BudgetRoutes.createCategory),
+        onOpen: (id) => context.go(BudgetRoutes.detailFor(id)),
       ),
     );
   }

@@ -50,9 +50,9 @@
 
 ## 6. Detail — 67:359, 67:524
 
-- [ ] 6.1 Detail screen: ring, two stat tiles including the daily allowance,
+- [x] 6.1 Detail screen: ring, two stat tiles including the daily allowance,
       the contributing transactions, banner when over.
-- [ ] 6.2 Tests: on-track and over states, the listed transactions are exactly
+- [x] 6.2 Tests: on-track and over states, the listed transactions are exactly
       the counted ones, skipped foreign currency disclosed.
 
 ## 7. Wire up and record

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moneta/app/auth_routes.dart';
+import 'package:moneta/app/budget_detail_route_screen.dart';
 import 'package:moneta/app/budgets_route_screen.dart';
 import 'package:moneta/app/create_budget_route_screens.dart';
 import 'package:moneta/app/gallery/gallery_screen.dart';
@@ -50,6 +51,12 @@ GoRouter buildRouter({String initialLocation = defaultInitialRoute}) {
           GoRoute(
             path: BudgetRoutes.overview,
             builder: (context, state) => const BudgetsRouteScreen(),
+          ),
+          GoRoute(
+            path: BudgetRoutes.detail,
+            builder: (context, state) => BudgetDetailRouteScreen(
+              budgetId: state.pathParameters['id']!,
+            ),
           ),
           GoRoute(
             path: DestinationRoutes.paths[MonetaDestination.transactions]!,
