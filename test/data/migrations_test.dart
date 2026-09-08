@@ -233,6 +233,97 @@ void main() {
     });
   });
 
+  group('v3 — budgets, applied to a populated database', () {
+    test('v2 data survives and the budgets table arrives empty', () async {
+      // File-backed for the same reason as the v2 case: two opens of
+      // inMemoryDatabasePath are two different databases.
+      final dir = await Directory.systemTemp.createTemp('moneta_v3');
+      addTearDown(() => dir.delete(recursive: true));
+      final path = '${dir.path}/moneta.db';
+
+      Future<Database> openAt(int version) => factory.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: version,
+          onCreate: (db, v) => runMigrations(db, from: 0, to: v),
+          onUpgrade: (db, from, to) => runMigrations(db, from: from, to: to),
+        ),
+      );
+
+      final v2 = await openAt(2);
+      await v2.insert('transactions', {
+        'id': 'survivor',
+        'amount_minor': 45000,
+        'currency': 'VND',
+        'direction': 'expense',
+        'category': 'food',
+        'occurred_at': 1756000000000,
+        'note': 'cà phê',
+        'created_at': 1756000000000,
+      });
+      await v2.insert('settings', {'key': 'currency', 'value': 'VND'});
+      await v2.close();
+
+      final v3 = await openAt(3);
+      expect(await v3.getVersion(), 3);
+      expect((await v3.query('transactions')).single['note'], 'cà phê');
+      expect((await v3.query('settings')).single['value'], 'VND');
+      expect(
+        await v3.query('budgets'),
+        isEmpty,
+        reason: 'the new table starts empty',
+      );
+      await v3.close();
+    });
+
+    test(
+      'budgets stores the limit as an integer and the rate as a real',
+      () async {
+        // Money is never a double. A REAL limit column would reintroduce the one
+        // rule this project will not bend, and a REAL threshold is correct
+        // because it is a ratio rather than an amount.
+        final db = await freshDatabase(version: schemaVersion);
+        final columns = await db.rawQuery('PRAGMA table_info(budgets)');
+        final byName = {for (final c in columns) c['name']! as String: c};
+
+        expect(byName['limit_minor']!['type'], 'INTEGER');
+        expect(byName['alert_threshold']!['type'], 'REAL');
+        expect(byName['rolls_over']!['type'], 'INTEGER');
+        expect(byName['id']!['pk'], 1);
+        for (final column in byName.values) {
+          expect(
+            column['notnull'],
+            1,
+            reason:
+                '${column['name']} is nullable; a budget has no optional part',
+          );
+        }
+        await db.close();
+      },
+    );
+
+    test('one category and period can only have one budget', () async {
+      final db = await freshDatabase(version: schemaVersion);
+      Map<String, Object?> row(String id) => {
+        'id': id,
+        'category': 'food',
+        'limit_minor': 4000000,
+        'currency': 'VND',
+        'period': 'monthly',
+        'starts_on': 1756000000000,
+        'rolls_over': 0,
+        'alert_threshold': 0.8,
+        'created_at': 1756000000000,
+      };
+      await db.insert('budgets', row('a'));
+      await expectLater(
+        db.insert('budgets', row('b')),
+        throwsA(isA<DatabaseException>()),
+      );
+      await db.close();
+    });
+  });
+
   group('fresh install versus stepwise upgrade', () {
     test('produce an identical schema', () async {
       // The test that catches the classic mistake: editing migration v1 in place

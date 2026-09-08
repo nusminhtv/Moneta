@@ -22,11 +22,11 @@
 
 ## 3. Storage
 
-- [ ] 3.1 Migration to schema version 3: `budgets` table with a unique index on
+- [x] 3.1 Migration to schema version 3: `budgets` table with a unique index on
       (category, period). Test that v2 databases upgrade and keep their data.
-- [ ] 3.2 `BudgetDao` and `SqliteBudgetRepository`, reading spend by joining the
+- [x] 3.2 `BudgetDao` and `SqliteBudgetRepository`, reading spend by joining the
       existing transactions table rather than storing it.
-- [ ] 3.3 Tests to ≥85%: round-trip, duplicate rejection, delete, and a budget
+- [x] 3.3 Tests to ≥85%: round-trip, duplicate rejection, delete, and a budget
       whose spend changes when a transaction is deleted.
 
 ## 4. Overview and empty — 66:91, 66:277

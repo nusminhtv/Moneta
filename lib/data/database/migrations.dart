@@ -22,7 +22,7 @@ final class Migration {
 }
 
 /// The schema version the application expects.
-const int schemaVersion = 2;
+const int schemaVersion = 3;
 
 /// Every migration, in ascending order.
 final List<Migration> migrations = [
@@ -64,6 +64,39 @@ CREATE TABLE settings (
   key   TEXT NOT NULL PRIMARY KEY,
   value TEXT NOT NULL
 )''');
+    },
+  ),
+  Migration(
+    version: 3,
+    apply: (db) async {
+      // limit_minor is the limit the user set. Spend is NOT stored: it is
+      // summed from `transactions` on every read, so a budget and the
+      // transactions under it cannot drift apart when one is edited or deleted
+      // by anything but the path that would have maintained a cached total.
+      //
+      // alert_threshold is a ratio, not an amount, and it is per budget:
+      // annotation 04.04 makes "Alert me at 80%" a setting, and says the
+      // component's warning colour is data-driven rather than hardcoded.
+      await db.execute('''
+CREATE TABLE budgets (
+  id               TEXT    NOT NULL PRIMARY KEY,
+  category         TEXT    NOT NULL,
+  limit_minor      INTEGER NOT NULL,
+  currency         TEXT    NOT NULL,
+  period           TEXT    NOT NULL,
+  starts_on        INTEGER NOT NULL,
+  rolls_over       INTEGER NOT NULL,
+  alert_threshold  REAL    NOT NULL,
+  created_at       INTEGER NOT NULL
+)''');
+      // Two budgets over one category and period would split the same spend
+      // between them, and neither total would mean anything. Enforced in the
+      // schema as well as in the repository: the repository's check is a race
+      // between two writes, the index is not.
+      await db.execute(
+        'CREATE UNIQUE INDEX idx_budgets_category_period '
+        'ON budgets (category, period)',
+      );
     },
   ),
 ];
