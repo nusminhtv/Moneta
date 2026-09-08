@@ -8,15 +8,15 @@
 
 ## 2. Budget domain
 
-- [ ] 2.1 `lib/features/budgets/domain/budget.dart`: `Budget`, `BudgetPeriod`,
+- [x] 2.1 `lib/features/budgets/domain/budget.dart`: `Budget`, `BudgetPeriod`,
       validated construction returning `Result`. Limit `Money`, threshold a
       ratio in (0, 1].
-- [ ] 2.2 `budget_window.dart`: the current window from period + start + clock,
+- [x] 2.2 `budget_window.dart`: the current window from period + start + clock,
       including the 31 Jan → February anchor case.
-- [ ] 2.3 `budget_progress.dart`: spend, carry-in, effective limit, fraction,
+- [x] 2.3 `budget_progress.dart`: spend, carry-in, effective limit, fraction,
       status, daily allowance, skipped-currency count. Allowance rounds down.
-- [ ] 2.4 `budget_repository.dart`: the interface, returning `Result`.
-- [ ] 2.5 Tests to ≥85%: every scenario in the budgets spec, including zero and
+- [x] 2.4 `budget_repository.dart`: the interface, returning `Result`.
+- [x] 2.5 Tests to ≥85%: every scenario in the budgets spec, including zero and
       negative limits, thresholds out of range, half-open boundaries, rollover
       one deep, over-budget allowance, and a future start date.
 
