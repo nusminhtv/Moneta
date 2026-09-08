@@ -57,6 +57,7 @@ class MonetaCircularProgress extends StatelessWidget {
   const MonetaCircularProgress({
     required this.fraction,
     this.size = MonetaCircularProgressSize.md,
+    this.nearLimitThreshold = BudgetStatus.defaultNearLimitThreshold,
     this.semanticLabel,
     super.key,
   });
@@ -71,12 +72,22 @@ class MonetaCircularProgress extends StatelessWidget {
   /// Which of the three authored diameters to draw.
   final MonetaCircularProgressSize size;
 
+  /// Where the warning colour begins, from the budget's own "Alert me at"
+  /// setting. Defaults to 0.8, which is what `04.04` shows.
+  final double nearLimitThreshold;
+
   /// Accessibility label. Null for a ring whose meaning is in adjacent text.
   final String? semanticLabel;
 
   /// The arc colour for a fraction — the same rule the bar uses.
-  static Color arcColorFor(double fraction, MonetaColors colors) =>
-      BudgetStatus.fromFraction(fraction).colorIn(colors);
+  static Color arcColorFor(
+    double fraction,
+    MonetaColors colors, {
+    double nearLimitThreshold = BudgetStatus.defaultNearLimitThreshold,
+  }) => BudgetStatus.fromFraction(
+    fraction,
+    nearLimitThreshold: nearLimitThreshold,
+  ).colorIn(colors);
 
   /// The label a fraction produces, or null at [MonetaCircularProgressSize.sm].
   ///
@@ -108,7 +119,11 @@ class MonetaCircularProgress extends StatelessWidget {
         child: CustomPaint(
           painter: _RingPainter(
             sweep: swept,
-            arcColor: arcColorFor(fraction, theme.colors),
+            arcColor: arcColorFor(
+              fraction,
+              theme.colors,
+              nearLimitThreshold: nearLimitThreshold,
+            ),
             trackColor: theme.colors.track,
             strokeWidth: size.stroke,
           ),

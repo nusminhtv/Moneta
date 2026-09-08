@@ -19,8 +19,15 @@ enum BudgetStatus {
   /// Above the limit.
   over;
 
-  /// The fraction at which a budget starts reading as near its limit.
-  static const double nearLimitThreshold = 0.8;
+  /// The fraction at which a budget starts reading as near its limit, when the
+  /// caller does not say.
+  ///
+  /// A **default**, not the rule. Annotation `04.04` makes the boundary a
+  /// per-budget setting — *"'Alert me at 80%' … the 80% threshold is
+  /// configurable here, so the component's warning colour is data-driven, not
+  /// hardcoded"* — and this shipped as a constant that three widgets read
+  /// before that annotation was read.
+  static const double defaultNearLimitThreshold = 0.8;
 
   /// Classifies a raw spend fraction.
   ///
@@ -28,7 +35,10 @@ enum BudgetStatus {
   /// "exactly at the limit" from "double the limit", and those are different
   /// states. Exactly `1.0` is [nearLimit], not [over] — the limit has been
   /// reached, not exceeded.
-  static BudgetStatus fromFraction(double fraction) {
+  static BudgetStatus fromFraction(
+    double fraction, {
+    double nearLimitThreshold = defaultNearLimitThreshold,
+  }) {
     if (fraction.isNaN) return BudgetStatus.onTrack;
     if (fraction > 1) return BudgetStatus.over;
     if (fraction >= nearLimitThreshold) return BudgetStatus.nearLimit;
@@ -40,7 +50,11 @@ enum BudgetStatus {
   /// A zero limit is treated as over budget the moment anything is spent: any
   /// spend against no allowance has exceeded it. A clamped ratio would report
   /// `0` here and render as on-track, which is the opposite of the truth.
-  static BudgetStatus fromSpend(Money spent, Money limit) {
+  static BudgetStatus fromSpend(
+    Money spent,
+    Money limit, {
+    double nearLimitThreshold = defaultNearLimitThreshold,
+  }) {
     if (spent.currency != limit.currency) {
       throw ArgumentError(
         'Currency mismatch: spent ${spent.currency.code} '
@@ -49,7 +63,10 @@ enum BudgetStatus {
     }
     if (spent.minorUnits <= 0) return BudgetStatus.onTrack;
     if (limit.minorUnits <= 0) return BudgetStatus.over;
-    return fromFraction(spent.minorUnits / limit.minorUnits);
+    return fromFraction(
+      spent.minorUnits / limit.minorUnits,
+      nearLimitThreshold: nearLimitThreshold,
+    );
   }
 
   /// The unclamped spend fraction, for callers that need the raw number.

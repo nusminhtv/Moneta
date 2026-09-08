@@ -30,6 +30,7 @@ class MonetaProgressBar extends StatelessWidget {
   const MonetaProgressBar({
     required this.fraction,
     this.size = MonetaProgressBarSize.md,
+    this.nearLimitThreshold = BudgetStatus.defaultNearLimitThreshold,
     this.semanticLabel,
     super.key,
   });
@@ -43,6 +44,10 @@ class MonetaProgressBar extends StatelessWidget {
   /// Track height.
   final MonetaProgressBarSize size;
 
+  /// Where the warning colour begins, from the budget's own "Alert me at"
+  /// setting. Defaults to 0.8, which is what `04.04` shows.
+  final double nearLimitThreshold;
+
   /// Accessibility label. Pass null for a bar that duplicates adjacent text.
   final String? semanticLabel;
 
@@ -53,13 +58,23 @@ class MonetaProgressBar extends StatelessWidget {
   ///
   /// Exposed so the ring can be tested against it: two widgets showing one
   /// budget must not disagree about whether it is over.
-  static Color fillColorFor(double fraction, MonetaColors colors) =>
-      BudgetStatus.fromFraction(fraction).colorIn(colors);
+  static Color fillColorFor(
+    double fraction,
+    MonetaColors colors, {
+    double nearLimitThreshold = BudgetStatus.defaultNearLimitThreshold,
+  }) => BudgetStatus.fromFraction(
+    fraction,
+    nearLimitThreshold: nearLimitThreshold,
+  ).colorIn(colors);
 
   @override
   Widget build(BuildContext context) {
     final theme = context.moneta;
-    final fillColor = fillColorFor(fraction, theme.colors);
+    final fillColor = fillColorFor(
+      fraction,
+      theme.colors,
+      nearLimitThreshold: nearLimitThreshold,
+    );
 
     final clamped = fraction.isNaN ? 0.0 : fraction.clamp(0.0, 1.0);
 

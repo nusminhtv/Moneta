@@ -24,7 +24,7 @@ void main() {
     });
 
     test('the threshold constant is the documented 80%', () {
-      expect(BudgetStatus.nearLimitThreshold, 0.8);
+      expect(BudgetStatus.defaultNearLimitThreshold, 0.8);
     });
 
     test('a negative fraction reads as on track', () {

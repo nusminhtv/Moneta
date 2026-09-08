@@ -19,6 +19,7 @@ class BudgetCard extends StatelessWidget {
     required this.spent,
     required this.limit,
     required this.note,
+    this.nearLimitThreshold = BudgetStatus.defaultNearLimitThreshold,
     this.onTap,
     super.key,
   });
@@ -38,12 +39,20 @@ class BudgetCard extends StatelessWidget {
   /// screen is showing, which the card does not know.
   final String note;
 
+  /// Where the warning colour begins, from the budget's own "Alert me at"
+  /// setting. Defaults to 0.8, which is what `04.04` shows.
+  final double nearLimitThreshold;
+
   /// Called when the card is activated.
   final VoidCallback? onTap;
 
   /// The card's derived status. Exposed so a screen can group or sort by it
   /// without re-deriving the rule.
-  BudgetStatus get status => BudgetStatus.fromSpend(spent, limit);
+  BudgetStatus get status => BudgetStatus.fromSpend(
+    spent,
+    limit,
+    nearLimitThreshold: nearLimitThreshold,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -152,6 +161,7 @@ class BudgetCard extends StatelessWidget {
                   SizedBox(height: theme.spacing.lg),
                   MonetaProgressBar(
                     fraction: BudgetStatus.fractionOf(spent, limit),
+                    nearLimitThreshold: nearLimitThreshold,
                     semanticLabel: '${category.label} budget',
                   ),
                 ],

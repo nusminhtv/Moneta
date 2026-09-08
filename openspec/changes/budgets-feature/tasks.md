@@ -1,6 +1,6 @@
 ## 1. The threshold becomes data-driven
 
-- [ ] 1.1 `BudgetStatus.fromFraction` and `fromSpend` gain a
+- [x] 1.1 `BudgetStatus.fromFraction` and `fromSpend` gain a
       `nearLimitThreshold` defaulting to 0.8; `MonetaProgressBar`,
       `MonetaCircularProgress` and `BudgetCard` gain the parameter and pass it
       through. Tests: a moved boundary changes each widget's colour, all three
