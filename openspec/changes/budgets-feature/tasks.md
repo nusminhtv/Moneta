@@ -42,10 +42,10 @@
 
 ## 5. Create flow — 66:378, 66:488
 
-- [ ] 5.1 Step 1: category grid, action disabled until one is chosen.
-- [ ] 5.2 Step 2: amount, period, the three options from `66:534`
+- [x] 5.1 Step 1: category grid, action disabled until one is chosen.
+- [x] 5.2 Step 2: amount, period, the three options from `66:534`
       (Starts / Rolls over unused / Alert me at), submit.
-- [ ] 5.3 Tests: nothing written until submit, zero amount blocked with a
+- [x] 5.3 Tests: nothing written until submit, zero amount blocked with a
       message, duplicate category refused.
 
 ## 6. Detail — 67:359, 67:524

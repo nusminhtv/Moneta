@@ -70,6 +70,23 @@ options (`66:488`), and SHALL NOT write anything until the final action.
 - **THEN** the submit action is disabled and the amount input shows its error
   state with a message
 
+#### Scenario: An unavailable category is disabled, not hidden
+- **WHEN** step 1 is shown
+- **THEN** income categories are rendered and disabled, not removed
+- **AND** a category that already has a budget for this period is also disabled
+- **AND** the grid still lists every category, so the user is not left
+  wondering where one went
+
+#### Scenario: The reason a category is disabled is written down
+- **WHEN** any category in the grid is disabled
+- **THEN** the screen states why in copy below the grid
+- **AND** the reason is not left to be inferred from the dimming, which a
+  low-vision user may not see at all
+
+#### Scenario: A disabled category cannot be selected
+- **WHEN** a disabled category is activated
+- **THEN** the selection does not change and the step-1 action stays disabled
+
 #### Scenario: A duplicate budget for a category is refused
 - **WHEN** a budget already exists for the chosen category and period
 - **THEN** creating a second one fails with a validation message naming the

@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:moneta/app/budget_providers.dart';
 import 'package:moneta/data/app_providers.dart';
 import 'package:moneta/design_system/molecules/skeleton.dart';
@@ -18,6 +19,12 @@ import 'package:moneta/features/budgets/presentation/budgets_screen.dart';
 abstract final class BudgetRoutes {
   /// The overview.
   static const String overview = '/budgets';
+
+  /// Create, step 1 — the category grid.
+  static const String createCategory = '/budgets/new';
+
+  /// Create, step 2 — amount, period and options.
+  static const String createAmount = '/budgets/new/amount';
 }
 
 /// Hosts [BudgetsScreen] and supplies it with data.
@@ -51,6 +58,7 @@ class _BudgetsRouteScreenState extends ConsumerState<BudgetsRouteScreen> {
         period: _period,
         currency: currency,
         onPeriodChanged: (period) => setState(() => _period = period),
+        onAdd: () => context.go(BudgetRoutes.createCategory),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moneta/app/auth_routes.dart';
 import 'package:moneta/app/budgets_route_screen.dart';
+import 'package:moneta/app/create_budget_route_screens.dart';
 import 'package:moneta/app/gallery/gallery_screen.dart';
 import 'package:moneta/app/home_route_screen.dart';
 import 'package:moneta/app/shell.dart';
@@ -68,6 +69,17 @@ GoRouter buildRouter({String initialLocation = defaultInitialRoute}) {
       ),
       // First run lives outside the shell: it has no navigation bar, and
       // showing one would imply the user is already in the app.
+      // Outside the shell: `66:378` and `66:488` draw a bottom safe area and no
+      // bottom navigation. A wizard with a tab bar invites the user to leave
+      // halfway through.
+      GoRoute(
+        path: BudgetRoutes.createCategory,
+        builder: (context, state) => const CreateBudgetCategoryRouteScreen(),
+      ),
+      GoRoute(
+        path: BudgetRoutes.createAmount,
+        builder: (context, state) => const CreateBudgetAmountRouteScreen(),
+      ),
       GoRoute(
         path: SplashRoute.path,
         builder: (context, state) => SplashScreen(
