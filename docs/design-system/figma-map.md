@@ -368,3 +368,53 @@ screens to draw.
 - **`BarChart`** is instanced on `04.07` (`67:712`) but appears on none of the
   three component pages. Either it is a screen-local frame or it lives on a page
   not yet queried. Budgets history is blocked on finding out.
+
+## 📱 04 Budgets — read and built, 2026-09-08
+
+| Screen | Node | State |
+| --- | --- | --- |
+| 04.01 Overview | `66:91` | done |
+| 04.02 Empty | `66:277` | done |
+| 04.03 Create — category | `66:378` | done |
+| 04.04 Create — amount | `66:488` | done |
+| 04.05 Detail — on track | `67:359` | done |
+| 04.06 Detail — over limit | `67:524` | done |
+| 04.07 History | `67:690` | **blocked** — see below |
+
+### What the annotations said that the components did not
+
+| # | Source | What it changed |
+| --- | --- | --- |
+| 16 | `04.04` | *"'Alert me at 80%' is what drives BudgetCard's NearLimit state — the 80% threshold is configurable here, so the component's warning colour is data-driven, not hardcoded."* `budget-components` had shipped `BudgetStatus.nearLimitThreshold` as a constant read by three widgets. Now a parameter defaulting to 0.8. **The design file contradicted code that was already merged.** |
+| 17 | `04.03` | *"The disabled reason is stated in copy under the grid, not left to be inferred from the dimming."* An accessibility rule the spec delta had missed; the spec was corrected before implementing. Modelled as an enum carrying its sentence, because a bool cannot carry a reason. |
+| 18 | `04.06` | *"There is no daily-allowance tile here — it would be negative and meaningless, so it is replaced by 'Over by'."* A tile swap, not a negative number. |
+| 19 | `04.06` | *"It says WHEN the budget was passed."* Required a new domain computation — the transaction that tipped the budget over, found by walking the window in occurrence order. |
+| 20 | `04.01` | *"Bottom nav stays on Home because Budgets is a Home sub-screen, not a tab."* Works because unknown locations fall back to Home; pinned by a test that also asserts Budgets is absent from the destination table. |
+
+### Not attempted
+
+- **`BarChart`** (`67:712`, instanced on `04.07`) appears on none of the three
+  component pages. Budgets — history is not built. Approximating a chart
+  component is how the invented spacing scale happened.
+- **`Numpad`** (`36:92`) and **`NumpadKey`** (`36:91`) exist in Figma and are
+  not built. `04.04` pairs the hero amount with the numpad; the screen uses a
+  hidden `EditableText` behind the figure instead — the same composition the OTP
+  screen already uses. Shipping without either would have repeated the
+  add-transaction bug: a form demanding a value it gives no way to enter.
+- **`Snackbar`** (`42:305`) is unbuilt. Create-flow failures land on the amount
+  field, which is where the problem is and does not disappear on a timer.
+
+### Values used with no recorded inspection, added here
+
+| Value | Where | Status |
+| --- | --- | --- |
+| `BudgetStepIndicator.height 3`, `gap 4` | `budget_step_indicator.dart` | read from `66:399`–`66:401`'s geometry in the node listing, not from an inspected style |
+| Category-cell disabled opacity 0.35 | `create_budget_category_screen.dart` | quoted from `04.03`'s annotation text, not measured on the node |
+
+### Rollover depth is a decision, not a transcription
+
+Annotation `04.04` says *"Rollover changes next period's limit, not this
+one's"* and stops there. It does not say whether two consecutive underspent
+periods both reach the third. Implemented one window deep, with the carry
+reported separately from the limit. Reasoning in
+`openspec/changes/budgets-feature/design.md`.

@@ -57,7 +57,7 @@
 
 ## 7. Wire up and record
 
-- [ ] 7.1 Home's first-run checklist "Set one budget" gets its destination,
+- [x] 7.1 Home's first-run checklist "Set one budget" gets its destination,
       null since `a9d3a8f`.
-- [ ] 7.2 `figma-map.md`: six screens done, `04.07` recorded as blocked on
+- [x] 7.2 `figma-map.md`: six screens done, `04.07` recorded as blocked on
       `BarChart`, and the threshold correction added to the deviations table.
