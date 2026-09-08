@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:moneta/app/budgets_route_screen.dart';
 import 'package:moneta/app/home_providers.dart';
 import 'package:moneta/app/router.dart';
 import 'package:moneta/app/shell.dart';
@@ -43,10 +44,10 @@ class _HomeRouteScreenState extends ConsumerState<HomeRouteScreen> {
         snapshot: data,
         greeting: 'Hi there',
         now: ref.watch(clockProvider).nowUtc(),
-        // Accounts and Budgets are not built yet. A row that goes nowhere is
-        // worse than a row that plainly does not respond, so these stay null
-        // until those features exist.
+        // Accounts is still not built. A row that goes nowhere is worse than a
+        // row that plainly does not respond, so it stays null until it exists.
         onLogFirstExpense: () => showAddTransactionSheet(context),
+        onSetBudget: () => context.go(BudgetRoutes.overview),
         masked: _masked,
         onToggleMask: () => setState(() => _masked = !_masked),
         onSeeAllTransactions: () => context.go(

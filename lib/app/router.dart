@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moneta/app/auth_routes.dart';
+import 'package:moneta/app/budgets_route_screen.dart';
 import 'package:moneta/app/gallery/gallery_screen.dart';
 import 'package:moneta/app/home_route_screen.dart';
 import 'package:moneta/app/shell.dart';
@@ -42,6 +43,12 @@ GoRouter buildRouter({String initialLocation = defaultInitialRoute}) {
           GoRoute(
             path: DestinationRoutes.paths[MonetaDestination.home]!,
             builder: (context, state) => const HomeRouteScreen(),
+          ),
+          // Inside the shell and not a destination: `04.01` says the bottom
+          // nav stays on Home because Budgets is a Home sub-screen.
+          GoRoute(
+            path: BudgetRoutes.overview,
+            builder: (context, state) => const BudgetsRouteScreen(),
           ),
           GoRoute(
             path: DestinationRoutes.paths[MonetaDestination.transactions]!,

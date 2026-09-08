@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moneta/app/budgets_route_screen.dart';
 import 'package:moneta/app/gallery/gallery_screen.dart';
 import 'package:moneta/app/home_route_screen.dart';
 import 'package:moneta/app/router.dart';
@@ -92,6 +93,27 @@ void main() {
 
     test('an unknown location falls back to home', () {
       expect(DestinationRoutes.of('/nope'), MonetaDestination.home);
+    });
+
+    test('budgets keeps Home lit, because it is not a tab', () {
+      // Annotation 04.01: "Bottom nav stays on Home because Budgets is a Home
+      // sub-screen, not a tab." 39:243's description calls getting the active
+      // tab wrong a real defect. This holds today because unknown locations
+      // fall back to Home; adding Budgets to `paths` would silently break it,
+      // which is what this pins.
+      expect(
+        DestinationRoutes.of(BudgetRoutes.overview),
+        MonetaDestination.home,
+      );
+      expect(
+        DestinationRoutes.of('${BudgetRoutes.overview}/b1'),
+        MonetaDestination.home,
+      );
+      expect(
+        DestinationRoutes.paths.values,
+        isNot(contains(BudgetRoutes.overview)),
+        reason: 'Budgets became a destination, so it now lights its own tab',
+      );
     });
 
     test('/transactions does not match as a prefix of /transactionsfoo', () {

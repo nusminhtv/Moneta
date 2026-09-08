@@ -31,13 +31,13 @@
 
 ## 4. Overview and empty — 66:91, 66:277
 
-- [ ] 4.1 `lib/app/budget_providers.dart` deriving from the transaction
+- [x] 4.1 `lib/app/budget_providers.dart` deriving from the transaction
       controller, so a new transaction moves the budgets the same way it moves
       Home.
-- [ ] 4.2 `BudgetsScreen`: period switcher, total ring, cards worst first;
+- [x] 4.2 `BudgetsScreen`: period switcher, total ring, cards worst first;
       empty state when there are none.
-- [ ] 4.3 Route inside the shell with Home active; shell keeps Home lit.
-- [ ] 4.4 Tests: ordering including a tie, the ring is total-over-total not an
+- [x] 4.3 Route inside the shell with Home active; shell keeps Home lit.
+- [x] 4.4 Tests: ordering including a tie, the ring is total-over-total not an
       average, Home stays the active tab, empty state.
 
 ## 5. Create flow — 66:378, 66:488
