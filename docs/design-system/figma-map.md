@@ -47,6 +47,8 @@ Method note for anyone extending this map: **query nodes, do not enumerate pages
 | `🧩 Components / Organisms` | `5:11` | 14 component sets, listed below |
 | `📱 01 Onboarding & Auth` | `5:14` | 12 screens, each with a sibling annotation frame |
 | `📱 04 Budgets` | `5:17` | 7 screens, `04.01`–`04.07`. Listed here as *02* until 2026-08-28; the frames inside are named `04.xx`, so the page number was wrong, not the node id. |
+| `📱 02 Home & Dashboard` | `5:15` | 6 screens, `02.01`–`02.06`, each with a sibling annotation frame. Read 2026-09-09. |
+| `🧩 Components / Charts` | `5:12` | **the fourth component page** — 5 component sets, listed below. Never queried before 2026-09-09. |
 | — | `29:70` | `TransactionRow`, 4 variants — a component the Organisms page does not list |
 | — | `107:75` | the real `space/*` variable collection, 12 values |
 
@@ -365,9 +367,16 @@ screens to draw.
   Skeleton 1 of 4, PaginationDots 1 of 3, TransactionRow 2 of 4, TextField 4 of
   5, IconButton and AppBar registered through loops that were not counted.
   Closing this is a design-system-wide audit and needs its own change.
-- **`BarChart`** is instanced on `04.07` (`67:712`) but appears on none of the
-  three component pages. Either it is a screen-local frame or it lives on a page
-  not yet queried. Budgets history is blocked on finding out.
+- ~~**`BarChart`** is instanced on `04.07` (`67:712`) but appears on none of the
+  three component pages.~~ **Resolved 2026-09-09: it lives on a page not yet
+  queried.** See *The fourth component page* below. `BarChart` is `48:34` on
+  `🧩 Components / Charts` (`5:12`). Budgets `04.07` is no longer blocked on
+  finding the component — only on being scheduled.
+
+  Worth keeping for the pattern: this entry offered two hypotheses and the
+  cheaper one to test was never tested. "Appears on none of the three component
+  pages" was true and the inference from it was wrong, for the third time in this
+  file, and for the same reason each time — **the page listing is not the file.**
 
 ## 📱 04 Budgets — read and built, 2026-09-08
 
@@ -418,3 +427,84 @@ one's"* and stops there. It does not say whether two consecutive underspent
 periods both reach the third. Implemented one window deep, with the carry
 reported separately from the limit. Reasoning in
 `openspec/changes/budgets-feature/design.md`.
+
+## The fourth component page, found 2026-09-09
+
+`get_metadata` with no `nodeId` still returns three pages. The component library
+is on **four**: `5:9` Atoms, `5:10` Molecules, `5:11` Organisms, and
+`5:12` **`🧩 Components / Charts`**, which nothing in this repository had ever
+queried. (`5:13` is a separator page named `────────────────`.)
+
+**Charts — page `5:12`**
+
+| Component | Node | Variants |
+| --- | --- | --- |
+| ChartLegendItem | `47:47` | 9 (`Slot=1`–`8`, `Other`) |
+| DonutChart | `47:48` | 1, 353×482 |
+| BarChart | `48:34` | 1, 353×223 |
+| LineChart | `48:76` | 1, 353×226 |
+| Sparkline | `48:94` | 1, 104×34 |
+
+So the library is **50 component sets, not 45**, and five of the components the
+Insights screens need were sitting on a page the map described as absent. It was
+found by querying `5:12` on a hunch after `5:11`, which is the same method note
+this file has carried since August: *query nodes, do not enumerate pages.*
+
+## 📱 02 Home & Dashboard — read and partly built, 2026-09-09
+
+Screens at `5:15`. Every sibling annotation was read — the first time, because
+`home-overview`'s own proposal and design both recorded that no Figma tool was
+callable, and four of these screens were built against the frames alone.
+
+| Screen | Node | Annotation | State |
+| --- | --- | --- | --- |
+| 02.01 Home — default | `52:2` | `52:362` | done |
+| 02.02 Home — empty | `52:372` | `52:537` | done |
+| 02.03 Home — loading | `52:547` | `52:630` | done |
+| 02.04 Home — over-budget alert | `57:414` | `57:612` | **not built** |
+| 02.05 Notifications — list | `57:622` | `57:830` | **not built** |
+| 02.06 Notifications — empty | `57:840` | `57:935` | **not built** |
+
+`04.01`–`04.07`'s `TransactionRow` question was also settled for Home: all four
+instances on `52:2` (`52:177`, `52:214`, `52:246`, `52:276`) are `Type=Expense`
+or `Type=Income`. No `Transfer`, no `Pending`, so Home did not need the two
+unbuilt variants.
+
+### What the annotations said that the merged code did not
+
+| # | Source | What it changed |
+| --- | --- | --- |
+| 21 | `52:362` | *"Recent list is capped at 5 rows client-side."* `homeRecentLimit` was **4**, and its comment justified it as "Figma `52:2` draws four". The frame does draw four. The annotation beside it states the rule. A drawing shows one instance of a rule; it is not the rule. |
+| 22 | `52:362` | *"safe-to-spend = balance minus committed budgets minus scheduled bills to period end."* The card was being handed the total balance under the safe-to-spend label, commented "there is no budget feature yet" — true when written, false since `budgets-feature`. |
+| 23 | `52:630` | *"AppBar and BottomNav render immediately; only the content area is skeletonised."* `_HomeLoading` rendered **no app bar**, so the bar appeared when data landed and pushed the page down — the exact jump the skeletons exist to prevent. |
+| 24 | `52:630` | The authored skeleton composition is `Card x3, Circle x4, Line x6, Row x4`, confirmed against the geometry of `52:564`–`52:594`. The implementation had `Card x1, Line x1, Row x3`. |
+| 25 | `52:362` | `SectionHeader/HasAction` + `BudgetCard x2` on the default screen. Home had **no budgets section at all**, though `home-overview`'s own spec already required `BudgetCard` there. |
+| 26 | `52:537` | *"An empty state with no action is a dead end."* The first-run CTA and its first checklist row both called `onLinkAccount`, which the route never passes because Accounts is unbuilt. The app's first screen had two dead prominent controls. |
+| 27 | `52:537` | *"checklist items tick off independently."* Nothing ticked. Only the budget step can tick while the screen is up: any transaction replaces it, and the account step has no feature to complete. |
+
+### Deviations recorded here, with reasons
+
+| # | What | Resolution |
+| --- | --- | --- |
+| 28 | Safe-to-spend omits the **scheduled bills** term of its authored formula. | There is no bill entity, table or concept in this codebase. Completing the formula would mean inventing a domain from one clause of one annotation — how the invented spacing scale happened. The figure is short by a term it names, and says so at the point of use. |
+| 29 | Safe-to-spend subtracts each budget's **unspent remainder**, not its whole limit. | Interpretation, not transcription, so the reasoning is recorded: the annotation's two terms are parallel and both name *future* outflows. Money already spent has left the balance, so subtracting the full limit deducts it twice — a fully spent 5m budget would cost 10m of headroom, and the figure would get worse the more diligently the user recorded spending. Clamped at zero, so overspending cannot hand headroom back. |
+| 30 | Home's first-run **primary CTA is "Log your first expense"**, where `52:389` authors the account action. | Accounts (page 05) is unbuilt. Fidelity here would reproduce the dead end annotation `52:537` exists to prevent. Reverts when Accounts lands. |
+| 31 | A first-run checklist step with no destination renders **no chevron**, where `52:428`–`52:481` author `Trailing=Chevron` on all three. | An accessory must not promise what the row cannot deliver. The notifications spec states the same rule outright — *"a row carrying a chevron with nowhere to go is not representable"* — and allowing it on this screen would have been inconsistent with it. |
+| 32 | A **completed** checklist step uses `ListRow`'s `Badge` accessory. | `52:372` authors no completed state, because nothing is complete on a first-run frame. Composing an authored variant beats inventing a visual for an unauthored state. |
+| 33 | Loading skeletons keep the `Line` variant's **full-bleed width** where `52:578` and `52:581` are resized to 140 and 180. | `Skeleton` authors no width property — and neither does the Figma component; the *frame* resizes the instance. Hard-coding two unrecorded pixel widths would put raw design values in a screen. Nothing jumps vertically, which is what the annotation asks for. |
+| 34 | Home shows **two** budget cards. | Frame-derived, and labelled as such in code. `52:362` lists `BudgetCard x2` in its component inventory and its Data line says nothing about a cap — unlike the recent list, where the cap is stated outright. Two is what `52:2` instances, not a rule the file states. |
+
+### Values used with no recorded inspection, added here
+
+| Value | Where | Status |
+| --- | --- | --- |
+| Quick-action glyphs `repeat` (Transfer), `target` (Budgets), `award` (Goals) | `home_route_screen.dart` | **not observed — derived.** The four labels are transcribed from the frame names at `52:66`–`52:105`, but the `IconButton` instances at `52:67`, `52:81`, `52:94` and `52:106` were never read: Figma access began returning "you don't have edit access" partway through the task, on nodes that had answered minutes earlier, and did not recover. `plus` for Add carries over from the previous implementation. **Re-read those four nodes before treating any of them as transcribed.** |
+| First-run copy: the empty-state title and message, and the three checklist titles and subtitles | `home_screen.dart` | **not verified.** Written while this change believed no Figma tool was callable. `52:389`, `52:428`, `52:459` and `52:481` have still not been read. |
+
+### An oddity, observed and not acted on
+
+Frame **`145:3776`** carries the same name as `52:2` — "02.01 Home & Dashboard /
+Home — default" — with the same children, at 1215px tall instead of 852 (content
+962 instead of 599). Two frames with one name, one of them a taller variant.
+Candidate for the file's twelve deliberate mistakes; the answer key at
+`🔧 Utilities / Known Deviations` has still never been read.
