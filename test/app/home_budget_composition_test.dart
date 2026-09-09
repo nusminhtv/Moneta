@@ -51,9 +51,13 @@ void main() {
     createdAt: DateTime.utc(2026, 9, 10, 3),
   ).valueOrNull!;
 
-  /// Three 5,000,000 ₫ budgets: food 90% spent, transport 80%, shopping
-  /// untouched. Worst-first ranking puts shopping last, so a cap of two drops
-  /// the only budget whose commitment is still entirely outstanding.
+  /// Four 5,000,000 ₫ budgets: food 90% spent, transport 80%, shopping and
+  /// bills untouched. Worst-first ranking puts the untouched pair last, so
+  /// *any* cap drops budgets whose commitment is still entirely outstanding.
+  ///
+  /// Four rather than three on purpose. With exactly three, `take(3)` inside
+  /// `safeToSpend` passed the whole suite — the guard only caught the cap that
+  /// happened to ship.
   Future<ProviderContainer> container() async {
     final repository = FakeTransactionRepository(
       initial: [
@@ -70,6 +74,7 @@ void main() {
             budget(id: 'b-food', category: SpendCategory.food),
             budget(id: 'b-transport', category: SpendCategory.transport),
             budget(id: 'b-shopping', category: SpendCategory.shopping),
+            budget(id: 'b-bills', category: SpendCategory.bills),
           ],
         ),
       ],
@@ -84,7 +89,7 @@ void main() {
     // The cap belongs to HomeScreen now. The snapshot carries the truth.
     return container().then((c) {
       final snapshot = c.read(homeSnapshotProvider).value!;
-      expect(snapshot.budgets, hasLength(3));
+      expect(snapshot.budgets, hasLength(4));
     });
   });
 
@@ -93,13 +98,16 @@ void main() {
     final snapshot = c.read(homeSnapshotProvider).value!;
 
     // balance = -8,500,000 (two expenses, no income)
-    // remainders = 500,000 + 1,000,000 + 5,000,000 = 6,500,000
+    // remainders = 500,000 + 1,000,000 + 5,000,000 + 5,000,000 = 11,500,000
     expect(snapshot.totalBalance, const Money(-8500000, vnd));
-    expect(snapshot.safeToSpend, const Money(-15000000, vnd));
+    expect(snapshot.safeToSpend, const Money(-20000000, vnd));
   });
 
-  test('dropping the last-ranked budget would overstate it by its whole '
-      'commitment', () async {
+  test('no cap of any size gives the right answer', () async {
+    // Written as a loop rather than against one magic number. A fixture of
+    // exactly three budgets let `take(3)` pass the whole suite, which is the
+    // same shape of hole as the bug: a guard calibrated to the cap that
+    // shipped.
     final c = await container();
     final snapshot = c.read(homeSnapshotProvider).value!;
 
@@ -107,28 +115,34 @@ void main() {
       balance: snapshot.totalBalance,
       budgets: snapshot.budgets,
     );
-    final cappedAtTwo = safeToSpend(
-      balance: snapshot.totalBalance,
-      budgets: snapshot.budgets.take(2).toList(),
-    );
-
     expect(snapshot.safeToSpend, all);
-    expect(cappedAtTwo - all, const Money(5000000, vnd));
-    expect(
-      cappedAtTwo.minorUnits,
-      greaterThan(all.minorUnits),
-      reason: 'a cap can only ever make safe-to-spend look better',
-    );
+
+    for (var cap = 1; cap < snapshot.budgets.length; cap++) {
+      final capped = safeToSpend(
+        balance: snapshot.totalBalance,
+        budgets: snapshot.budgets.take(cap).toList(),
+      );
+      expect(
+        capped.minorUnits,
+        greaterThan(all.minorUnits),
+        reason: 'a cap of $cap made safe-to-spend look better than it is',
+      );
+    }
   });
 
   test('budgets arrive worst first', () async {
     final c = await container();
     final snapshot = c.read(homeSnapshotProvider).value!;
-    expect(snapshot.budgets.map((b) => b.category), [
+    expect(snapshot.budgets.take(2).map((b) => b.category), [
       SpendCategory.food,
       SpendCategory.transport,
-      SpendCategory.shopping,
     ]);
+    // The untouched pair tie at 0%, so only their position after the spent
+    // ones is guaranteed.
+    expect(
+      snapshot.budgets.skip(2).map((b) => b.category),
+      containsAll([SpendCategory.shopping, SpendCategory.bills]),
+    );
   });
 
   test('the untouched budget keeps its whole limit as remainder', () async {

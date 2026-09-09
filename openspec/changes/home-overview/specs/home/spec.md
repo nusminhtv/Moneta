@@ -54,7 +54,7 @@ how a drawing was mistaken for a specification.
 - **WHEN** fewer than five recent entries are available
 - **THEN** every available entry is rendered and no placeholder rows are added
 
-### Requirement: Safe to spend subtracts committed budgets
+### Requirement: Safe to spend subtracts each budget's unspent remainder
 
 The balance card's safe-to-spend figure SHALL be the total balance minus the sum
 of each current-period budget's **unspent remainder**, computed in `lib/app`.

@@ -24,8 +24,13 @@ typedef HomeQuickAction = ({
 /// The Home screen, from Figma node `52:2`.
 ///
 /// Takes a [HomeSnapshot] and renders it. It performs no arithmetic beyond
-/// grouping the recent list by local day: totals are computed in `lib/app`,
-/// where `tool/coverage_critical.txt` reaches them, per ADR 0004.
+/// grouping the recent list by local day: totals are computed in `lib/app`, per
+/// ADR 0004, which keeps them out of a build method.
+///
+/// `lib/app` is **not** in `tool/coverage_critical.txt` — only `lib/core`,
+/// `*/domain/` and `*/data/` are. This comment used to claim the 85% gate
+/// reached those totals. It does not, and the unguarded gap is where a display
+/// cap silently reached safe-to-spend.
 ///
 /// The bottom navigation is **not** here — the shell owns it, so the active tab
 /// cannot disagree with the route. Figma draws it inside the screen frame

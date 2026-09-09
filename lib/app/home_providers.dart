@@ -48,9 +48,13 @@ RecentEntry toRecentEntry(Transaction transaction) => RecentEntry(
 /// a balance that resets each month is not a balance. Income and expenses are
 /// the period figures the card shows beside it.
 ///
-/// [budgets] must already be ranked worst-first and capped; this function does
-/// not reorder them. It subtracts their unspent remainder from the balance to
-/// reach safe-to-spend.
+/// [budgets] must already be ranked worst-first, and must be **every** budget
+/// in the current period — never a display-capped subset. This function does not
+/// reorder them. It subtracts their unspent remainder from the balance to reach
+/// safe-to-spend.
+///
+/// This doc comment used to say "ranked worst-first **and capped**", which is
+/// the instruction that produced the bug it now warns against.
 HomeSnapshot buildSnapshot({
   required List<Transaction> all,
   required Currency currency,

@@ -189,10 +189,12 @@ final class HomeSnapshot extends Equatable {
   /// `docs/design-system/figma-map.md` rather than papered over.
   final Money safeToSpend;
 
-  /// Budgets to show on Home, worst first.
+  /// Every budget in the current period, worst first.
   ///
-  /// Already ranked and already capped by the composition layer: the screen
-  /// renders what it is given rather than deciding which budgets matter.
+  /// Ranked by the composition layer and **not** capped by it. How many the
+  /// screen draws is `HomeScreen.budgetCardLimit`'s business; this list is what
+  /// the figures are computed from, and capping it here made safe-to-spend
+  /// wrong.
   final List<BudgetSummary> budgets;
 
   /// Whether any budget has passed its limit.
