@@ -494,12 +494,50 @@ unbuilt variants.
 | 33 | Loading skeletons keep the `Line` variant's **full-bleed width** where `52:578` and `52:581` are resized to 140 and 180. | `Skeleton` authors no width property — and neither does the Figma component; the *frame* resizes the instance. Hard-coding two unrecorded pixel widths would put raw design values in a screen. Nothing jumps vertically, which is what the annotation asks for. |
 | 34 | Home shows **two** budget cards. | Frame-derived, and labelled as such in code. `52:362` lists `BudgetCard x2` in its component inventory and its Data line says nothing about a cap — unlike the recent list, where the cap is stated outright. Two is what `52:2` instances, not a rule the file states. |
 
-### Values used with no recorded inspection, added here
+### Values that were derived, then verified
 
-| Value | Where | Status |
+Both entries below were recorded as unverified while Figma access was down, and
+read once it came back the same day. **Both turned out correct.** They are kept
+here rather than deleted, because a guess that happens to be right is still a
+guess, and the record of *how* a value arrived is what tells a later reader how
+much to trust it.
+
+| Value | Where | Outcome |
 | --- | --- | --- |
-| Quick-action glyphs `repeat` (Transfer), `target` (Budgets), `award` (Goals) | `home_route_screen.dart` | **not observed — derived.** The four labels are transcribed from the frame names at `52:66`–`52:105`, but the `IconButton` instances at `52:67`, `52:81`, `52:94` and `52:106` were never read: Figma access began returning "you don't have edit access" partway through the task, on nodes that had answered minutes earlier, and did not recover. `plus` for Add carries over from the previous implementation. **Re-read those four nodes before treating any of them as transcribed.** |
-| First-run copy: the empty-state title and message, and the three checklist titles and subtitles | `home_screen.dart` | **not verified.** Written while this change believed no Figma tool was callable. `52:389`, `52:428`, `52:459` and `52:481` have still not been read. |
+| Quick-action glyphs `repeat` (Transfer), `target` (Budgets), `award` (Goals) | `home_route_screen.dart` | **Verified, all four matched.** `52:67` = `icon/plus` (`10:29`), `52:81` = `icon/repeat` (`10:63`), `52:94` = `icon/target` (`10:20`), `52:106` = `icon/award` (`11:83`). `Style=Tonal, Size=Md` (`20:54`, 44×44) and the `label/sm` + `text-secondary` caption confirmed at the same time. |
+| First-run copy: the empty-state title, and the three checklist titles and subtitles | `home_screen.dart` | **Verified, exact.** All three rows match `52:428`, `52:459` and `52:481` word for word, including the leading glyphs `icon/credit-card` (`10:25`), `icon/plus` (`10:29`) and `icon/target` (`10:20`); the empty state's title and its `icon/shopping-bag` (`11:54`) match `52:389`. This copy was written while the change believed Figma was unreachable, and it was accurate anyway. |
+
+Two strings on `52:372` do still diverge, both deliberately — see deviation 30
+and the entry below.
+
+| # | What | Resolution |
+| --- | --- | --- |
+| 35 | The first-run message drops `52:389`'s opening clause. Figma authors *"Add an account and log one transaction. Moneta needs about a week of data before budgets get useful."* | The second sentence is kept verbatim. The first instructs the user to add an account, which is the one thing they cannot do while Accounts is unbuilt, and it sat directly above a CTA that had been repointed away from that step for the same reason. Reverts with deviation 30 when Accounts lands. |
+
+### The `57:414` variant check, performed
+
+Deviation-free: `57:517` (`Category=Shopping`) and `57:551` (`Category=Food`)
+are both `Type=Expense`. Neither is `Transfer` nor `Pending`, so the over-budget
+screen never needed the two `TransactionRow` variants this project has not built,
+and task 4.4's stop condition did not fire. This check is why 4.4 sat implemented
+but unticked for the length of the Figma outage.
+
+### What the outage actually was
+
+Recorded because the first diagnosis was wrong and acted on. Every Figma tool
+returned *"Looks like you don't have edit access to this file"* on every node,
+including `5:24` and `52:116` which had answered minutes earlier. That pattern —
+reads working, then uniformly failing — was read as a rate limit on the plan.
+
+It was the **seat**. `whoami` is the tool for this and it says so in its own
+description: *"You MUST use this tool if you are experiencing file access/
+permission issues or are being rate limited."* It was not called until six failed
+retries later. It reported `seat: "View"`, `tier: "starter"` — and a View seat
+cannot use the design-context tools at all, which is exactly what the error said
+in plain words. Access returned on a `seat: "Full"`, `tier: "pro"` account.
+
+Two lessons, neither about Figma: the error message was accurate and was read as
+boilerplate, and the diagnostic tool was in the tool list the whole time.
 
 ### An oddity, observed and not acted on
 

@@ -228,10 +228,26 @@ class HomeScreen extends StatelessWidget {
   /// `docs/design-system/figma-map.md`. It should be revisited when Accounts
   /// lands, at which point Figma's CTA becomes the correct one.
   ///
-  /// **The copy here is not verified against the nodes.** It was written while
-  /// this change believed no Figma tool was callable, and `52:389`, `52:428`,
-  /// `52:459` and `52:481` still have not been read — access was unavailable
-  /// throughout this task. Treat every string below as unconfirmed.
+  /// **The copy is verified against the nodes** (read once Figma access
+  /// returned). The three rows match `52:428`, `52:459` and `52:481` word for
+  /// word — titles, subtitles and leading glyphs (`icon/credit-card` `10:25`,
+  /// `icon/plus` `10:29`, `icon/target` `10:20`) — as does the empty state's
+  /// title and its `icon/shopping-bag` (`11:54`). That copy was written while
+  /// this change believed no Figma tool was callable, and it was right anyway.
+  ///
+  /// Exactly two strings diverge from `52:389`, both consequences of the CTA
+  /// decision above:
+  ///
+  /// - the action reads "Log your first expense" where Figma authors
+  ///   "Link an account";
+  /// - the message drops Figma's opening clause. It authors *"Add an account and
+  ///   log one transaction. Moneta needs about a week of data before budgets get
+  ///   useful."* The second sentence is kept verbatim; the first instructed the
+  ///   user to add an account, which is the thing they cannot do.
+  ///
+  /// `35:138`'s own description states the rule this screen is built around:
+  /// *"An empty state without a primary action is a dead end — only use
+  /// HasAction=False when there is genuinely nothing the user can do here."*
   Widget _firstRun(BuildContext context) {
     final theme = context.moneta;
     return ListView(

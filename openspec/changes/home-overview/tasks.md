@@ -76,7 +76,7 @@
 
   Verify it uses `AppBar`, `BottomNav` and the authored `Skeleton` variants at
   those counts.
-- [ ] 4.4 Annotation `57:612` read. Implement the over-budget Home screen — this
+- [x] 4.4 Annotation `57:612` read. Implement the over-budget Home screen — this
   state does not exist in any form today, and `Banner` appears nowhere in
   `lib/features/home`. What the annotation pins:
   - **Trigger**: any active budget for the current period exceeding 100% of its
@@ -91,18 +91,15 @@
   not carried by colour alone. Check the `TransactionRow` variants on `57:517` and
   `57:551` as in 4.1; if either is `Transfer` or `Pending`, stop and report it.
 
-  **Implemented but NOT ticked, 2026-09-09.** The behaviour is built, tested and
-  through the gate. What is missing is this task's own verification step: the
-  variants of `57:517` and `57:551` were never read, because Figma access failed
-  during 4.1 and did not recover. Ticking this would claim a check that was not
-  performed.
+  **Closed 2026-09-09, after the Figma outage lifted.** This sat implemented but
+  unticked because the task's own verification step could not be performed: the
+  variants of `57:517` and `57:551` were unreadable while access was down, and
+  ticking would have claimed a check nobody made.
 
-  The exposure is small but real. Home renders its rows from `RecentEntry`, whose
-  direction is `TransactionDirection`, which has only income and expense — so
-  this screen *cannot* express `Transfer` or `Pending` whatever the frame says,
-  and the four rows on `52:2` were verified as expense/income. If `57:414` turns
-  out to author either variant, the screen is wrong in a way no test here would
-  notice. **To close: read `57:517` and `57:551`, then tick or report.**
+  Check performed: `57:517` is `Category=Shopping` and `57:551` is
+  `Category=Food`, **both `Type=Expense`**. Neither is `Transfer` nor `Pending`,
+  so the stop condition did not fire and the screen never needed the two
+  unbuilt variants.
 
 ## 5. Notifications Screens
 

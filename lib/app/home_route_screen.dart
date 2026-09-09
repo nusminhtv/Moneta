@@ -39,14 +39,16 @@ class HomeRouteScreen extends ConsumerStatefulWidget {
   /// wiring them would lie. It is the rule `onLinkAccount` already set: a
   /// control that goes nowhere is worse than one that plainly does not respond.
   ///
-  /// **The glyphs are derived, not observed.** The labels are transcribed from
-  /// the frame names read on 2026-09-09, but the icons inside `52:67`, `52:81`,
-  /// `52:94` and `52:106` were never read — Figma access began returning an
-  /// access error mid-task, on nodes that had answered minutes earlier. `plus`
-  /// carries over from the previous implementation; `repeat`, `target` and
-  /// `award` are this set's nearest matches and are listed as unverified in
-  /// `docs/design-system/figma-map.md`. Re-read those four nodes before
-  /// treating them as transcribed.
+  /// **The glyphs are verified.** They were derived first, while Figma access
+  /// was down, and read afterwards once it returned: `52:67` is `icon/plus`
+  /// (`10:29`), `52:81` is `icon/repeat` (`10:63`), `52:94` is `icon/target`
+  /// (`10:20`) and `52:106` is `icon/award` (`11:83`). All four guesses matched.
+  ///
+  /// Recording that they were *guesses that happened to be right* rather than
+  /// quietly relabelling them as transcriptions: the process was wrong even
+  /// though the answer was not, and the next set of four might not match.
+  /// `Style=Tonal, Size=Md` (`20:54`, 44×44) and the `label/sm` +
+  /// `text-secondary` caption were confirmed at the same time.
   ///
   /// A function rather than a literal inside `build` so the authored set is
   /// reachable from a test without pumping a router.
