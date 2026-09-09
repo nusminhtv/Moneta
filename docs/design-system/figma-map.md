@@ -388,7 +388,7 @@ screens to draw.
 | 04.04 Create — amount | `66:488` | done |
 | 04.05 Detail — on track | `67:359` | done |
 | 04.06 Detail — over limit | `67:524` | done |
-| 04.07 History | `67:690` | **blocked** — see below |
+| 04.07 History | `67:690` | **deferred** — `BarChart` is `48:34` on `5:12`; see below |
 
 ### What the annotations said that the components did not
 
@@ -402,9 +402,12 @@ screens to draw.
 
 ### Not attempted
 
-- **`BarChart`** (`67:712`, instanced on `04.07`) appears on none of the three
-  component pages. Budgets — history is not built. Approximating a chart
-  component is how the invented spacing scale happened.
+- **`BarChart`** (`67:712`, instanced on `04.07`) — **deferred, not blocked, and
+  this entry was wrong.** It said the component appears on none of the three
+  component pages. True, and beside the point: it is `48:34` on the *fourth*
+  page, `🧩 Components / Charts` (`5:12`), queried on 2026-09-09. Budgets —
+  history is still not built, but nothing is missing except the work. It belongs
+  with the Insights charts, which come from the same page.
 - **`Numpad`** (`36:92`) and **`NumpadKey`** (`36:91`) exist in Figma and are
   not built. `04.04` pairs the hero amount with the numpad; the screen uses a
   hidden `EditableText` behind the figure instead — the same composition the OTP

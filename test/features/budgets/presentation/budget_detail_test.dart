@@ -24,6 +24,7 @@ void main() {
     String id,
     int minor, {
     int day = 10,
+    int hour = 3,
     TransactionDirection direction = TransactionDirection.expense,
     SpendCategory category = SpendCategory.food,
     Currency currency = vnd,
@@ -32,7 +33,7 @@ void main() {
     category: category,
     direction: direction,
     amount: Money(minor, currency),
-    occurredAt: DateTime.utc(2026, 9, day, 3),
+    occurredAt: DateTime.utc(2026, 9, day, hour),
   );
 
   BudgetProgress progressWith(
@@ -259,6 +260,67 @@ void main() {
       final all = [for (var i = 1; i <= 8; i++) entry('e$i', 300000, day: i)];
       await pumpDetail(tester, progressWith(all), all);
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('the crossing instant is the one that tipped it', () {
+    testWidgets('not simply the last counted transaction', (tester) async {
+      // Every existing test made the tipping transaction the chronologically
+      // last one too, so an implementation returning `counted.last` passed all
+      // of them. The spec is explicit: "it is not the last transaction in the
+      // window regardless of date." This puts a fourth, later, smaller spend
+      // after the one that crossed the limit.
+      final p = progressWith([
+        entry('a', 400000, day: 3),
+        entry('b', 900000, day: 11),
+        entry('c', 50000, day: 25),
+      ]);
+      expect(p.passedLimitOn, DateTime.utc(2026, 9, 11, 3));
+
+      await pumpDetail(tester, p, const []);
+      final banner = tester.widget<MonetaBanner>(find.byType(MonetaBanner));
+      expect(banner.message, contains('11 Sep'));
+      expect(
+        banner.message,
+        isNot(contains('25 Sep')),
+        reason: 'the banner names the last spend, not the one that crossed',
+      );
+    });
+
+    testWidgets('order of arrival does not change the answer', (tester) async {
+      // Entries are sorted by occurrence, not taken as given.
+      final p = progressWith([
+        entry('c', 50000, day: 25),
+        entry('b', 900000, day: 11),
+        entry('a', 400000, day: 3),
+      ]);
+      expect(p.passedLimitOn, DateTime.utc(2026, 9, 11, 3));
+    });
+  });
+
+  group('the banner date is a local date', () {
+    testWidgets('an instant late in the local day is not dated a day early', (
+      tester,
+    ) async {
+      // The gate pins TZ=Asia/Ho_Chi_Minh (+7). Every other test here uses
+      // 03:00 UTC, which is 10:00 local on the SAME calendar day, so dropping
+      // .toLocal() from _dayLabel left the whole suite green.
+      //
+      // 2026-09-10T18:00Z is 2026-09-11 01:00 local. A UTC-formatted label
+      // reads "10 Sep"; the correct local one reads "11 Sep".
+      final p = progressWith([
+        entry('a', 400000, day: 3),
+        entry('b', 900000, day: 10, hour: 18),
+      ]);
+      await pumpDetail(tester, p, const []);
+
+      final banner = tester.widget<MonetaBanner>(find.byType(MonetaBanner));
+      expect(banner.message, contains('11 Sep'));
+      expect(
+        banner.message,
+        isNot(contains('10 Sep')),
+        reason: '_dayLabel formatted a UTC instant without .toLocal()',
+      );
     });
   });
 }

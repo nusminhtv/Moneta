@@ -65,9 +65,21 @@ Two steps, one write. A partially-created budget row with a null limit would
 need every reader to handle it, and there is no draft the user asked to keep.
 The flow holds its state in the route and commits once.
 
-## 04.07 is not attempted
+## 04.07 is deferred, and the reason given was wrong
 
-`BarChart` (`67:712`) is instanced on the history screen and appears on none of
-the three component pages. The options were: query more pages, or approximate a
-chart. Approximating is how the invented spacing scale happened — a plausible
-component, consistently applied, wrong. It is recorded as blocked.
+`BarChart` (`67:712`) is instanced on the history screen. This change did not
+build it, and the decision not to approximate a chart was right — approximating
+is how the invented spacing scale happened, a plausible component consistently
+applied and wrong.
+
+The *reason* recorded was not right. It said the component "appears on none of
+the three component pages", and named two options: query more pages, or
+approximate. The first was never done. Querying `5:12` on 2026-09-09 found
+`🧩 Components / Charts` — a fourth component page holding `BarChart` at `48:34`,
+along with `DonutChart`, `LineChart`, `Sparkline` and `ChartLegendItem`.
+
+So the screen was never blocked on a missing component; it was blocked on a page
+nobody had opened. **Deferred is the accurate word.** Kept here rather than
+quietly rewritten, because "appears on none of the three pages" was a true
+statement that licensed a false conclusion, and that is the third time in this
+repository that the page listing has been mistaken for the file.

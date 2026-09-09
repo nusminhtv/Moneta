@@ -46,10 +46,19 @@ the budget's, as the annotation requires.
 | 04.05 Detail — on track | `67:359` | |
 | 04.06 Detail — over limit | `67:524` | same screen, a banner and a state |
 
-**04.07 Budgets — history is deferred.** It instances a `BarChart` (`67:712`)
-that appears on none of the three component pages. Guessing at a chart component
-is how the invented spacing scale happened. It is recorded as blocked in
-`figma-map.md` rather than approximated.
+**04.07 Budgets — history is deferred.** It instances a `BarChart` (`67:712`),
+and this change did not build it.
+
+The original reason given here was that the component "appears on none of the
+three component pages", which was true and was the wrong conclusion. **The
+component exists**: `BarChart` is `48:34` on a *fourth* component page,
+`🧩 Components / Charts` (`5:12`), found on 2026-09-09 by querying a node instead
+of trusting the page listing — the same mistake this repository has now made
+three times.
+
+So `04.07` is **deferred, not blocked**. Nothing stands in the way of building it
+except scheduling; it belongs with the Insights charts, which need the same page.
+Recorded in `figma-map.md`.
 
 **Budgets is not a tab.** Annotation `04.01`:
 

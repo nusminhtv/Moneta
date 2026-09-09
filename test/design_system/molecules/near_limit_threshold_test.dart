@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moneta/core/money.dart';
@@ -150,22 +152,65 @@ void main() {
   });
 
   group('the status is still derived, not chosen', () {
-    test('no widget accepts a BudgetStatus', () {
-      const bar = MonetaProgressBar(fraction: 0.5);
-      const ring = MonetaCircularProgress(fraction: 0.5);
-      const card = BudgetCard(
-        category: SpendCategory.food,
-        spent: Money(500, vnd),
-        limit: Money(1000, vnd),
-        note: '50%',
-      );
-      for (final w in <Widget>[bar, ring, card]) {
+    // This asserted that `toDiagnosticsNode().getProperties()` did not contain
+    // "status". None of the three overrides `debugFillProperties`, so that list
+    // is EMPTY — the assertion could not fail, and would have passed just as
+    // happily for a widget that took a status parameter. It is the design
+    // decision the whole change rests on (I10: a label that cannot disagree
+    // with its arc), guarded by nothing.
+    //
+    // Dart cannot reflect over constructors at runtime, so this reads the
+    // source instead — the same approach the token layer already uses to stop
+    // `MonetaColors.all` silently omitting a field. A `status` constructor
+    // parameter requires a `final BudgetStatus status;` field to bind to, so
+    // the field declaration is the thing to look for. A derived
+    // `BudgetStatus get status` is fine and deliberately does not trip this:
+    // BudgetCard has one.
+    const sources = <String>[
+      'lib/design_system/molecules/progress_bar.dart',
+      'lib/design_system/atoms/moneta_circular_progress.dart',
+      'lib/design_system/organisms/budget_card.dart',
+    ];
+
+    test('no widget stores a BudgetStatus, so none can be handed one', () {
+      for (final path in sources) {
+        final file = File(path);
+        expect(file.existsSync(), isTrue, reason: '$path moved');
+        final source = file.readAsStringSync();
+
         expect(
-          w.toDiagnosticsNode().getProperties().map((p) => p.name),
-          isNot(contains('status')),
-          reason: '${w.runtimeType} exposes a settable status',
+          source,
+          isNot(contains('final BudgetStatus')),
+          reason: '$path stores a BudgetStatus, so a caller can set it',
+        );
+        expect(
+          source,
+          isNot(contains('this.status')),
+          reason: '$path binds a status constructor parameter',
         );
       }
+    });
+
+    test('and the check itself can fail', () {
+      // Guards the guard: if `final BudgetStatus` stopped being the shape a
+      // stored status takes, the test above would silently pass forever.
+      const counterfeit = '''
+        class Fake extends StatelessWidget {
+          const Fake({required this.status});
+          final BudgetStatus status;
+        }
+      ''';
+      expect(counterfeit, contains('final BudgetStatus'));
+      expect(counterfeit, contains('this.status'));
+    });
+
+    test('a derived status getter is still allowed', () {
+      // BudgetCard computes one. Forbidding the word outright would make the
+      // correct implementation fail.
+      final card = File(
+        'lib/design_system/organisms/budget_card.dart',
+      ).readAsStringSync();
+      expect(card, contains('BudgetStatus get status'));
     });
   });
 }
