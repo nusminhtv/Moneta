@@ -335,6 +335,7 @@ recorded in code as derived rather than presented as transcriptions.
 | 2026-09-09 | checkpoint | 4.3 loading: the app bar stays, and the authored skeleton counts | `699c42b` | `verify-runs/2026-09-09T07-58-18Z_home-overview.md` |
 | 2026-09-09 | partial 6.2 | The fourth component page (`5:12` Charts) and page 02's deviations 21–34 | `8fd7bdf` | `verify-runs/2026-09-09T08-00-36Z_home-overview.md` |
 | 2026-09-09 | implemented, **not ticked** | 4.4 over-budget alert — built and green; `57:517`/`57:551` variant check unperformed | `dafce7d` | `verify-runs/2026-09-09T08-05-11Z_home-overview.md` |
+| 2026-09-09 | checkpoint | 4.4 **closed** — variant check performed (both Expense); glyphs and first-run copy verified | `1aa0c9e` | `verify-runs/2026-09-09T08-37-40Z_home-overview.md` |
 
 ### Where this change stopped, and why
 
