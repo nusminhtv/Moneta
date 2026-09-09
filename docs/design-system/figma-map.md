@@ -214,6 +214,7 @@ number, consistently applied, wrong.
 | `fabSlotWidth 72` | `spacing.dart` (`MonetaLayout`) | **not observed — derived**, and now labelled as such in both the code and `figma-tokens.md`. Figma authors the FAB and the bar but no slot width. Found by the provenance check on its fourth revision. |
 | Button paddings 14 / 20 / 24, icon sizes 16 / 20 / 24, heights 36 / 44 / 56 | `moneta_button.dart` | heights are quoted from `13:2`'s annotation in code; the paddings and icon sizes are not |
 | CircularProgress stroke widths 6 (Md) and 10 (Lg) | `moneta_circular_progress.dart` | **not observed — derived**. Figma exports the arcs as SVG assets, so the diameters are readable from the node and the stroke widths are not. The ratio matches the exported arcs by eye; nothing was measured. |
+| CircularProgress stroke width **4 (Sm)** | `moneta_circular_progress.dart` | **not observed — derived**, and it was missing from this table until 2026-09-09 while 6 and 10 were listed. It reaches the painter through `strokeWidth ?? 4`, a default whose null *also* encodes "no label" — so someone who measures Sm's real stroke and writes `sm(48, 4)` would silently give Sm a percentage label it is not meant to have. Worth separating those two meanings before the value is corrected. |
 | Illustration `bandHeight 268`, `haloSize 212`, `ringSize 262`, `glyphSize 72`, the ring/halo/glyph placements (45.5/3, 70.5/28, 140.5/98) and the four dot positions | `onboarding_illustration.dart` | transcribed from the exported SVGs, not re-verified against `71:59` after the rewrite |
 
 Listing them is not the same as fixing them. Re-reading these nodes is
@@ -360,13 +361,28 @@ screens to draw.
 ## Still open
 
 - **The gallery cannot catch a variant shortfall.** `auth-components` proposed a
-  generic `expectedVariants` field and stopped at 10 of 14 tasks. Today the
-  guard is one hand-written count test per component, and nine of the
-  twenty-four registered sections carry fewer variants than Figma authors —
-  Checkbox 1 of 6, Divider 1 of 4, ProgressBar 1 of 6, CategoryIcon 1 of 24,
-  Skeleton 1 of 4, PaginationDots 1 of 3, TransactionRow 2 of 4, TextField 4 of
-  5, IconButton and AppBar registered through loops that were not counted.
-  Closing this is a design-system-wide audit and needs its own change.
+  generic `expectedVariants` field and stopped at 10 of 14 tasks. Today the guard
+  is one hand-written count test per component, so a component registered with 2
+  of its 18 variants passes the whole gate. Closing this needs its own change.
+
+  **The shortfall list this entry used to carry was wrong.** It claimed nine of
+  twenty-four sections were short — Checkbox 1 of 6, Divider 1 of 4, ProgressBar
+  1 of 6, CategoryIcon 1 of 24, Skeleton 1 of 4, PaginationDots 1 of 3,
+  TransactionRow 2 of 4, TextField 4 of 5, with IconButton and AppBar "registered
+  through loops that were not counted".
+
+  Counted from the live catalog on 2026-09-09, there are **29 sections and two
+  are short**: `TransactionRow` 2 of 4 and `TextField` 4 of 5. Checkbox 6,
+  Divider 4, ProgressBar 6, CategoryIcon 24, Skeleton 4, PaginationDots 3,
+  IconButton 18 and AppBar 4 are all complete. The last clause was the tell — it
+  admitted the method was counting `GalleryVariant(` literals in source, which
+  misses every section that builds its variants in a loop, and that is exactly
+  what made six complete components look 1-of-N. The table twenty lines above
+  already marked ProgressBar and CategoryIcon **done**.
+
+  This mattered beyond bookkeeping: the false count was cited in
+  `budget-components` as justification for narrowing that change's own variant
+  requirement.
 - ~~**`BarChart`** is instanced on `04.07` (`67:712`) but appears on none of the
   three component pages.~~ **Resolved 2026-09-09: it lives on a page not yet
   queried.** See *The fourth component page* below. `BarChart` is `48:34` on

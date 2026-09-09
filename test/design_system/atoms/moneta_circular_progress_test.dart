@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moneta/design_system/atoms/moneta_circular_progress.dart';
@@ -86,16 +88,92 @@ void main() {
     });
   });
 
+  group('what the ring actually paints', () {
+    // Nothing asserted this. Swapping arcColor and trackColor in the painter
+    // drew the progress arc in track grey and left all 1196 tests green -- the
+    // flagship requirement of this component, unguarded. The parity tests above
+    // compare two identical expressions to each other, which is not the same as
+    // checking what reaches the canvas.
+    testWidgets('under the threshold the arc is drawn in income', (
+      tester,
+    ) async {
+      await pumpRing(tester, 0.4);
+      expect(
+        find.byType(CustomPaint).last,
+        paints
+          ..arc(color: colors.track)
+          ..arc(color: colors.income),
+      );
+    });
+
+    testWidgets('near the limit the arc is drawn in warning', (tester) async {
+      await pumpRing(tester, 0.9);
+      expect(
+        find.byType(CustomPaint).last,
+        paints
+          ..arc(color: colors.track)
+          ..arc(color: colors.warning),
+      );
+    });
+
+    testWidgets('over the limit the arc is drawn in expense', (tester) async {
+      await pumpRing(tester, 1.2);
+      expect(
+        find.byType(CustomPaint).last,
+        paints
+          ..arc(color: colors.track)
+          ..arc(color: colors.expense),
+      );
+    });
+
+    testWidgets('the track is painted first, so the arc sits on top', (
+      tester,
+    ) async {
+      // Reversed, the track would cover the progress it is meant to sit under.
+      await pumpRing(tester, 0.4);
+      expect(
+        find.byType(CustomPaint).last,
+        paintsExactlyCountTimes(#drawArc, 2),
+      );
+    });
+
+    testWidgets('an empty ring paints the track and no arc', (tester) async {
+      await pumpRing(tester, 0);
+      expect(
+        find.byType(CustomPaint).last,
+        paintsExactlyCountTimes(#drawArc, 1),
+      );
+      expect(find.byType(CustomPaint).last, paints..arc(color: colors.track));
+    });
+  });
+
   group('the label cannot contradict the arc', () {
     test('there is no way to set the label text', () {
       // Figma has no TEXT property here and types the percentage onto each
       // instance (ledger I10). Adding a `label` parameter would reintroduce
       // exactly that: a number that can disagree with the sweep.
-      const ring = MonetaCircularProgress(fraction: 0.62);
-      expect(
-        ring.toDiagnosticsNode().getProperties().map((p) => p.name),
-        isNot(contains('label')),
+      //
+      // This used to inspect `toDiagnosticsNode().getProperties()`, which is
+      // EMPTY for a widget that does not override debugFillProperties -- so it
+      // passed just as happily for a widget that did take a label. It reads the
+      // source instead, the way the token layer already guards
+      // MonetaColors.all.
+      final source = File(
+        'lib/design_system/atoms/moneta_circular_progress.dart',
+      ).readAsStringSync();
+      final constructor = source.substring(
+        source.indexOf('const MonetaCircularProgress({'),
+        source.indexOf('});', source.indexOf('const MonetaCircularProgress({')),
       );
+      expect(
+        constructor,
+        isNot(contains('label')),
+        reason:
+            'the ring gained a label parameter, so a number can now '
+            'disagree with the sweep',
+      );
+      // Guards the guard: the substring really did capture the parameter list.
+      expect(constructor, contains('this.fraction'));
     });
 
     testWidgets('over budget sweeps a full turn and still reports the truth', (

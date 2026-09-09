@@ -157,11 +157,17 @@ against the Figma count.
 This is the existing per-component pattern, not the generic `expectedVariants`
 field. `auth-components` proposed that field and stopped at 10 of 14 tasks, so
 the gallery still cannot catch a *shortfall* generically: a component registered
-with 2 of its 18 variants passes the whole gate. Nine of the twenty-four
-sections registered today are short of Figma. Closing that is a design-system
-audit spanning every component, which does not belong inside a change about
-Budgets — it is recorded as open in `docs/design-system/figma-map.md` and left
-for its own change.
+with 2 of its 18 variants passes the whole gate. That hole is real and is
+recorded as open in `docs/design-system/figma-map.md`.
+
+**Two** of the twenty-nine sections registered today are short of Figma:
+`TransactionRow` at 2 of 4 and `TextField` at 4 of 5. An earlier draft of this
+paragraph said nine of twenty-four, listing Checkbox, Divider, ProgressBar,
+CategoryIcon, PaginationDots and Skeleton among them; all six are registered in
+full, and `IconButton` and `AppBar` are complete at 18 and 4. The list came from
+counting `GalleryVariant(` literals in source, which misses every section that
+builds its variants in a loop — and it was cited as justification for narrowing
+this change's own requirement. Counted from the live catalog instead.
 
 #### Scenario: The variant counts match Figma
 - **WHEN** each new section is checked

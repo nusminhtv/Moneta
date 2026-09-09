@@ -167,19 +167,25 @@ class _RingPainter extends CustomPainter {
       center: size.center(Offset.zero),
       radius: (size.shortestSide - strokeWidth) / 2,
     );
-    final base = Paint()
+    // Two Paints, not one mutated twice. Skia copies a Paint at the call, so a
+    // shared instance renders correctly on a device — but a recording canvas
+    // keeps the reference, so both arcs report whichever colour was set last
+    // and the paint sequence cannot be asserted. That is why swapping these two
+    // colours passed the whole suite: nothing could see them.
+    Paint stroke(Color color) => Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.round
+      ..color = color;
 
-    canvas.drawArc(rect, 0, math.pi * 2, false, base..color = trackColor);
+    canvas.drawArc(rect, 0, math.pi * 2, false, stroke(trackColor));
     if (sweep > 0) {
       canvas.drawArc(
         rect,
         _start,
         math.pi * 2 * sweep,
         false,
-        base..color = arcColor,
+        stroke(arcColor),
       );
     }
   }
