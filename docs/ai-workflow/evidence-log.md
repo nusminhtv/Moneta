@@ -336,38 +336,61 @@ recorded in code as derived rather than presented as transcriptions.
 | 2026-09-09 | partial 6.2 | The fourth component page (`5:12` Charts) and page 02's deviations 21–34 | `8fd7bdf` | `verify-runs/2026-09-09T08-00-36Z_home-overview.md` |
 | 2026-09-09 | implemented, **not ticked** | 4.4 over-budget alert — built and green; `57:517`/`57:551` variant check unperformed | `dafce7d` | `verify-runs/2026-09-09T08-05-11Z_home-overview.md` |
 | 2026-09-09 | checkpoint | 4.4 **closed** — variant check performed (both Expense); glyphs and first-run copy verified | `1aa0c9e` | `verify-runs/2026-09-09T08-37-40Z_home-overview.md` |
+| 2026-09-09 | checkpoint | 5.1 notification centre, derived from budgets and the ledger | `b064be0` | `verify-runs/2026-09-09T08-47-11Z_home-overview.md` |
+| 2026-09-09 | checkpoint | 6.1 `/notifications` routed inside the shell; bell on Home's app bar | `022da25` | `verify-runs/2026-09-09T12-51-06Z_home-overview.md` |
+| 2026-09-09 | checkpoint | 5.2 empty centre, action-free as `57:935` sanctions | `629b3a0` | `verify-runs/2026-09-09T12-54-03Z_home-overview.md` |
+| 2026-09-09 | checkpoint | 6.2–6.4 close-out: figma-map, this log, the full gate — **18/18** | `PENDINGCO` | `verify-runs/2026-09-09T12-56-10Z_home-overview.md` |
 
-### Where this change stopped, and why
+### The Figma outage, and what it actually was
 
-Six checkpoints in, `home-overview` is at 11/18 ticked with 4.4 built but
-deliberately unticked. The remainder is blocked on one external thing and one
-open question.
+Work stopped mid-change when every Figma tool began returning *"Looks like you
+don't have edit access to this file"* on nodes that had answered minutes earlier.
+It was retested repeatedly and diagnosed wrongly twice before `whoami` was
+called — whose own description says to use it for exactly this.
 
-**Figma access failed mid-task and did not recover.** Partway through 4.1 every
-Figma tool — `get_design_context`, `get_metadata`, `get_screenshot` — began
-returning *"Looks like you don't have edit access to this file"* on nodes that
-had answered minutes earlier; `52:116` succeeded and then failed on retry, which
-is how it was identified as an outage rather than a bad node. It was retested
-four times across the session. What that leaves unread:
+**The cause was two Figma accounts behind one MCP connection.** `whoami` returned
+different identities at different times:
 
-| Task | Needs | Nodes |
-| --- | --- | --- |
-| 4.4 (close) | the two `TransactionRow` variants | `57:517`, `57:551` |
-| 4.2 (verify) | the first-run copy, still unconfirmed | `52:389`, `52:428`, `52:459`, `52:481` |
-| 4.1 (verify) | the four quick-action glyphs | `52:67`, `52:81`, `52:94`, `52:106` |
-| 5.1 | five notification rows, two section headings | under `57:622` |
-| 5.2 | the empty-state copy | `57:861` |
+| Account | Team | Seat | Tier | Result |
+| --- | --- | --- | --- | --- |
+| `figma@niktechnology.com` | NUS Team | **Full** | pro | reads succeed |
+| `jeff@relayvault.ai` | Jeff Nguyen's team | **View** | starter | every read refused |
 
-Work continued on everything that did not depend on reading a node, and stopped
-at the point where continuing would have meant inventing screen copy. That line
-is drawn deliberately: the invented spacing scale is in this repository's history
-because a plausible value was applied consistently, and screen copy fabricated
-from an annotation's summary would be the same mistake wearing different clothes.
+That explains what looked inexplicable: roughly eight nodes read cleanly, then
+everything failed, because the connection resolved to the View-seat account. A
+`View` seat cannot use the design-context tools, and the error text is literal —
+it was neither a rate limit nor an expired token, which were the two wrong
+guesses made along the way.
 
-**Notifications also need a decision, not just copy.** `02.05` lists five
-notifications, and D3 forbids persistence in this change, so they cannot be
-stored. They would have to be derived — most plausibly from budget state, which
-is the only thing Home can already see — and that is a content model nobody has
-specified. `57:830` splits the rows into actionable and informational, which
-implies at least two sources. Deriving one from scratch is a design decision that
-belongs to the user, not to an implementer working around an outage.
+**Two lessons worth more than the fix.** First, `whoami` is the diagnostic and
+should have been the first call, not the seventh. Second, "reads worked and then
+stopped" was treated as evidence of a *quota*, when it was evidence of a
+*changing identity* — the same shape of error as reading a page listing and
+concluding what a file contains.
+
+While it was down, work continued on everything that did not require reading a
+node and stopped at the point where continuing meant inventing screen copy. That
+line held: no copy was fabricated, and when access returned every guessed value
+was checked. The four quick-action glyphs guessed during the outage — `plus`,
+`repeat`, `target`, `award` — all turned out to match `10:29`, `10:63`, `10:20`
+and `11:83`. Being right is not the same as having verified, which is why they
+were labelled derived until they were.
+
+### What the annotations were worth
+
+Thirteen of the twenty findings recorded for page 02 came from annotation frames,
+not from the screen frames — and the four screens built before those annotations
+were read all needed correcting. Two contradicted merged code outright
+(`homeRecentLimit = 4`, safe-to-spend as the raw balance), one described a defect
+the implementation had introduced (the loading state's missing app bar), and one
+required a whole missing section (`BudgetCard x2` on Home).
+
+The recurring shape: **a frame draws one instance of a rule, and the rule was
+written down next to it.** `homeRecentLimit = 4` was justified in a comment
+reading "Figma `52:2` draws four". It does draw four. The annotation beside it
+said the cap is five.
+
+The reverse also happened once, which is why the rule is not "annotations always
+win": `57:612` says the over-budget screen has the "same layout as 02.01", but
+`57:414` authors no quick-actions row. There the frame won, because "same layout
+as" describes where a cap of five specifies.

@@ -142,7 +142,7 @@
 - [x] 6.1 Add `/notifications` and replace the Home placeholder only inside the
   HOME marker block in `lib/app/router.dart`. Verify `test/app/router_test.dart`
   covers `/`, `/notifications` and the active Home tab.
-- [ ] 6.2 Update `docs/design-system/figma-map.md` with the implemented Home and
+- [x] 6.2 Update `docs/design-system/figma-map.md` with the implemented Home and
   notifications screens, append any newly observed component values, and record
   any deliberate deviations with node ids. Verify the map names every component
   this branch implemented. This must additionally record:
@@ -158,8 +158,8 @@
     the loading state's app bar.
   - Frame **`145:3776`**, a second frame named identically to `52:2` at 1215px
     tall — observed, not acted on, candidate for the twelve deliberate mistakes.
-- [ ] 6.3 Update `docs/ai-workflow/evidence-log.md` with this change's verify
+- [x] 6.3 Update `docs/ai-workflow/evidence-log.md` with this change's verify
   runs and commits. Verify the entries match `git log`.
-- [ ] 6.4 Run the full gate. Verify:
+- [x] 6.4 Run the full gate. Verify:
   `bash tool/verify.sh --change home-overview` passes and its evidence file is
   cited in the final commit.

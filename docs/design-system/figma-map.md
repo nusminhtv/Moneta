@@ -461,9 +461,14 @@ callable, and four of these screens were built against the frames alone.
 | 02.01 Home — default | `52:2` | `52:362` | done |
 | 02.02 Home — empty | `52:372` | `52:537` | done |
 | 02.03 Home — loading | `52:547` | `52:630` | done |
-| 02.04 Home — over-budget alert | `57:414` | `57:612` | **not built** |
-| 02.05 Notifications — list | `57:622` | `57:830` | **not built** |
-| 02.06 Notifications — empty | `57:840` | `57:935` | **not built** |
+| 02.04 Home — over-budget alert | `57:414` | `57:612` | done |
+| 02.05 Notifications — list | `57:622` | `57:830` | done |
+| 02.06 Notifications — empty | `57:840` | `57:935` | done |
+
+All six built. `lib/features/notifications` is a new feature directory holding
+`HomeNotification` and `NotificationsScreen`; the derivation lives in
+`lib/app/notification_providers.dart` because `features/notifications` may not
+import `features/budgets` or `features/transactions`.
 
 `04.01`–`04.07`'s `TransactionRow` question was also settled for Home: all four
 instances on `52:2` (`52:177`, `52:214`, `52:246`, `52:276`) are `Type=Expense`
@@ -513,6 +518,11 @@ and the entry below.
 | # | What | Resolution |
 | --- | --- | --- |
 | 35 | The first-run message drops `52:389`'s opening clause. Figma authors *"Add an account and log one transaction. Moneta needs about a week of data before budgets get useful."* | The second sentence is kept verbatim. The first instructs the user to add an account, which is the one thing they cannot do while Accounts is unbuilt, and it sat directly above a CTA that had been repointed away from that step for the same reason. Reverts with deviation 30 when Accounts lands. |
+| 36 | Home's app bar carries a **bell**, where `52:3` authors one action with an `icon/search` glyph. | Annotation `57:830` says the notification centre is *"reached from the Home app bar"*, and search would leave it unreachable — 5.1 would be dead code. The search glyph is almost certainly `AppBar/LargeTitle`'s default left unoverridden: that component's own sample is titled "Transactions" with a search action, and `52:3` overrides only the title. Home also has nothing to search — `SearchField` (`35:38`) is unbuilt and search belongs to Transactions. **Candidate for the twelve deliberate mistakes.** |
+| 37 | The notification centre is **derived on every read**, not stored. | `home-overview`'s D3 keeps persistence out of this change. The consequence is stated rather than hidden: there is no read/unread state, and an entry disappears when the fact behind it stops being true — a budget brought back under its limit stops being reported. That is a defensible reading of a derived feed and it is **not** what a stored feed does. Durable notifications need their own change. |
+| 38 | Three of the five notification kinds on `57:622` are produced; two are **left out rather than seeded**. | `57:718` is a failed account sync and `57:740` is a goal's funding progress. Accounts and Goals do not exist, so neither fact can be computed. Fabricating them would put fake content in a feed the user is meant to trust, which is worse than a shorter feed. |
+| 39 | The notifications empty state keeps `EmptyState`'s default **`icon/shopping-bag`**, which reads oddly over "You're all caught up". | Both `57:861` and the first-run `52:389` carry the component default with no swap applied, so the file authors a shopping bag in a notification centre. Reproduced rather than corrected, in the same spirit as `BottomNav`'s 23px tab icons — a bell would look better and would also be inventing a glyph the file does not author. **Candidate for the twelve deliberate mistakes.** |
+| 40 | `/notifications` is declared **inside the `ShellRoute`**, not in the `HOME` marker block the task named. | The marker block sits outside the shell, so a route declared there renders with no bottom navigation — precisely what annotation `57:830` calls *"a real defect, not a nitpick"*. The marker exists to keep parallel agents out of each other's files, not to override the design; Budgets resolved the same conflict the same way. A mutation moving the route into the marker fails two router tests, so this is pinned. |
 
 ### The `57:414` variant check, performed
 
