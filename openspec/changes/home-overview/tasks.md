@@ -133,7 +133,7 @@
   one case plus one derivation when those features land.
 
   Verify it uses `AppBar`, `BottomNav`, `ListRow` and `SectionHeader`.
-- [ ] 5.2 Read the sibling annotation frame for Notifications -- empty
+- [x] 5.2 Read the sibling annotation frame for Notifications -- empty
   (`57:840`) and implement the notifications empty screen. Verify it uses
   `AppBar`, `BottomNav` and `EmptyState`.
 

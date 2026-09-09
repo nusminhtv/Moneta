@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
+import 'package:moneta/design_system/molecules/empty_state.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/molecules/section_header.dart';
 import 'package:moneta/design_system/organisms/moneta_app_bar.dart';
@@ -282,6 +283,72 @@ void main() {
         ),
         entry(id: 'b', occurredAt: now.subtract(const Duration(days: 2))),
       ]);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('the empty centre — 57:840', () {
+    testWidgets('an empty list renders the empty state', (tester) async {
+      await pump(tester, const []);
+      expect(find.byType(EmptyState), findsOneWidget);
+    });
+
+    testWidgets('it shows the authored copy from 57:861', (tester) async {
+      await pump(tester, const []);
+      expect(find.text("You're all caught up"), findsOneWidget);
+      expect(
+        find.text(
+          'Budget warnings, sync problems and goal milestones will show up '
+          'here.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('it offers no action, which 57:935 sanctions', (tester) async {
+      // "the rare legitimate case for HasAction=False — there is genuinely
+      // nothing for the user to do here". The general rule that an empty state
+      // must offer a next step is deliberately not applied.
+      await pump(tester, const []);
+      final empty = tester.widget<EmptyState>(find.byType(EmptyState));
+      expect(empty.actionLabel, isNull);
+      expect(empty.onAction, isNull);
+    });
+
+    testWidgets('no headings and no rows are left behind', (tester) async {
+      await pump(tester, const []);
+      expect(find.byType(SectionHeader), findsNothing);
+      expect(find.byType(ListRow), findsNothing);
+      expect(find.text('Today'), findsNothing);
+      expect(find.text('Earlier'), findsNothing);
+    });
+
+    testWidgets('the app bar and its back control survive', (tester) async {
+      // The way out must not depend on there being content.
+      await pump(tester, const []);
+      expect(find.byType(MonetaAppBar), findsOneWidget);
+      expect(find.text('Notifications'), findsOneWidget);
+    });
+
+    testWidgets('back still works from the empty state', (tester) async {
+      var backs = 0;
+      await pump(tester, const [], onBack: () => backs++);
+      await tester.tap(find.bySemanticsLabel('Back').first);
+      expect(backs, 1);
+    });
+
+    testWidgets('one notification replaces the empty state', (tester) async {
+      await pump(tester, [entry()]);
+      expect(find.byType(EmptyState), findsNothing);
+      expect(find.byType(ListRow), findsOneWidget);
+    });
+
+    testWidgets('it is distinct from a loading state', (tester) async {
+      // The route renders an empty list while the read is pending, so this is
+      // the screen a user sees mid-load too. It says something true either way
+      // rather than showing skeletons that imply data is coming.
+      await pump(tester, const []);
+      expect(find.byType(EmptyState), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

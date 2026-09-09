@@ -1,4 +1,6 @@
 import 'package:flutter/widgets.dart';
+import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
+import 'package:moneta/design_system/molecules/empty_state.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/molecules/section_header.dart';
 import 'package:moneta/design_system/organisms/moneta_app_bar.dart';
@@ -94,12 +96,14 @@ class NotificationsScreen extends StatelessWidget {
                 MonetaSpacing.spaceLg,
                 MonetaSpacing.spaceBase,
               ),
-              children: [
-                // A heading appears only when its group has rows. An empty
-                // "Today" above nothing reads as a failed load.
-                ..._group('Today', groups.today),
-                ..._group('Earlier', groups.earlier),
-              ],
+              children: notifications.isEmpty
+                  ? const [_EmptyNotifications()]
+                  : [
+                      // A heading appears only when its group has rows. An
+                      // empty "Today" above nothing reads as a failed load.
+                      ..._group('Today', groups.today),
+                      ..._group('Earlier', groups.earlier),
+                    ],
             ),
           ),
         ],
@@ -115,6 +119,40 @@ class NotificationsScreen extends StatelessWidget {
       for (final entry in entries)
         _NotificationRow(entry: entry, onOpen: onOpen),
     ];
+  }
+}
+
+/// The empty notification centre, from node `57:840` and its `EmptyState`
+/// instance at `57:861`.
+///
+/// **The only sanctioned `HasAction=False` so far.** The component's own
+/// description warns that *"an empty state without a primary action is a dead
+/// end"*, and annotation `57:935` grants the exception explicitly: *"the rare
+/// legitimate case for HasAction=False — there is genuinely nothing for the
+/// user to do here"*, contrasting it with `02.02`, where an empty state must
+/// offer a next step. So no action is added here to satisfy the general rule.
+///
+/// Title and body are transcribed from `57:861`.
+///
+/// **The glyph is a shopping bag, and that is what the design says.** Both this
+/// instance and the first-run one at `52:389` carry `icon/shopping-bag`
+/// (`11:54`), which is `EmptyState`'s own default with no swap applied — odd on
+/// "You're all caught up", and reproduced rather than corrected, in the same
+/// spirit as keeping `BottomNav`'s 23px tab icons. A bell would read better and
+/// would also be this session inventing a glyph the file does not author.
+/// Recorded in `docs/design-system/figma-map.md`.
+class _EmptyNotifications extends StatelessWidget {
+  const _EmptyNotifications();
+
+  @override
+  Widget build(BuildContext context) {
+    return const EmptyState(
+      icon: MonetaIconName.shoppingBag,
+      title: "You're all caught up",
+      message:
+          'Budget warnings, sync problems and goal milestones will show up '
+          'here.',
+    );
   }
 }
 
