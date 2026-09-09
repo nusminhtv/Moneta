@@ -287,3 +287,47 @@ empty"; by the time I started they had six sections, so adding a required
 `expectedVariants` would mean editing a file I do not own. Deferred to
 integration, and it remains a real hole: any component can be registered with
 fewer variants than Figma authors and the gate will not notice.
+
+## home-overview — in progress, resumed 2026-09-09
+
+Resumed at 8/18 tasks. The six components (2.1–3.4) had landed; the six screens
+had not, and four of them had been implemented anyway during later changes
+without their tasks being ticked.
+
+**The premise the plan was built on was false.** Both `proposal.md` and `design.md`
+recorded that "this session has no callable Figma inspection tool", and on that
+basis the four Home screens were built against the frames alone. The tool was
+callable. Reading the six sibling annotations produced three contradictions with
+code already merged on this branch:
+
+| Annotation | Says | Code did |
+| --- | --- | --- |
+| `52:362` | recent list capped at **5** | `homeRecentLimit = 4`, commented "Figma `52:2` draws four" |
+| `52:362` | safe-to-spend = balance − committed budgets − scheduled bills | passed the total balance through, commented "there is no budget feature yet" |
+| `52:630` | "AppBar and BottomNav render immediately" | loading state renders no app bar at all |
+
+The pattern in all three: **a frame draws one instance of a rule; the rule was
+written down next to it.** The cap of four was arrived at by counting rows in a
+picture. This is the same failure mode as the invented spacing scale, one level
+up — not inventing a value, but inferring a specification from a drawing when the
+specification was a sibling node away.
+
+**A fourth component page nobody had queried.** Locating the Insights screens
+turned up `🧩 Components / Charts` at `5:12`: `DonutChart` `47:48`, `BarChart`
+`48:34`, `LineChart` `48:76`, `Sparkline` `48:94`, `ChartLegendItem` `47:47`
+(9 variants). `figma-map.md` had carried an open question — whether `BarChart`
+was a screen-local frame or lived on an unqueried page — and blocked Budgets
+`04.07` on it. It was on an unqueried page. `5:13` is a separator, so the library
+is four component pages, not three.
+
+**Figma access failed mid-task.** Partway through 4.1, `get_design_context`,
+`get_metadata` and `get_screenshot` all began returning "you don't have edit
+access" on nodes that had answered minutes earlier (`52:116` succeeded, then
+failed on retry). The four quick-action glyphs at `52:67`, `52:81`, `52:94` and
+`52:106` were never read; only the labels are transcribed, and the icons are
+recorded in code as derived rather than presented as transcriptions.
+
+| Date | Kind | Task | Commit | Evidence |
+| --- | --- | --- | --- | --- |
+| 2026-09-09 | plan revision | Fold in six annotations read for the first time | `bd3714f` | — (artifacts only) |
+| 2026-09-09 | checkpoint | 4.1 default Home: budgets section, cap of 5, safe-to-spend, authored quick actions | `a77867d` | `verify-runs/2026-09-09T07-40-25Z_home-overview.md` |
