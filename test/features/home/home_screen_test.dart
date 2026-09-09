@@ -6,8 +6,10 @@ import 'package:moneta/core/transaction_direction.dart';
 import 'package:moneta/design_system/molecules/date_group_header.dart';
 import 'package:moneta/design_system/molecules/empty_state.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
+import 'package:moneta/design_system/molecules/section_header.dart';
 import 'package:moneta/design_system/molecules/transaction_row.dart';
 import 'package:moneta/design_system/organisms/balance_card.dart';
+import 'package:moneta/design_system/organisms/budget_card.dart';
 import 'package:moneta/design_system/organisms/moneta_app_bar.dart';
 import 'package:moneta/features/home/domain/home_snapshot.dart';
 import 'package:moneta/features/home/presentation/home_screen.dart';
@@ -31,11 +33,30 @@ void main() {
     occurredAt: at,
   );
 
-  HomeSnapshot snapshotWith(List<RecentEntry> recent) => HomeSnapshot(
+  HomeSnapshot snapshotWith(
+    List<RecentEntry> recent, {
+    List<BudgetSummary> budgets = const [],
+    Money? safeToSpend,
+  }) => HomeSnapshot(
     totalBalance: const Money(31877000, vnd),
     income: const Money(32000000, vnd),
     expenses: const Money(123000, vnd),
     recent: recent,
+    safeToSpend: safeToSpend ?? const Money(31877000, vnd),
+    budgets: budgets,
+  );
+
+  BudgetSummary budget({
+    SpendCategory category = SpendCategory.food,
+    int spent = 4000000,
+    int limit = 5000000,
+    String note = '8 days left',
+  }) => BudgetSummary(
+    id: 'b-${category.name}',
+    category: category,
+    spent: Money(spent, vnd),
+    limit: Money(limit, vnd),
+    note: note,
   );
 
   Future<void> pumpHome(WidgetTester tester, HomeSnapshot snapshot) =>
@@ -219,6 +240,167 @@ void main() {
         tester.widget<BalanceCard>(find.byType(BalanceCard)).masked,
         isTrue,
       );
+    });
+  });
+
+  group('the budgets section', () {
+    // `52:116` titles this "Budgets" and carries a See all action; the two cards
+    // are `52:125` and `52:143`.
+    testWidgets('renders a card per budget under a Budgets header', (
+      tester,
+    ) async {
+      await pumpHome(
+        tester,
+        snapshotWith(
+          [],
+          budgets: [
+            budget(),
+            budget(category: SpendCategory.transport, spent: 1000000),
+          ],
+        ),
+      );
+      expect(find.byType(BudgetCard), findsNWidgets(2));
+      expect(
+        find.descendant(
+          of: find.byType(SectionHeader),
+          matching: find.text('Budgets'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('is absent entirely when there are no budgets', (tester) async {
+      // A heading with nothing under it reads as a failed load, not an absence.
+      await pumpHome(tester, snapshotWith([]));
+      expect(find.byType(BudgetCard), findsNothing);
+      expect(find.text('Budgets'), findsNothing);
+    });
+
+    testWidgets("each card is given its own figures, not the first budget's", (
+      tester,
+    ) async {
+      await pumpHome(
+        tester,
+        snapshotWith(
+          [],
+          budgets: [
+            budget(spent: 4000000, limit: 5000000),
+            budget(
+              category: SpendCategory.transport,
+              spent: 500000,
+              limit: 2000000,
+            ),
+          ],
+        ),
+      );
+      final cards = tester
+          .widgetList<BudgetCard>(find.byType(BudgetCard))
+          .toList();
+      expect(cards[0].spent, const Money(4000000, vnd));
+      expect(cards[0].limit, const Money(5000000, vnd));
+      expect(cards[1].spent, const Money(500000, vnd));
+      expect(cards[1].limit, const Money(2000000, vnd));
+    });
+
+    testWidgets('a budget carries its own alert threshold to its card', (
+      tester,
+    ) async {
+      // Annotation `04.04` made the threshold per-budget. A card reading the
+      // default would show the warning colour at the wrong point.
+      await pumpHome(
+        tester,
+        snapshotWith(
+          [],
+          budgets: const [
+            BudgetSummary(
+              id: 'b1',
+              category: SpendCategory.food,
+              spent: Money(3000000, vnd),
+              limit: Money(5000000, vnd),
+              note: 'note',
+              alertThreshold: 0.5,
+            ),
+          ],
+        ),
+      );
+      expect(
+        tester.widget<BudgetCard>(find.byType(BudgetCard)).nearLimitThreshold,
+        0.5,
+      );
+    });
+
+    testWidgets('tapping a card opens that budget, not the budgets list', (
+      tester,
+    ) async {
+      // Routing every card to /budgets would make which card you tapped
+      // irrelevant to where you land.
+      final opened = <String>[];
+      await pumpMonetaWidget(
+        tester,
+        SizedBox(
+          width: 393,
+          height: 852,
+          child: HomeScreen(
+            snapshot: snapshotWith(
+              [],
+              budgets: [
+                budget(),
+                budget(category: SpendCategory.transport),
+              ],
+            ),
+            greeting: 'Hi there',
+            now: DateTime.utc(2026, 8, 20, 3),
+            onOpenBudget: opened.add,
+          ),
+        ),
+        surfaceSize: const Size(393, 852),
+      );
+      await tester.tap(find.byType(BudgetCard).last);
+      expect(opened, ['b-transport']);
+    });
+
+    testWidgets('cards are inert when no budget handler is given', (
+      tester,
+    ) async {
+      await pumpHome(tester, snapshotWith([], budgets: [budget()]));
+      expect(
+        tester.widget<BudgetCard>(find.byType(BudgetCard)).onTap,
+        isNull,
+      );
+    });
+
+    testWidgets('the section survives a full-width budget note without '
+        'overflowing', (tester) async {
+      await pumpHome(
+        tester,
+        snapshotWith(
+          [],
+          budgets: [
+            budget(
+              note:
+                  'A supporting line long enough to need the whole row and '
+                  'then rather more than that as well',
+            ),
+          ],
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('safe to spend', () {
+    testWidgets('the balance card shows safe to spend, not the balance', (
+      tester,
+    ) async {
+      // These were the same value until annotation `52:362` was read.
+      await pumpHome(
+        tester,
+        snapshotWith([], safeToSpend: const Money(6000000, vnd)),
+      );
+      final card = tester.widget<BalanceCard>(find.byType(BalanceCard));
+      expect(card.safeToSpend, const Money(6000000, vnd));
+      expect(card.totalBalance, const Money(31877000, vnd));
+      expect(card.safeToSpend, isNot(card.totalBalance));
     });
   });
 }

@@ -23,6 +23,39 @@ class HomeRouteScreen extends ConsumerStatefulWidget {
   /// Creates the route wrapper.
   const HomeRouteScreen({super.key});
 
+  /// Home's quick-actions row, as authored at `52:66`, `52:80`, `52:93` and
+  /// `52:105`: Add, Transfer, Budgets, Goals.
+  ///
+  /// This replaces a shipped set of Add, History, Insights and Profile that
+  /// matched no Figma node.
+  ///
+  /// **Transfer and Goals are deliberately dead.** Neither feature exists, so
+  /// they render disabled rather than being dropped or pointed somewhere
+  /// plausible. Dropping them would quietly redesign the frame's four-up row;
+  /// wiring them would lie. It is the rule `onLinkAccount` already set: a
+  /// control that goes nowhere is worse than one that plainly does not respond.
+  ///
+  /// **The glyphs are derived, not observed.** The labels are transcribed from
+  /// the frame names read on 2026-09-09, but the icons inside `52:67`, `52:81`,
+  /// `52:94` and `52:106` were never read — Figma access began returning an
+  /// access error mid-task, on nodes that had answered minutes earlier. `plus`
+  /// carries over from the previous implementation; `repeat`, `target` and
+  /// `award` are this set's nearest matches and are listed as unverified in
+  /// `docs/design-system/figma-map.md`. Re-read those four nodes before
+  /// treating them as transcribed.
+  ///
+  /// A function rather than a literal inside `build` so the authored set is
+  /// reachable from a test without pumping a router.
+  static List<HomeQuickAction> quickActions({
+    required VoidCallback onAdd,
+    required VoidCallback onBudgets,
+  }) => [
+    (icon: MonetaIconName.plus, label: 'Add', onPressed: onAdd),
+    (icon: MonetaIconName.repeat, label: 'Transfer', onPressed: null),
+    (icon: MonetaIconName.target, label: 'Budgets', onPressed: onBudgets),
+    (icon: MonetaIconName.award, label: 'Goals', onPressed: null),
+  ];
+
   @override
   ConsumerState<HomeRouteScreen> createState() => _HomeRouteScreenState();
 }
@@ -53,34 +86,12 @@ class _HomeRouteScreenState extends ConsumerState<HomeRouteScreen> {
         onSeeAllTransactions: () => context.go(
           DestinationRoutes.paths[MonetaDestination.transactions]!,
         ),
-        quickActions: [
-          (
-            icon: MonetaIconName.plus,
-            label: 'Add',
-            onPressed: () => showAddTransactionSheet(context),
-          ),
-          (
-            icon: MonetaIconName.list,
-            label: 'History',
-            onPressed: () => context.go(
-              DestinationRoutes.paths[MonetaDestination.transactions]!,
-            ),
-          ),
-          (
-            icon: MonetaIconName.pieChart,
-            label: 'Insights',
-            onPressed: () => context.go(
-              DestinationRoutes.paths[MonetaDestination.insights]!,
-            ),
-          ),
-          (
-            icon: MonetaIconName.user,
-            label: 'Profile',
-            onPressed: () => context.go(
-              DestinationRoutes.paths[MonetaDestination.profile]!,
-            ),
-          ),
-        ],
+        onSeeAllBudgets: () => context.go(BudgetRoutes.overview),
+        onOpenBudget: (id) => context.go(BudgetRoutes.detailFor(id)),
+        quickActions: HomeRouteScreen.quickActions(
+          onAdd: () => showAddTransactionSheet(context),
+          onBudgets: () => context.go(BudgetRoutes.overview),
+        ),
       ),
     );
   }

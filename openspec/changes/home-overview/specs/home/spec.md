@@ -71,9 +71,29 @@ written and false now.
 
 #### Scenario: Budgets are set
 - **WHEN** budgets exist for the current period
-- **THEN** safe to spend is the total balance minus the sum of their committed
-  limits
-- **AND** the subtraction uses committed limits, not amounts already spent
+- **THEN** safe to spend is the total balance minus the sum of each budget's
+  **unspent** remainder
+
+#### Scenario: Spend is not subtracted twice
+- **WHEN** a budget has already been partly spent
+- **THEN** only its unspent remainder is subtracted from the balance
+- **AND** the amount already spent is not subtracted again, because it has
+  already left the balance
+
+The annotation's two terms are parallel and both name *future* outflows: budget
+money not yet spent, and bills not yet due. Subtracting a whole limit would
+deduct the spent part a second time — a fully spent budget of 5m would cost the
+user 10m of headroom.
+
+#### Scenario: An overspent budget does not return headroom
+- **WHEN** a budget's spend has passed its limit
+- **THEN** its remainder contributes zero rather than a negative amount
+- **AND** safe to spend does not rise because a budget was exceeded
+
+#### Scenario: A foreign-currency budget is skipped
+- **WHEN** a budget's currency differs from the wallet's
+- **THEN** it is excluded from the subtraction rather than added across
+  currencies
 
 #### Scenario: Scheduled bills are not implemented
 - **WHEN** the safe-to-spend figure is computed

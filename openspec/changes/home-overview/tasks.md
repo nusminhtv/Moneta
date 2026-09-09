@@ -38,7 +38,7 @@
 
 ## 4. Home Screens
 
-- [ ] 4.1 Annotation `52:362` read. Reconcile the default Home screen in
+- [x] 4.1 Annotation `52:362` read. Reconcile the default Home screen in
   `lib/features/home` against it. The screen already exists; these four things are
   what the annotation changed:
   1. Add the **budgets section** — a `SectionHeader` with an action plus the

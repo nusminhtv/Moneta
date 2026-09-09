@@ -7,6 +7,7 @@ import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/molecules/section_header.dart';
 import 'package:moneta/design_system/molecules/transaction_row.dart';
 import 'package:moneta/design_system/organisms/balance_card.dart';
+import 'package:moneta/design_system/organisms/budget_card.dart';
 import 'package:moneta/design_system/organisms/moneta_app_bar.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/design_system/tokens/spacing.dart';
@@ -40,6 +41,8 @@ class HomeScreen extends StatelessWidget {
     this.masked = false,
     this.onToggleMask,
     this.onSeeAllTransactions,
+    this.onSeeAllBudgets,
+    this.onOpenBudget,
     this.quickActions = const [],
     super.key,
   });
@@ -74,6 +77,12 @@ class HomeScreen extends StatelessWidget {
 
   /// Called from the recent section's "See all".
   final VoidCallback? onSeeAllTransactions;
+
+  /// Called from the budgets section's "See all".
+  final VoidCallback? onSeeAllBudgets;
+
+  /// Called with a budget's id when its card is tapped.
+  final void Function(String id)? onOpenBudget;
 
   /// The shortcut row under the balance card.
   final List<HomeQuickAction> quickActions;
@@ -120,7 +129,7 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       BalanceCard(
                         totalBalance: snapshot.totalBalance,
-                        safeToSpend: snapshot.totalBalance,
+                        safeToSpend: snapshot.safeToSpend,
                         income: snapshot.income,
                         expenses: snapshot.expenses,
                         safeToSpendUntil: _monthEndLabel(),
@@ -130,6 +139,32 @@ class HomeScreen extends StatelessWidget {
                       if (quickActions.isNotEmpty) ...[
                         const SizedBox(height: MonetaSpacing.spaceBase),
                         _QuickActions(actions: quickActions),
+                      ],
+                      // The budgets section, from `52:116` and the two cards at
+                      // `52:125` and `52:143`. Omitted entirely when there are
+                      // no budgets: a heading with nothing under it reads as a
+                      // failed load rather than as an absence.
+                      if (snapshot.budgets.isNotEmpty) ...[
+                        const SizedBox(height: MonetaSpacing.spaceBase),
+                        SectionHeader(
+                          title: 'Budgets',
+                          actionLabel: 'See all',
+                          onAction: onSeeAllBudgets,
+                        ),
+                        for (final budget in snapshot.budgets) ...[
+                          const SizedBox(height: MonetaSpacing.spaceSm),
+                          BudgetCard(
+                            key: ValueKey('budget-${budget.category.name}'),
+                            category: budget.category,
+                            spent: budget.spent,
+                            limit: budget.limit,
+                            note: budget.note,
+                            nearLimitThreshold: budget.alertThreshold,
+                            onTap: onOpenBudget == null
+                                ? null
+                                : () => onOpenBudget!(budget.id),
+                          ),
+                        ],
                       ],
                       const SizedBox(height: MonetaSpacing.spaceBase),
                       SectionHeader(

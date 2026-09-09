@@ -213,4 +213,197 @@ void main() {
       expect(snapshot.isEmpty, isFalse);
     });
   });
+
+  group('the recent cap is five', () {
+    // Annotation `52:362`: "Recent list is capped at 5 rows client-side."
+    // This shipped as four, justified by counting the rows the frame draws.
+    List<Transaction> many(int count) => [
+      for (var i = 0; i < count; i++)
+        tx(
+          id: '$i',
+          minor: 1000,
+          direction: TransactionDirection.expense,
+          at: DateTime.utc(2026, 8, i + 1),
+        ),
+    ];
+
+    test('the default cap is five, not four', () {
+      expect(homeRecentLimit, 5);
+    });
+
+    test('six transactions produce five rows', () {
+      final snapshot = buildSnapshot(all: many(6), currency: vnd);
+      expect(snapshot.recent, hasLength(5));
+    });
+
+    test('four transactions produce four rows and no padding', () {
+      final snapshot = buildSnapshot(all: many(4), currency: vnd);
+      expect(snapshot.recent, hasLength(4));
+    });
+  });
+
+  group('safeToSpend', () {
+    BudgetSummary summary({
+      SpendCategory category = SpendCategory.food,
+      int spent = 0,
+      int limit = 5000000,
+      Currency currency = vnd,
+    }) => BudgetSummary(
+      id: 'b-${category.name}',
+      category: category,
+      spent: Money(spent, currency),
+      limit: Money(limit, currency),
+      note: 'note',
+    );
+
+    test('with no budgets it is the balance', () {
+      expect(
+        safeToSpend(balance: const Money(10000000, vnd), budgets: const []),
+        const Money(10000000, vnd),
+      );
+    });
+
+    test('an untouched budget is subtracted in full', () {
+      expect(
+        safeToSpend(
+          balance: const Money(10000000, vnd),
+          budgets: [summary(limit: 4000000)],
+        ),
+        const Money(6000000, vnd),
+      );
+    });
+
+    test('only the unspent part is subtracted', () {
+      // The spent 3m has already left the balance. Subtracting the whole 4m
+      // limit would deduct it twice and understate the headroom by 3m.
+      expect(
+        safeToSpend(
+          balance: const Money(10000000, vnd),
+          budgets: [summary(limit: 4000000, spent: 3000000)],
+        ),
+        const Money(9000000, vnd),
+      );
+    });
+
+    test('a fully spent budget subtracts nothing further', () {
+      expect(
+        safeToSpend(
+          balance: const Money(10000000, vnd),
+          budgets: [summary(limit: 4000000, spent: 4000000)],
+        ),
+        const Money(10000000, vnd),
+      );
+    });
+
+    test('an overspent budget does not hand headroom back', () {
+      // The clamp matters: an unclamped remainder would be negative here and
+      // *raise* safe-to-spend because a budget was blown.
+      expect(
+        safeToSpend(
+          balance: const Money(10000000, vnd),
+          budgets: [summary(limit: 4000000, spent: 6000000)],
+        ),
+        const Money(10000000, vnd),
+      );
+    });
+
+    test('several budgets accumulate', () {
+      expect(
+        safeToSpend(
+          balance: const Money(10000000, vnd),
+          budgets: [
+            summary(limit: 4000000, spent: 1000000),
+            summary(category: SpendCategory.transport, limit: 2000000),
+          ],
+        ),
+        const Money(5000000, vnd),
+      );
+    });
+
+    test('a foreign-currency budget is skipped, not added', () {
+      expect(
+        safeToSpend(
+          balance: const Money(10000000, vnd),
+          budgets: [summary(limit: 400, currency: usd)],
+        ),
+        const Money(10000000, vnd),
+      );
+    });
+
+    test('it can go negative when budgets exceed the balance', () {
+      // Not clamped at the top level: a user who has committed more than they
+      // hold is exactly who needs to be told.
+      expect(
+        safeToSpend(
+          balance: const Money(1000000, vnd),
+          budgets: [summary(limit: 4000000)],
+        ),
+        const Money(-3000000, vnd),
+      );
+    });
+  });
+
+  group('buildSnapshot with budgets', () {
+    test('safe to spend is on the snapshot, not the raw balance', () {
+      final snapshot = buildSnapshot(
+        currency: vnd,
+        all: [
+          tx(
+            id: 'in',
+            minor: 10000000,
+            direction: TransactionDirection.income,
+          ),
+        ],
+        budgets: const [
+          BudgetSummary(
+            id: 'b1',
+            category: SpendCategory.food,
+            spent: Money.zero(vnd),
+            limit: Money(4000000, vnd),
+            note: 'note',
+          ),
+        ],
+      );
+      expect(snapshot.totalBalance, const Money(10000000, vnd));
+      expect(snapshot.safeToSpend, const Money(6000000, vnd));
+    });
+
+    test('budgets are passed through in the order given', () {
+      final snapshot = buildSnapshot(
+        currency: vnd,
+        all: const [],
+        budgets: const [
+          BudgetSummary(
+            id: 'b-transport',
+            category: SpendCategory.transport,
+            spent: Money.zero(vnd),
+            limit: Money(1, vnd),
+            note: 'a',
+          ),
+          BudgetSummary(
+            id: 'b-food',
+            category: SpendCategory.food,
+            spent: Money.zero(vnd),
+            limit: Money(1, vnd),
+            note: 'b',
+          ),
+        ],
+      );
+      expect(
+        snapshot.budgets.map((b) => b.category),
+        [SpendCategory.transport, SpendCategory.food],
+      );
+    });
+
+    test('with no budgets safe to spend equals the balance', () {
+      final snapshot = buildSnapshot(
+        currency: vnd,
+        all: [
+          tx(id: 'in', minor: 500, direction: TransactionDirection.income),
+        ],
+      );
+      expect(snapshot.safeToSpend, snapshot.totalBalance);
+      expect(snapshot.budgets, isEmpty);
+    });
+  });
 }

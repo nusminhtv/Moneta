@@ -130,10 +130,23 @@ plausible number, consistently applied, wrong. A figure that is short by a term 
 names is honest; a figure completed by guesswork is not, and it would be
 indistinguishable from a correct one on screen.
 
-The subtraction uses **committed limits, not spend to date**. "Committed" is what
-the annotation says, and it is the meaning that makes the number useful: money
-already promised to a budget is not money that is safe to spend, whether or not it
-has been spent yet.
+The subtraction takes each budget's **unspent remainder**, not its whole limit.
+This is the one point where the annotation's wording needed interpreting rather
+than transcribing, so the reasoning is recorded: its two terms are parallel and
+both name *future* outflows — budget money not yet spent, and bills not yet due
+by period end. Money already spent against a budget has already left the balance,
+so subtracting the full limit would deduct it twice: a fully spent 5m food budget
+would cost the user 10m of headroom and safe-to-spend would drift further from the
+truth the more diligently the user recorded their spending.
+
+The remainder is clamped at zero, matching `BudgetProgress.remaining`. Unclamped,
+an overspent budget would contribute a negative commitment and *raise*
+safe-to-spend — the app would reward blowing a budget with more apparent headroom.
+
+The first draft of this spec said "committed limits, not amounts already spent",
+which is the opposite rule. It was written before the arithmetic was worked
+through and is corrected here rather than left as a second, contradictory
+statement of the same requirement.
 
 **Quick actions reproduce the file, including what it points at.** `52:2` authors
 Add, Transfer, Budgets and Goals. Transfer and Goals have no feature behind them.

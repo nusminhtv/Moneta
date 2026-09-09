@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:moneta/core/money.dart';
 import 'package:moneta/core/spend_category.dart';
 import 'package:moneta/core/transaction_direction.dart';
+import 'package:moneta/design_system/molecules/budget_status.dart';
 
 /// One row in Home's recent list.
 ///
@@ -50,6 +51,82 @@ final class RecentEntry extends Equatable {
   ];
 }
 
+/// One budget, as Home sees it.
+///
+/// Home may not import `features/budgets` — `tool/check_architecture.dart`
+/// forbids it — so this is the same reduction `RecentEntry` performs for
+/// transactions: a value type over `core` types that the composition layer fills
+/// in. `lib/app` maps a `BudgetProgress` onto one of these.
+///
+/// [limit] is the **effective** limit, meaning the budget's own limit plus any
+/// rollover carried into this period. Passing the raw limit instead would make
+/// this summary's status disagree with the Budgets screen's for the same budget.
+final class BudgetSummary extends Equatable {
+  /// Creates a budget summary.
+  const BudgetSummary({
+    required this.id,
+    required this.category,
+    required this.spent,
+    required this.limit,
+    required this.note,
+    this.alertThreshold = BudgetStatus.defaultNearLimitThreshold,
+  });
+
+  /// The budget's identity, so a card can open its own detail screen.
+  ///
+  /// Without this every card on Home would have to navigate to the budgets
+  /// list, which makes the card's identity irrelevant to where tapping it
+  /// goes — a coarse destination reads as a bug the first time a user taps the
+  /// second card and lands somewhere generic.
+  final String id;
+
+  /// Which category this budget governs.
+  final SpendCategory category;
+
+  /// Spent against it so far this period.
+  final Money spent;
+
+  /// The effective limit in force this period.
+  final Money limit;
+
+  /// The card's secondary line — "12 days left", and so on.
+  final String note;
+
+  /// The fraction at which this budget starts reading as near its limit.
+  ///
+  /// Per-budget, not a constant. Annotation `04.04`: *"the 80% threshold is
+  /// configurable here, so the component's warning colour is data-driven, not
+  /// hardcoded."*
+  final double alertThreshold;
+
+  /// Whatever is left of [limit], never below zero.
+  ///
+  /// Clamped, matching `BudgetProgress.remaining`. An unclamped value would make
+  /// an overspent budget *add* to safe-to-spend, which is the opposite of what
+  /// being over a budget means.
+  Money get remaining {
+    final left = limit.minorUnits - spent.minorUnits;
+    return Money(left < 0 ? 0 : left, limit.currency);
+  }
+
+  /// The status, derived against this budget's own threshold.
+  BudgetStatus get status =>
+      BudgetStatus.fromSpend(spent, limit, nearLimitThreshold: alertThreshold);
+
+  /// Whether spend has passed the effective limit.
+  bool get isOver => status == BudgetStatus.over;
+
+  @override
+  List<Object?> get props => [
+    id,
+    category,
+    spent,
+    limit,
+    note,
+    alertThreshold,
+  ];
+}
+
 /// Everything Home needs to render, assembled before it is built.
 ///
 /// Home takes one of these and does no arithmetic of its own beyond grouping the
@@ -62,6 +139,8 @@ final class HomeSnapshot extends Equatable {
     required this.income,
     required this.expenses,
     required this.recent,
+    required this.safeToSpend,
+    this.budgets = const [],
   });
 
   /// An empty wallet — a first run, before anything is recorded.
@@ -70,6 +149,7 @@ final class HomeSnapshot extends Equatable {
     income: Money.zero(currency),
     expenses: Money.zero(currency),
     recent: const [],
+    safeToSpend: Money.zero(currency),
   );
 
   /// Income minus expenses, across everything recorded up to now.
@@ -83,6 +163,37 @@ final class HomeSnapshot extends Equatable {
 
   /// The most recent entries, newest first.
   final List<RecentEntry> recent;
+
+  /// What is left after every budget's unspent commitment is set aside.
+  ///
+  /// From annotation `52:362`: *"safe-to-spend = balance minus committed budgets
+  /// minus scheduled bills to period end."* Computed in `lib/app`, where the
+  /// coverage gate reaches it.
+  ///
+  /// **This figure is short by one term.** Scheduled bills do not exist anywhere
+  /// in this codebase, and inventing them from one clause of one annotation is
+  /// how the invented spacing scale happened. The omission is recorded in
+  /// `docs/design-system/figma-map.md` rather than papered over.
+  final Money safeToSpend;
+
+  /// Budgets to show on Home, worst first.
+  ///
+  /// Already ranked and already capped by the composition layer: the screen
+  /// renders what it is given rather than deciding which budgets matter.
+  final List<BudgetSummary> budgets;
+
+  /// Whether any budget has passed its limit.
+  ///
+  /// Drives the over-budget alert state at `57:414`. Annotation `57:612`:
+  /// *"over-budget alert — triggered when any active budget exceeds 100%."*
+  bool get hasOverBudget => budgets.any((budget) => budget.isOver);
+
+  /// The worst budget, or null when there are none.
+  ///
+  /// [budgets] arrives worst-first, so this is the head of the list. The banner
+  /// names **only** this one: annotation `57:612` says the text *"names the
+  /// worst category only, even if several are over."*
+  BudgetSummary? get worstBudget => budgets.isEmpty ? null : budgets.first;
 
   /// Whether there is nothing recent to list.
   bool get isEmpty => recent.isEmpty;
@@ -98,5 +209,12 @@ final class HomeSnapshot extends Equatable {
       recent.isEmpty && totalBalance.isZero && income.isZero && expenses.isZero;
 
   @override
-  List<Object?> get props => [totalBalance, income, expenses, recent];
+  List<Object?> get props => [
+    totalBalance,
+    income,
+    expenses,
+    recent,
+    safeToSpend,
+    budgets,
+  ];
 }

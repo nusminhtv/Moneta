@@ -7,7 +7,10 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:moneta/app/budget_providers.dart';
 import 'package:moneta/core/money.dart';
+import 'package:moneta/features/budgets/domain/budget_progress.dart';
+import 'package:moneta/features/budgets/presentation/budgets_screen.dart';
 import 'package:moneta/features/home/domain/home_snapshot.dart';
 import 'package:moneta/features/transactions/domain/transaction.dart';
 import 'package:moneta/features/transactions/presentation/transaction_list_controller.dart';
@@ -15,9 +18,24 @@ import 'package:moneta/features/transactions/presentation/transaction_providers.
 
 /// How many entries Home's recent list shows.
 ///
-/// Figma `52:2` draws four. The screen is a summary with a "See all" link, not
-/// the transactions list.
-const int homeRecentLimit = 4;
+/// **Five, from annotation `52:362`:** *"Recent list is capped at 5 rows
+/// client-side."*
+///
+/// This was four, justified in a comment reading "Figma `52:2` draws four".
+/// The frame does draw four. But a frame draws one instance of a rule, and the
+/// rule was written down in the annotation next to it, which nobody had read.
+/// Counting instances in a drawing is not reading a specification.
+const int homeRecentLimit = 5;
+
+/// How many budget cards Home shows.
+///
+/// **Frame-derived, not stated as a rule.** Annotation `52:362` lists
+/// `BudgetCard x2` in its component inventory and its Data line says nothing
+/// about a cap — unlike the recent list, where the cap is stated outright. So
+/// two is what `52:2` instances (`52:125`, `52:143`), and it is labelled here as
+/// an instance count rather than dressed up as a specification. If a Data line
+/// somewhere states otherwise, that wins.
+const int homeBudgetLimit = 2;
 
 /// One transaction, as Home sees it.
 ///
@@ -39,9 +57,14 @@ RecentEntry toRecentEntry(Transaction transaction) => RecentEntry(
 /// Balance is income minus expenses over **everything**, not over the period:
 /// a balance that resets each month is not a balance. Income and expenses are
 /// the period figures the card shows beside it.
+///
+/// [budgets] must already be ranked worst-first and capped; this function does
+/// not reorder them. It subtracts their unspent remainder from the balance to
+/// reach safe-to-spend.
 HomeSnapshot buildSnapshot({
   required List<Transaction> all,
   required Currency currency,
+  List<BudgetSummary> budgets = const [],
   int limit = homeRecentLimit,
 }) {
   var income = Money.zero(currency);
@@ -61,13 +84,50 @@ HomeSnapshot buildSnapshot({
   }
 
   final sorted = [...all]..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+  final balance = income - expenses;
 
   return HomeSnapshot(
-    totalBalance: income - expenses,
+    totalBalance: balance,
     income: income,
     expenses: expenses,
     recent: [for (final t in sorted.take(limit)) toRecentEntry(t)],
+    safeToSpend: safeToSpend(balance: balance, budgets: budgets),
+    budgets: budgets,
   );
+}
+
+/// The balance minus what every budget still has unspent.
+///
+/// Annotation `52:362`: *"safe-to-spend = balance minus committed budgets minus
+/// scheduled bills to period end."*
+///
+/// **It subtracts the unspent remainder, not the whole limit.** Money already
+/// spent against a budget has already left the balance, so subtracting the full
+/// limit would deduct it twice and understate what is safe to spend — a budget
+/// of 5m fully spent would cost the user 10m of headroom. The annotation's two
+/// terms are parallel and both name *future* outflows: budget money not yet
+/// spent, and bills not yet paid. `BudgetProgress.remaining` clamps at zero, and
+/// [BudgetSummary.remaining] matches it, so an overspent budget subtracts
+/// nothing further rather than adding headroom back.
+///
+/// **The scheduled-bills term is missing and stays missing.** There is no bill
+/// entity, table or concept in this codebase. Completing the formula would mean
+/// inventing a domain from one clause of one annotation, which is exactly how
+/// the invented spacing scale happened; the shortfall is recorded in
+/// `docs/design-system/figma-map.md` instead.
+///
+/// Foreign-currency budgets are skipped for the same reason [buildSnapshot]
+/// skips foreign transactions: adding them would produce a meaningless number.
+Money safeToSpend({
+  required Money balance,
+  required List<BudgetSummary> budgets,
+}) {
+  var committed = Money.zero(balance.currency);
+  for (final budget in budgets) {
+    if (budget.remaining.currency != balance.currency) continue;
+    committed += budget.remaining;
+  }
+  return balance - committed;
 }
 
 /// Home's data.
@@ -83,11 +143,42 @@ HomeSnapshot buildSnapshot({
 final homeSnapshotProvider = Provider<AsyncValue<HomeSnapshot>>((ref) {
   final currency = ref.watch(walletCurrencyProvider);
   final list = ref.watch(transactionListControllerProvider);
+  final progress = ref.watch(budgetProgressProvider);
+
+  // Home waits for budgets as well as transactions. Rendering as soon as the
+  // ledger lands would paint safe-to-spend equal to the balance and then correct
+  // it a frame later, so the first number the user reads would be the wrong one.
+  // Both reads hit the same database, so this costs nothing in practice.
+  if (progress case AsyncError(:final error, :final stackTrace)) {
+    return AsyncError(error, stackTrace);
+  }
+  final ranked = progress.value;
+  if (ranked == null) return const AsyncLoading();
 
   return list.whenData(
     (state) => buildSnapshot(
       all: [for (final day in state.days) ...day.transactions],
       currency: currency,
+      budgets: [
+        for (final entry in ranked.take(homeBudgetLimit))
+          toBudgetSummary(entry),
+      ],
     ),
   );
 });
+
+/// One budget's progress, as Home sees it.
+///
+/// The note reuses `BudgetsScreen.noteFor` rather than formatting its own. The
+/// authored copy at `52:125` is *"61% used · 9 days left"*, which is the same
+/// sentence the Budgets screen already builds; writing it twice would let the
+/// same budget describe itself differently on two screens, and only one of them
+/// would get fixed when the wording changed.
+BudgetSummary toBudgetSummary(BudgetProgress progress) => BudgetSummary(
+  id: progress.budget.id,
+  category: progress.budget.category,
+  spent: progress.spent,
+  limit: progress.effectiveLimit,
+  note: BudgetsScreen.noteFor(progress),
+  alertThreshold: progress.budget.alertThreshold,
+);

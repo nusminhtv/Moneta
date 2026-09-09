@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moneta/app/budget_providers.dart';
 import 'package:moneta/app/home_providers.dart';
 import 'package:moneta/core/clock.dart';
 import 'package:moneta/core/money.dart';
@@ -37,11 +38,20 @@ void main() {
         clockProvider.overrideWithValue(
           TickingClock(DateTime.utc(2026, 8, 20, 10)),
         ),
+        // Home waits for budgets as well as transactions, so that safe-to-spend
+        // is never painted as the bare balance and then corrected. These tests
+        // are about Home and the list agreeing on the ledger; without this
+        // override the budget read would reach for a real database and the
+        // snapshot would stay loading forever.
+        budgetListProvider.overrideWith((ref) async => const []),
       ],
     );
     addTearDown(c.dispose);
     // Home derives from the controller, so the controller has to have loaded.
     await c.read(transactionListControllerProvider.future);
+    // ...and it now waits on budgets too, which must resolve before the
+    // snapshot leaves its loading state.
+    await c.read(budgetListProvider.future);
     return c;
   }
 
