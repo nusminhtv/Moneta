@@ -3,12 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moneta/core/money.dart';
 import 'package:moneta/core/spend_category.dart';
 import 'package:moneta/core/transaction_direction.dart';
+import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/molecules/date_group_header.dart';
 import 'package:moneta/design_system/molecules/empty_state.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/molecules/section_header.dart';
 import 'package:moneta/design_system/molecules/transaction_row.dart';
 import 'package:moneta/design_system/organisms/balance_card.dart';
+import 'package:moneta/design_system/organisms/banner.dart';
 import 'package:moneta/design_system/organisms/budget_card.dart';
 import 'package:moneta/design_system/organisms/moneta_app_bar.dart';
 import 'package:moneta/features/home/domain/home_snapshot.dart';
@@ -550,6 +552,151 @@ void main() {
       // No hero over zero, and no quick actions to nowhere.
       await pump(tester, firstRun());
       expect(find.byType(BalanceCard), findsNothing);
+    });
+  });
+
+  group('the over-budget alert', () {
+    // `57:414`, annotation `57:612`. This state did not exist: Banner appeared
+    // nowhere in lib/features/home.
+    BudgetSummary over({
+      SpendCategory category = SpendCategory.food,
+      int spent = 5620000,
+      int limit = 5000000,
+    }) => BudgetSummary(
+      id: 'over-${category.name}',
+      category: category,
+      spent: Money(spent, vnd),
+      limit: Money(limit, vnd),
+      note: 'note',
+    );
+
+    testWidgets('no banner while every budget is on track', (tester) async {
+      await pumpHome(tester, snapshotWith([], budgets: [budget()]));
+      expect(find.byType(MonetaBanner), findsNothing);
+    });
+
+    testWidgets('a budget over its limit raises the banner', (tester) async {
+      await pumpHome(tester, snapshotWith([], budgets: [over()]));
+      expect(find.byType(MonetaBanner), findsOneWidget);
+    });
+
+    testWidgets('a budget exactly at its limit raises nothing', (tester) async {
+      // Exactly 1.0 is the limit reached, not exceeded.
+      await pumpHome(
+        tester,
+        snapshotWith([], budgets: [over(spent: 5000000, limit: 5000000)]),
+      );
+      expect(find.byType(MonetaBanner), findsNothing);
+    });
+
+    testWidgets('the banner sits above the balance card', (tester) async {
+      await pumpHome(tester, snapshotWith([], budgets: [over()]));
+      final banner = tester.getTopLeft(find.byType(MonetaBanner)).dy;
+      final card = tester.getTopLeft(find.byType(BalanceCard)).dy;
+      expect(banner, lessThan(card));
+    });
+
+    testWidgets('the banner names the worst category only', (tester) async {
+      // Annotation: "names the worst category only, even if several are over."
+      // budgets arrives ranked, so the head is the worst.
+      await pumpHome(
+        tester,
+        snapshotWith(
+          [],
+          budgets: [
+            over(spent: 9000000),
+            over(category: SpendCategory.transport, spent: 5100000),
+          ],
+        ),
+      );
+      final banner = tester.widget<MonetaBanner>(find.byType(MonetaBanner));
+      expect(banner.title, contains(SpendCategory.food.label));
+      expect(banner.title, isNot(contains(SpendCategory.transport.label)));
+      expect(banner.message, isNot(contains(SpendCategory.transport.label)));
+    });
+
+    testWidgets('only one banner appears however many budgets are over', (
+      tester,
+    ) async {
+      await pumpHome(
+        tester,
+        snapshotWith(
+          [],
+          budgets: [
+            over(spent: 9000000),
+            over(category: SpendCategory.transport, spent: 5100000),
+          ],
+        ),
+      );
+      expect(find.byType(MonetaBanner), findsOneWidget);
+    });
+
+    testWidgets('the alert is not carried by colour alone', (tester) async {
+      await pumpHome(tester, snapshotWith([], budgets: [over()]));
+      final banner = tester.widget<MonetaBanner>(find.byType(MonetaBanner));
+      expect(banner.title, isNotEmpty);
+      expect(banner.message, isNotEmpty);
+    });
+
+    testWidgets('the banner reports how far over, not just that it is over', (
+      tester,
+    ) async {
+      await pumpHome(
+        tester,
+        snapshotWith([], budgets: [over(spent: 5620000, limit: 5000000)]),
+      );
+      final banner = tester.widget<MonetaBanner>(find.byType(MonetaBanner));
+      expect(banner.message, contains(const Money(620000, vnd).format()));
+    });
+
+    testWidgets('this state drops the quick-actions row', (tester) async {
+      // `57:414` authors none, while `52:2` does.
+      await pumpMonetaWidget(
+        tester,
+        SizedBox(
+          width: 393,
+          height: 852,
+          child: HomeScreen(
+            snapshot: snapshotWith([], budgets: [over()]),
+            greeting: 'Hi there',
+            now: DateTime.utc(2026, 8, 20, 3),
+            quickActions: const [
+              (icon: MonetaIconName.plus, label: 'Add', onPressed: null),
+            ],
+          ),
+        ),
+        surfaceSize: const Size(393, 852),
+      );
+      expect(find.text('Add'), findsNothing);
+    });
+
+    testWidgets('the on-track screen keeps its quick actions', (tester) async {
+      await pumpMonetaWidget(
+        tester,
+        SizedBox(
+          width: 393,
+          height: 852,
+          child: HomeScreen(
+            snapshot: snapshotWith([], budgets: [budget()]),
+            greeting: 'Hi there',
+            now: DateTime.utc(2026, 8, 20, 3),
+            quickActions: const [
+              (icon: MonetaIconName.plus, label: 'Add', onPressed: null),
+            ],
+          ),
+        ),
+        surfaceSize: const Size(393, 852),
+      );
+      expect(find.text('Add'), findsOneWidget);
+    });
+
+    testWidgets('the rest of the screen is still there', (tester) async {
+      // "Same layout as 02.01" apart from the banner and the quick actions.
+      await pumpHome(tester, snapshotWith([], budgets: [over()]));
+      expect(find.byType(MonetaAppBar), findsOneWidget);
+      expect(find.byType(BalanceCard), findsOneWidget);
+      expect(find.byType(BudgetCard), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
   });
 }

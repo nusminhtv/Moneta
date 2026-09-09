@@ -7,6 +7,7 @@ import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/molecules/section_header.dart';
 import 'package:moneta/design_system/molecules/transaction_row.dart';
 import 'package:moneta/design_system/organisms/balance_card.dart';
+import 'package:moneta/design_system/organisms/banner.dart';
 import 'package:moneta/design_system/organisms/budget_card.dart';
 import 'package:moneta/design_system/organisms/moneta_app_bar.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
@@ -127,6 +128,16 @@ class HomeScreen extends StatelessWidget {
                       MonetaSpacing.spaceBase,
                     ),
                     children: [
+                      // The over-budget alert, from `57:414`. Above the hero,
+                      // per annotation `57:612`.
+                      if (snapshot.worstBudget case final worst?
+                          when snapshot.hasOverBudget) ...[
+                        _OverBudgetBanner(
+                          budget: worst,
+                          onTap: onSeeAllBudgets,
+                        ),
+                        const SizedBox(height: MonetaSpacing.spaceBase),
+                      ],
                       BalanceCard(
                         totalBalance: snapshot.totalBalance,
                         safeToSpend: snapshot.safeToSpend,
@@ -136,7 +147,13 @@ class HomeScreen extends StatelessWidget {
                         masked: masked,
                         onToggleMask: onToggleMask,
                       ),
-                      if (quickActions.isNotEmpty) ...[
+                      // `57:414` authors no quick-actions row, while `52:2`
+                      // does. The annotation's "same layout as 02.01" is loose
+                      // prose; the frame is specific, and `52:2` proves frames
+                      // here do draw content past their own fold, so the
+                      // omission is a decision rather than a crop.
+                      if (quickActions.isNotEmpty &&
+                          !snapshot.hasOverBudget) ...[
                         const SizedBox(height: MonetaSpacing.spaceBase),
                         _QuickActions(actions: quickActions),
                       ],
@@ -303,6 +320,44 @@ class HomeScreen extends StatelessWidget {
       'Dec',
     ];
     return '${end.day} ${months[end.month - 1]}';
+  }
+}
+
+/// Home's over-budget alert, from the `Banner` instance at `57:431`.
+///
+/// **It names one category, never a list.** Annotation `57:612`: *"banner text
+/// names the worst category only, even if several are over."* The worst budget
+/// is the head of an already-ranked list, so this cannot disagree with the card
+/// order below it.
+///
+/// The tone is `Warning`, as authored — amber — even though the card for the
+/// same budget renders its `Over` state in coral. That is the annotation's
+/// choice and is reproduced rather than harmonised: the banner rates how urgent
+/// the situation is, the card reports which state a budget is in.
+///
+/// The alert does not rest on colour: it carries a heading, a sentence and an
+/// amount. `MonetaBanner` also supplies a tone icon.
+///
+/// **The sentence wording is not verified against `57:431`.** Figma access was
+/// unavailable throughout this task, so the copy is composed from the data the
+/// annotation says it must name. Recorded in
+/// `docs/design-system/figma-map.md`.
+class _OverBudgetBanner extends StatelessWidget {
+  const _OverBudgetBanner({required this.budget, this.onTap});
+
+  final BudgetSummary budget;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return MonetaBanner(
+      tone: BannerTone.warning,
+      title: '${budget.category.label} is over budget',
+      message:
+          "You've spent ${budget.overBy.format()} more than this period's "
+          'limit of ${budget.limit.format()}.',
+      onTap: onTap,
+    );
   }
 }
 

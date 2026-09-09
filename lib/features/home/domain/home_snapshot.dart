@@ -109,6 +109,15 @@ final class BudgetSummary extends Equatable {
     return Money(left < 0 ? 0 : left, limit.currency);
   }
 
+  /// How far past [limit] the spend has gone, never negative.
+  ///
+  /// Clamped like [remaining] and for the same reason: a budget that is under
+  /// its limit is not "over by" a negative amount, it is simply not over.
+  Money get overBy {
+    final over = spent.minorUnits - limit.minorUnits;
+    return Money(over > 0 ? over : 0, limit.currency);
+  }
+
   /// The status, derived against this budget's own threshold.
   BudgetStatus get status =>
       BudgetStatus.fromSpend(spent, limit, nearLimitThreshold: alertThreshold);
