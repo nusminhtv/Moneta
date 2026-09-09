@@ -17,9 +17,21 @@ screens for `📱 02 Home & Dashboard`:
 | 02.06 | Notifications -- empty | `57:840` | P1 |
 
 Each screen has a sibling annotation frame in Figma that must be read before its
-layout is implemented. This repository does not currently contain those
-annotation contents, and this session has no callable Figma inspection tool; the
-node ids above are the exact queries required before final screen construction.
+layout is implemented. **Those six annotations have now been read** (2026-09-09):
+`52:362`, `52:537`, `52:630`, `57:612`, `57:830` and `57:935`.
+
+This proposal previously stated that the repository held no annotation contents
+and that "this session has no callable Figma inspection tool". The first half was
+true; the second was not, and it is the reason four screens were implemented
+against the frames alone. Reading the annotations produced two requirements that
+contradict code already merged on this branch — the recent list is capped at five
+rows, not four, and safe-to-spend is not the total balance — plus a loading state
+that must keep its app bar. Those are recorded in `specs/home/spec.md`.
+
+One observation, recorded but not acted on: frame `145:3776` carries the same
+name as `52:2`, "02.01 Home & Dashboard / Home — default", with the same children
+at 1215px tall instead of 852. It is a candidate for one of the file's twelve
+deliberate mistakes.
 
 The user-visible outcome is a Home tab that matches the four Home states, a
 notifications route that matches the two notification states, and a gallery that
@@ -80,13 +92,22 @@ shows every home-owned component variant.
 - **Modules touched:** home-owned design-system components, `lib/features/home`,
   `lib/features/notifications`, home gallery catalog/describer, Home marker
   blocks in app routing and gallery tests, and `openspec/changes/home-overview`.
-- **Dependencies:** none expected.
+- **Dependencies:** Home now reads budget data. Annotation `52:362` defines
+  safe-to-spend as balance minus committed budgets, and the over-budget state at
+  `57:414` triggers on a budget exceeding its limit, so neither is computable from
+  transactions alone. The read happens in `lib/app` composition — the layer ADR
+  0004 designated for seeing two features at once, alongside the existing
+  `home_providers.dart` and `budget_providers.dart` — so no
+  `features/home → features/budgets` import is introduced and
+  `tool/check_architecture.dart` stays satisfied. This is **not** a schema change;
+  the `budgets` table already exists at schema v3.
 - **Schema migration:** none. The database schema remains single-writer for the
   auth branch.
 - **Gates affected:** design-token checks for new UI code, gallery completeness,
   architecture, tests and coverage through `bash tool/verify.sh --change
   home-overview`.
-- **Figma nodes consumed so far:** Screen Index `5:24` as recorded in
-  `docs/ai-workflow/parallel-brief-home-dashboard.md` and component inventory in
-  `docs/design-system/figma-map.md`. The six sibling annotation frames still need
-  live Figma access before implementation can claim visual fidelity.
+- **Figma nodes consumed:** Screen Index `5:24` as recorded in
+  `docs/ai-workflow/parallel-brief-home-dashboard.md`, the component inventory in
+  `docs/design-system/figma-map.md`, the six screen frames, and the six sibling
+  annotation frames listed above — all read, so visual fidelity is now claimable
+  against the annotations rather than against the frames alone.
