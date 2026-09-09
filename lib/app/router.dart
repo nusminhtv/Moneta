@@ -7,6 +7,7 @@ import 'package:moneta/app/budgets_route_screen.dart';
 import 'package:moneta/app/create_budget_route_screens.dart';
 import 'package:moneta/app/gallery/gallery_screen.dart';
 import 'package:moneta/app/home_route_screen.dart';
+import 'package:moneta/app/notifications_route_screen.dart';
 import 'package:moneta/app/shell.dart';
 import 'package:moneta/design_system/organisms/bottom_nav.dart';
 import 'package:moneta/features/onboarding/presentation/onboarding_providers.dart';
@@ -57,6 +58,20 @@ GoRouter buildRouter({String initialLocation = defaultInitialRoute}) {
             builder: (context, state) => BudgetDetailRouteScreen(
               budgetId: state.pathParameters['id']!,
             ),
+          ),
+          // Also inside the shell and not a destination. Annotation `57:830`:
+          // *"The bottom nav stays on Home because this is a Home sub-screen —
+          // a wrong active tab here is a real defect, not a nitpick."*
+          //
+          // **Deliberately not in the `HOME` marker block below.** That block
+          // sits outside the `ShellRoute`, so a route added there renders with
+          // no bottom navigation at all — which is the precise defect the
+          // annotation names. The marker exists to keep parallel agents out of
+          // each other's files, not to override the design; Budgets resolved
+          // the same conflict the same way, two routes up.
+          GoRoute(
+            path: NotificationRoutes.path,
+            builder: (context, state) => const NotificationsRouteScreen(),
           ),
           GoRoute(
             path: DestinationRoutes.paths[MonetaDestination.transactions]!,

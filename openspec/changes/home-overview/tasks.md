@@ -139,7 +139,7 @@
 
 ## 6. Wiring and Close-Out
 
-- [ ] 6.1 Add `/notifications` and replace the Home placeholder only inside the
+- [x] 6.1 Add `/notifications` and replace the Home placeholder only inside the
   HOME marker block in `lib/app/router.dart`. Verify `test/app/router_test.dart`
   covers `/`, `/notifications` and the active Home tab.
 - [ ] 6.2 Update `docs/design-system/figma-map.md` with the implemented Home and

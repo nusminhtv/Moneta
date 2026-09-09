@@ -44,6 +44,7 @@ class HomeScreen extends StatelessWidget {
     this.onSeeAllTransactions,
     this.onSeeAllBudgets,
     this.onOpenBudget,
+    this.onOpenNotifications,
     this.quickActions = const [],
     super.key,
   });
@@ -85,6 +86,34 @@ class HomeScreen extends StatelessWidget {
   /// Called with a budget's id when its card is tapped.
   final void Function(String id)? onOpenBudget;
 
+  /// Called from the app bar's bell.
+  ///
+  /// Annotation `57:830` says the notification centre is *"reached from the
+  /// Home app bar"*, and this is that entry point.
+  ///
+  /// **`52:3` authors a `search` glyph here, not a bell.** Almost certainly a
+  /// component default left unoverridden: `AppBar/LargeTitle`'s own sample is
+  /// titled "Transactions" with a search action, and the instance overrides the
+  /// title to "Hi, Minh" without swapping the icon. Reproducing it would leave
+  /// the notification centre with no way in, and Home has nothing to search —
+  /// `SearchField` (`35:38`) is unbuilt and search belongs to Transactions.
+  /// Deviation recorded in `docs/design-system/figma-map.md`.
+  final VoidCallback? onOpenNotifications;
+
+  /// The app bar actions shared by the loaded and loading states.
+  ///
+  /// One function so the two states cannot drift: annotation `52:630` requires
+  /// the bar to render identically while loading.
+  static List<MonetaAppBarAction> appBarActions({
+    VoidCallback? onOpenNotifications,
+  }) => [
+    (
+      icon: MonetaIconName.bell,
+      semanticLabel: 'Notifications',
+      onPressed: onOpenNotifications,
+    ),
+  ];
+
   /// The shortcut row under the balance card.
   final List<HomeQuickAction> quickActions;
 
@@ -116,7 +145,12 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          MonetaAppBar(title: greeting),
+          MonetaAppBar(
+            title: greeting,
+            actions: appBarActions(
+              onOpenNotifications: onOpenNotifications,
+            ),
+          ),
           Expanded(
             child: snapshot.isFirstRun
                 ? _firstRun(context)

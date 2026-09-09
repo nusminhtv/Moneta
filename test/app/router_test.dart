@@ -4,11 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moneta/app/budgets_route_screen.dart';
 import 'package:moneta/app/gallery/gallery_screen.dart';
 import 'package:moneta/app/home_route_screen.dart';
+import 'package:moneta/app/notifications_route_screen.dart';
 import 'package:moneta/app/router.dart';
 import 'package:moneta/app/shell.dart';
 import 'package:moneta/design_system/organisms/bottom_nav.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/design_system/tokens/colors.dart';
+import 'package:moneta/features/notifications/presentation/notifications_screen.dart';
 import 'package:moneta/features/onboarding/presentation/onboarding_providers.dart';
 import 'package:moneta/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:moneta/features/onboarding/presentation/splash_screen.dart';
@@ -324,6 +326,71 @@ void main() {
       await pumpApp(tester, initialLocation: GalleryScreen.routePath);
       expect(find.byType(GalleryScreen), findsOneWidget);
       expect(find.byType(MonetaBottomNav), findsNothing);
+    });
+  });
+
+  group('the notification centre', () {
+    // `57:830`: "The bottom nav stays on Home because this is a Home
+    // sub-screen — a wrong active tab here is a real defect, not a nitpick."
+    test('it is not a destination, so it cannot light its own tab', () {
+      expect(
+        DestinationRoutes.paths.values,
+        isNot(contains(NotificationRoutes.path)),
+        reason: 'notifications became a tab, so it now lights its own',
+      );
+    });
+
+    test('its location resolves to Home', () {
+      expect(
+        DestinationRoutes.of(NotificationRoutes.path),
+        MonetaDestination.home,
+      );
+    });
+
+    testWidgets('the route reaches the notifications screen', (tester) async {
+      await pumpApp(tester, initialLocation: NotificationRoutes.path);
+      expect(find.byType(NotificationsScreen), findsOneWidget);
+    });
+
+    testWidgets('it keeps the bottom navigation', (tester) async {
+      // The defect this guards: the HOME marker block sits OUTSIDE the
+      // ShellRoute, so a route added there renders with no bottom navigation at
+      // all. That is exactly what the annotation calls a real defect, and it is
+      // why this route is declared next to the budget routes instead.
+      await pumpApp(tester, initialLocation: NotificationRoutes.path);
+      expect(find.byType(MonetaBottomNav), findsOneWidget);
+    });
+
+    testWidgets('the Home tab stays lit while it is open', (tester) async {
+      await pumpApp(tester, initialLocation: NotificationRoutes.path);
+      expect(
+        tabColour(tester, MonetaDestination.home),
+        colors.brandOnSurface,
+      );
+      expect(
+        tabColour(tester, MonetaDestination.transactions),
+        colors.textTertiary,
+      );
+    });
+
+    testWidgets('the bell on Home opens it', (tester) async {
+      // Annotation `57:830`: reached from the Home app bar. `52:3` authors a
+      // search glyph instead, which would leave this screen unreachable — see
+      // HomeScreen.onOpenNotifications.
+      await pumpApp(tester);
+      expect(find.byType(NotificationsScreen), findsNothing);
+
+      await tester.tap(find.bySemanticsLabel('Notifications').first);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NotificationsScreen), findsOneWidget);
+    });
+
+    testWidgets('going back from it returns to Home', (tester) async {
+      await pumpApp(tester, initialLocation: NotificationRoutes.path);
+      await tester.tap(find.bySemanticsLabel('Back').first);
+      await tester.pumpAndSettle();
+      expect(find.byType(HomeRouteScreen), findsOneWidget);
     });
   });
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moneta/app/budgets_route_screen.dart';
 import 'package:moneta/app/home_providers.dart';
+import 'package:moneta/app/notifications_route_screen.dart';
 import 'package:moneta/app/router.dart';
 import 'package:moneta/app/shell.dart';
 import 'package:moneta/data/app_providers.dart';
@@ -74,11 +75,17 @@ class _HomeRouteScreenState extends ConsumerState<HomeRouteScreen> {
     final snapshot = ref.watch(homeSnapshotProvider);
 
     return snapshot.when(
-      loading: () => const HomeLoadingScreen(greeting: _greeting),
+      loading: () => HomeLoadingScreen(
+        greeting: _greeting,
+        onOpenNotifications: () => context.go(NotificationRoutes.path),
+      ),
       // A read failure resolves to an empty wallet inside the provider, so this
       // arm is only reached by a genuine crash. Showing the empty screen is
       // still better than a red error box on the app's first surface.
-      error: (_, _) => const HomeLoadingScreen(greeting: _greeting),
+      error: (_, _) => HomeLoadingScreen(
+        greeting: _greeting,
+        onOpenNotifications: () => context.go(NotificationRoutes.path),
+      ),
       data: (data) => HomeScreen(
         snapshot: data,
         greeting: _greeting,
@@ -93,6 +100,7 @@ class _HomeRouteScreenState extends ConsumerState<HomeRouteScreen> {
           DestinationRoutes.paths[MonetaDestination.transactions]!,
         ),
         onSeeAllBudgets: () => context.go(BudgetRoutes.overview),
+        onOpenNotifications: () => context.go(NotificationRoutes.path),
         onOpenBudget: (id) => context.go(BudgetRoutes.detailFor(id)),
         quickActions: HomeRouteScreen.quickActions(
           onAdd: () => showAddTransactionSheet(context),

@@ -3,6 +3,7 @@ import 'package:moneta/design_system/molecules/skeleton.dart';
 import 'package:moneta/design_system/organisms/moneta_app_bar.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/design_system/tokens/spacing.dart';
+import 'package:moneta/features/home/presentation/home_screen.dart';
 
 /// Home while its data is still loading, from Figma node `52:547`.
 ///
@@ -31,7 +32,11 @@ import 'package:moneta/design_system/tokens/spacing.dart';
 /// `docs/design-system/figma-map.md`.
 class HomeLoadingScreen extends StatelessWidget {
   /// Creates the loading screen.
-  const HomeLoadingScreen({required this.greeting, super.key});
+  const HomeLoadingScreen({
+    required this.greeting,
+    this.onOpenNotifications,
+    super.key,
+  });
 
   /// The app bar title, identical to the loaded screen's.
   ///
@@ -39,6 +44,13 @@ class HomeLoadingScreen extends StatelessWidget {
   /// snapshot yet — and because a greeting that changes when the data lands
   /// would be its own flicker.
   final String greeting;
+
+  /// Called from the app bar's bell, exactly as on the loaded screen.
+  ///
+  /// The notification centre does not depend on Home's data, so there is no
+  /// reason to disable it while Home loads — and a bar whose controls appear
+  /// with the data would be the same flicker in miniature.
+  final VoidCallback? onOpenNotifications;
 
   /// How many quick-action placeholders the row shows.
   ///
@@ -57,7 +69,12 @@ class HomeLoadingScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          MonetaAppBar(title: greeting),
+          MonetaAppBar(
+            title: greeting,
+            actions: HomeScreen.appBarActions(
+              onOpenNotifications: onOpenNotifications,
+            ),
+          ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(
