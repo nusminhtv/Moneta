@@ -339,7 +339,7 @@ recorded in code as derived rather than presented as transcriptions.
 | 2026-09-09 | checkpoint | 5.1 notification centre, derived from budgets and the ledger | `b064be0` | `verify-runs/2026-09-09T08-47-11Z_home-overview.md` |
 | 2026-09-09 | checkpoint | 6.1 `/notifications` routed inside the shell; bell on Home's app bar | `022da25` | `verify-runs/2026-09-09T12-51-06Z_home-overview.md` |
 | 2026-09-09 | checkpoint | 5.2 empty centre, action-free as `57:935` sanctions | `629b3a0` | `verify-runs/2026-09-09T12-54-03Z_home-overview.md` |
-| 2026-09-09 | checkpoint | 6.2–6.4 close-out: figma-map, this log, the full gate — **18/18** | `PENDINGCO` | `verify-runs/2026-09-09T12-56-10Z_home-overview.md` |
+| 2026-09-09 | checkpoint | 6.2–6.4 close-out: figma-map, this log, the full gate — **18/18** | `5202332` | `verify-runs/2026-09-09T12-56-10Z_home-overview.md` |
 
 ### The Figma outage, and what it actually was
 
