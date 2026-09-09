@@ -332,3 +332,4 @@ recorded in code as derived rather than presented as transcriptions.
 | 2026-09-09 | plan revision | Fold in six annotations read for the first time | `bd3714f` | — (artifacts only) |
 | 2026-09-09 | checkpoint | 4.1 default Home: budgets section, cap of 5, safe-to-spend, authored quick actions | `a77867d` | `verify-runs/2026-09-09T07-40-25Z_home-overview.md` |
 | 2026-09-09 | checkpoint | 4.2 first-run: a primary action that works, and steps that tick independently | `cf180e9` | `verify-runs/2026-09-09T07-53-28Z_home-overview.md` |
+| 2026-09-09 | checkpoint | 4.3 loading: the app bar stays, and the authored skeleton counts | `699c42b` | `verify-runs/2026-09-09T07-58-18Z_home-overview.md` |
