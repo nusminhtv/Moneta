@@ -9,7 +9,6 @@ import 'package:moneta/design_system/organisms/budget_card.dart';
 import 'package:moneta/design_system/organisms/moneta_app_bar.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/design_system/tokens/spacing.dart';
-import 'package:moneta/features/budgets/domain/budget_period.dart';
 import 'package:moneta/features/budgets/domain/budget_progress.dart';
 
 /// All budgets for one period, worst first — Figma `66:91`, empty `66:277`.
@@ -20,8 +19,10 @@ class BudgetsScreen extends StatelessWidget {
   /// Creates the overview.
   const BudgetsScreen({
     required this.progress,
-    required this.period,
+    required this.periodLabels,
+    required this.selectedPeriod,
     required this.currency,
+    this.hasAnyBudget = true,
     this.onPeriodChanged,
     this.onAdd,
     this.onOpen,
@@ -31,14 +32,24 @@ class BudgetsScreen extends StatelessWidget {
   /// Every budget with its computed progress, already ranked.
   final List<BudgetProgress> progress;
 
-  /// Which period the switcher is showing.
-  final BudgetPeriod period;
+  /// The three segment labels, newest last — `66:118`, `66:120`, `66:122`.
+  final List<String> periodLabels;
+
+  /// Which segment is selected, as an index into [periodLabels].
+  final int selectedPeriod;
+
+  /// Whether the user has any budget at all, in any period.
+  ///
+  /// Distinct from `progress.isEmpty` on purpose. Looking at a period before a
+  /// budget existed yields no cards, and showing "No budgets yet" there tells
+  /// someone with three budgets that they have none.
+  final bool hasAnyBudget;
 
   /// The wallet's currency, for the totals when there is nothing to add up.
   final Currency currency;
 
-  /// Called with the newly selected period.
-  final ValueChanged<BudgetPeriod>? onPeriodChanged;
+  /// Called with the newly selected segment index.
+  final ValueChanged<int>? onPeriodChanged;
 
   /// Called from the section header's "Add" and from the empty state.
   final VoidCallback? onAdd;
@@ -51,10 +62,14 @@ class BudgetsScreen extends StatelessWidget {
   /// Not the average of their fractions. Averaging treats a 50,000 ₫ budget at
   /// 100% and a 5,000,000 ₫ budget at 10% as equally weighted, which answers a
   /// question nobody asked.
-  static double overallFraction(List<BudgetProgress> entries) {
+  static double overallFraction(
+    List<BudgetProgress> entries, [
+    Currency? only,
+  ]) {
     var spent = 0;
     var limit = 0;
     for (final entry in entries) {
+      if (only != null && entry.spent.currency != only) continue;
       spent += entry.spent.minorUnits;
       limit += entry.effectiveLimit.minorUnits;
     }
@@ -63,17 +78,28 @@ class BudgetsScreen extends StatelessWidget {
   }
 
   /// Total spend across [entries], in [fallback]'s currency when empty.
+  /// Skips anything outside [fallback]'s currency, as Home does.
+  ///
+  /// This used to sum `minorUnits` across every entry and label the result with
+  /// `entries.first`'s currency, so a USD budget beside a VND one produced a
+  /// total in neither. `Money.+` would have caught it; adding the raw integers
+  /// bypassed the guard.
   static Money totalSpent(List<BudgetProgress> entries, Currency fallback) =>
       Money(
-        entries.fold(0, (sum, e) => sum + e.spent.minorUnits),
-        entries.isEmpty ? fallback : entries.first.spent.currency,
+        entries
+            .where((e) => e.spent.currency == fallback)
+            .fold(0, (sum, e) => sum + e.spent.minorUnits),
+        fallback,
       );
 
   /// Total effective limit across [entries].
+  /// Skips anything outside [fallback]'s currency, as [totalSpent] does.
   static Money totalLimit(List<BudgetProgress> entries, Currency fallback) =>
       Money(
-        entries.fold(0, (sum, e) => sum + e.effectiveLimit.minorUnits),
-        entries.isEmpty ? fallback : entries.first.effectiveLimit.currency,
+        entries
+            .where((e) => e.effectiveLimit.currency == fallback)
+            .fold(0, (sum, e) => sum + e.effectiveLimit.minorUnits),
+        fallback,
       );
 
   @override
@@ -87,12 +113,47 @@ class BudgetsScreen extends StatelessWidget {
         children: [
           const MonetaAppBar(title: 'Budgets'),
           Expanded(
-            child: progress.isEmpty ? _empty(context) : _list(context),
+            child: switch ((progress.isEmpty, hasAnyBudget)) {
+              (false, _) => _list(context),
+              (true, false) => _empty(context),
+              (true, true) => _nothingThisPeriod(context),
+            },
           ),
         ],
       ),
     );
   }
+
+  /// Budgets exist, but none of them existed in the period being looked at.
+  ///
+  /// Not `66:277`. That frame is the first-run empty state and its action
+  /// creates a budget, which is the wrong offer to someone who already has
+  /// three and has simply scrolled back before they existed. No node authors
+  /// this state; it is composed from `EmptyState` with no action, the form
+  /// `57:935` establishes as legitimate when there is nothing to do.
+  Widget _nothingThisPeriod(BuildContext context) => ListView(
+    padding: const EdgeInsets.fromLTRB(
+      MonetaSpacing.spaceLg,
+      MonetaSpacing.spaceXs,
+      MonetaSpacing.spaceLg,
+      MonetaSpacing.spaceBase,
+    ),
+    children: [
+      MonetaSegmentedControl(
+        labels: periodLabels,
+        selectedIndex: selectedPeriod,
+        onChanged: onPeriodChanged,
+      ),
+      const SizedBox(height: MonetaSpacing.spaceMd),
+      const EmptyState(
+        icon: MonetaIconName.calendar,
+        title: 'Nothing to show for this period',
+        message:
+            'Your budgets started later than this. Pick a more recent '
+            'period to see them.',
+      ),
+    ],
+  );
 
   Widget _empty(BuildContext context) => ListView(
     padding: const EdgeInsets.fromLTRB(
@@ -127,15 +188,13 @@ class BudgetsScreen extends StatelessWidget {
       ),
       children: [
         MonetaSegmentedControl(
-          labels: [for (final p in BudgetPeriod.values) p.label],
-          selectedIndex: BudgetPeriod.values.indexOf(period),
-          onChanged: onPeriodChanged == null
-              ? null
-              : (i) => onPeriodChanged!(BudgetPeriod.values[i]),
+          labels: periodLabels,
+          selectedIndex: selectedPeriod,
+          onChanged: onPeriodChanged,
         ),
         const SizedBox(height: MonetaSpacing.spaceMd),
         _TotalCard(
-          fraction: overallFraction(progress),
+          fraction: overallFraction(progress, currency),
           spent: spent,
           limit: limit,
         ),

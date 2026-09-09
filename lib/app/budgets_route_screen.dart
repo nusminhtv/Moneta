@@ -6,7 +6,6 @@ import 'package:moneta/data/app_providers.dart';
 import 'package:moneta/design_system/molecules/skeleton.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/design_system/tokens/spacing.dart';
-import 'package:moneta/features/budgets/domain/budget_period.dart';
 import 'package:moneta/features/budgets/presentation/budgets_screen.dart';
 
 /// Where the budget routes live.
@@ -46,30 +45,48 @@ class BudgetsRouteScreen extends ConsumerStatefulWidget {
 }
 
 class _BudgetsRouteScreenState extends ConsumerState<BudgetsRouteScreen> {
-  BudgetPeriod _period = BudgetPeriod.monthly;
+  /// Which segment of `66:117` is selected, newest last.
+  ///
+  /// Starts on the newest, which is the period the user is living in.
+  int _selected = budgetPeriodSegments - 1;
+
+  /// How many periods back [_selected] means.
+  int get _offset => budgetPeriodSegments - 1 - _selected;
 
   @override
   Widget build(BuildContext context) {
     final currency = ref.watch(walletCurrencyProvider);
-    final progress = ref.watch(budgetProgressProvider);
+    final now = ref.watch(clockProvider).nowUtc();
+    final budgets = ref.watch(budgetListProvider);
+    final entries = ref.watch(spendEntriesProvider);
 
-    return progress.when(
-      loading: _BudgetsLoading.new,
-      // A read failure resolves to an empty list inside the provider, so this
-      // arm is only reached by a genuine crash. The skeleton is still better
-      // than a red error box.
-      error: (_, _) => const _BudgetsLoading(),
-      data: (all) => BudgetsScreen(
-        progress: [
-          for (final p in all)
-            if (p.budget.period == _period) p,
-        ],
-        period: _period,
-        currency: currency,
-        onPeriodChanged: (period) => setState(() => _period = period),
-        onAdd: () => context.go(BudgetRoutes.createCategory),
-        onOpen: (id) => context.go(BudgetRoutes.detailFor(id)),
-      ),
+    if (budgets case AsyncError()) return const _BudgetsLoading();
+    if (entries case AsyncError()) return const _BudgetsLoading();
+    final budgetList = budgets.value;
+    final entryList = entries.value;
+    if (budgetList == null || entryList == null) {
+      return const _BudgetsLoading();
+    }
+
+    // The switcher chooses which period to look at, so progress is recomputed
+    // at that offset rather than filtered. `budgetProgressProvider` still
+    // serves the offset-zero case for Home and notifications.
+    final progress = progressAtOffset(
+      budgets: budgetList,
+      entries: entryList,
+      now: now,
+      offset: _offset,
+    );
+
+    return BudgetsScreen(
+      progress: progress,
+      periodLabels: budgetPeriodLabels(budgets: budgetList, now: now),
+      selectedPeriod: _selected,
+      hasAnyBudget: budgetList.isNotEmpty,
+      currency: currency,
+      onPeriodChanged: (i) => setState(() => _selected = i),
+      onAdd: () => context.go(BudgetRoutes.createCategory),
+      onOpen: (id) => context.go(BudgetRoutes.detailFor(id)),
     );
   }
 }

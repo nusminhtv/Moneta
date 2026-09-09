@@ -38,9 +38,48 @@ per budget ordered by fraction used, descending.
   budgets shown, not an average of their fractions
 
 #### Scenario: The period switcher changes the window
-- **WHEN** the period is changed
-- **THEN** every card recomputes against the new window
+- **WHEN** a segment is selected
+- **THEN** every card recomputes against that period's window
 - **AND** exactly one segment is selected
+
+The switcher selects **which period to look at**, not which kind of budget to
+show. `66:117` labels its three segments `Jul`, `Aug`, `Sep`. A budget's period
+is fixed when it is created, so there is nothing to switch between; filtering by
+it made a segment able to empty a list of real budgets.
+
+#### Scenario: Each budget steps by its own period
+- **WHEN** the selected segment is one period back and budgets use different
+  periods
+- **THEN** a weekly budget recomputes against the previous week and a monthly
+  one against the previous month
+- **AND** no budget is omitted for using a period other than the selected one
+
+#### Scenario: Segment labels name the periods when they can
+- **WHEN** every budget shares one period
+- **THEN** the labels name that period's windows — the month for monthly, the
+  start date for weekly, the year for yearly
+- **AND** when periods are mixed, or there are no budgets to read a period from,
+  the labels are relative instead, because a month name beside a weekly window
+  would be wrong
+
+#### Scenario: A budget younger than the selected period
+- **WHEN** a budget did not exist during the selected period
+- **THEN** it is absent from that period rather than shown against its opening
+  window
+- **AND** its absence does not read as the wallet having no budgets
+
+### Requirement: An empty period is distinguished from an empty wallet
+
+The overview SHALL distinguish having no budgets at all from having none in the
+period being looked at.
+
+#### Scenario: No budgets in this period, but budgets exist
+- **WHEN** the selected period contains no budgets and budgets exist elsewhere
+- **THEN** the screen says so and offers no create action
+- **AND** the period switcher remains reachable, so a period with data can be
+  chosen
+- **AND** `66:277`'s first-run copy and its create action are not shown, because
+  offering to create a budget to someone who has three is the wrong answer
 
 ### Requirement: The empty state offers the one action that helps
 

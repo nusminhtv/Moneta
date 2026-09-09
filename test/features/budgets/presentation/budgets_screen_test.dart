@@ -17,6 +17,7 @@ import '../../../support/pump.dart';
 
 void main() {
   const vnd = Currency.vnd;
+  const usd = Currency.usd;
   final now = DateTime.utc(2026, 9, 21);
 
   BudgetProgress progressFor({
@@ -25,11 +26,12 @@ void main() {
     required int limit,
     required int spent,
     double threshold = 0.8,
+    Currency currency = vnd,
   }) => BudgetProgress.compute(
     budget: Budget.create(
       id: id,
       category: category,
-      limit: Money(limit, vnd),
+      limit: Money(limit, currency),
       period: BudgetPeriod.monthly,
       startsOn: DateTime.utc(2026, 9),
       createdAt: DateTime.utc(2026, 8, 30),
@@ -40,7 +42,7 @@ void main() {
         id: 's$id',
         category: category,
         direction: TransactionDirection.expense,
-        amount: Money(spent, vnd),
+        amount: Money(spent, currency),
         occurredAt: DateTime.utc(2026, 9, 10),
       ),
     ],
@@ -50,9 +52,11 @@ void main() {
   Future<void> pumpScreen(
     WidgetTester tester,
     List<BudgetProgress> progress, {
-    ValueChanged<BudgetPeriod>? onPeriodChanged,
+    ValueChanged<int>? onPeriodChanged,
     VoidCallback? onAdd,
     ValueChanged<String>? onOpen,
+    bool hasAnyBudget = true,
+    int selectedPeriod = 2,
   }) => pumpMonetaWidget(
     tester,
     SizedBox(
@@ -60,7 +64,9 @@ void main() {
       height: 852,
       child: BudgetsScreen(
         progress: progress,
-        period: BudgetPeriod.monthly,
+        periodLabels: const ['Jul', 'Aug', 'Sep'],
+        selectedPeriod: selectedPeriod,
+        hasAnyBudget: hasAnyBudget,
         currency: vnd,
         onPeriodChanged: onPeriodChanged,
         onAdd: onAdd,
@@ -187,8 +193,15 @@ void main() {
 
   group('empty', () {
     testWidgets('offers the one action that helps', (tester) async {
+      // The first-run state, `66:277`: no budgets anywhere, not merely none in
+      // the period being looked at. hasAnyBudget separates the two.
       var added = 0;
-      await pumpScreen(tester, [], onAdd: () => added++);
+      await pumpScreen(
+        tester,
+        [],
+        hasAnyBudget: false,
+        onAdd: () => added++,
+      );
 
       expect(find.byType(EmptyState), findsOneWidget);
       expect(find.byType(BudgetCard), findsNothing);
@@ -201,10 +214,14 @@ void main() {
   });
 
   group('interaction', () {
-    testWidgets('the period switcher reports the chosen period', (
+    testWidgets('the period switcher reports which segment was chosen', (
       tester,
     ) async {
-      BudgetPeriod? chosen;
+      // The switcher selects a period to look at -- `66:117` labels the
+      // segments Jul / Aug / Sep -- not a kind of budget. It used to report a
+      // BudgetPeriod, which the screen then used to filter budgets by their
+      // own period, so tapping a segment could empty a list of real budgets.
+      int? chosen;
       await pumpScreen(
         tester,
         [
@@ -215,10 +232,29 @@ void main() {
             spent: 100000,
           ),
         ],
-        onPeriodChanged: (p) => chosen = p,
+        onPeriodChanged: (i) => chosen = i,
       );
-      await tester.tap(find.text('Weekly'));
-      expect(chosen, BudgetPeriod.weekly);
+      await tester.tap(find.text('Jul'));
+      expect(chosen, 0);
+    });
+
+    testWidgets('the authored labels are rendered, not period names', (
+      tester,
+    ) async {
+      await pumpScreen(tester, [
+        progressFor(
+          id: 'food',
+          category: SpendCategory.food,
+          limit: 4000000,
+          spent: 100000,
+        ),
+      ]);
+      expect(find.text('Jul'), findsOneWidget);
+      expect(find.text('Aug'), findsOneWidget);
+      expect(find.text('Sep'), findsOneWidget);
+      expect(find.text('Weekly'), findsNothing);
+      expect(find.text('Monthly'), findsNothing);
+      expect(find.text('Yearly'), findsNothing);
     });
 
     testWidgets('exactly one segment is selected', (tester) async {
@@ -307,6 +343,79 @@ void main() {
       await pumpScreen(tester, []);
       expect(find.text('Insights'), findsNothing);
       expect(find.text('Profile'), findsNothing);
+    });
+  });
+
+  group('an empty period is not an empty wallet', () {
+    testWidgets('no budgets at all offers the create action', (tester) async {
+      await pumpScreen(tester, const [], hasAnyBudget: false, onAdd: () {});
+      expect(find.byType(EmptyState), findsOneWidget);
+      final empty = tester.widget<EmptyState>(find.byType(EmptyState));
+      expect(empty.onAction, isNotNull);
+    });
+
+    testWidgets('budgets that predate this period offer no create action', (
+      tester,
+    ) async {
+      // Someone with three budgets scrolling back before they existed was
+      // being told "No budgets yet" and offered a create button.
+      await pumpScreen(tester, const [], onAdd: () {});
+      final empty = tester.widget<EmptyState>(find.byType(EmptyState));
+      expect(empty.onAction, isNull);
+      expect(empty.actionLabel, isNull);
+      expect(find.textContaining('Nothing to show'), findsOneWidget);
+    });
+
+    testWidgets('the switcher stays reachable when a period is empty', (
+      tester,
+    ) async {
+      // Otherwise the only way back to a period with data would be gone.
+      await pumpScreen(tester, const []);
+      expect(find.text('Sep'), findsOneWidget);
+      expect(find.text('Jul'), findsOneWidget);
+    });
+
+    testWidgets('the first-run state has no switcher, per 66:277', (
+      tester,
+    ) async {
+      await pumpScreen(tester, const [], hasAnyBudget: false);
+      expect(find.text('Sep'), findsNothing);
+    });
+  });
+
+  group('totals never mix currencies', () {
+    test('a foreign-currency budget is skipped, not added in', () {
+      // Money.+ guards this; folding raw minorUnits bypassed the guard and
+      // labelled the result with whichever entry happened to be first.
+      final entries = [
+        progressFor(
+          id: 'vnd',
+          category: SpendCategory.food,
+          limit: 4000000,
+          spent: 1000000,
+        ),
+        progressFor(
+          id: 'usd',
+          category: SpendCategory.transport,
+          limit: 400,
+          spent: 9000,
+          currency: usd,
+        ),
+      ];
+      expect(
+        BudgetsScreen.totalSpent(entries, vnd),
+        const Money(1000000, vnd),
+      );
+      expect(
+        BudgetsScreen.totalLimit(entries, vnd),
+        const Money(4000000, vnd),
+      );
+      expect(BudgetsScreen.overallFraction(entries, vnd), 0.25);
+    });
+
+    test('an empty list totals zero in the wallet currency', () {
+      expect(BudgetsScreen.totalSpent(const [], vnd), const Money(0, vnd));
+      expect(BudgetsScreen.overallFraction(const [], vnd), 0);
     });
   });
 }
