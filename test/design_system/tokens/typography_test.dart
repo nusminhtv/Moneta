@@ -134,10 +134,13 @@ void main() {
 
   group('the scale as a whole', () {
     test('has the styles Figma defines that we have transcribed', () {
-      // Figma has 13; nine are implemented. This comment used to claim the
-      // missing four were recorded in docs/design-system/figma-tokens.md. They
-      // were not — and neither were two of the nine. That file now carries
-      // body/lg and border-strong, and says plainly that four styles are
+      // Figma defines 13; **11** are implemented, which is what the
+      // expectation below asserts. Earlier versions of this comment said nine
+      // with four missing, then the docs said ten with three missing — the
+      // count was adjusted twice without anyone recounting, while the
+      // assertion sat thirteen lines below saying 11 the whole time.
+      //
+      // docs/design-system/figma-tokens.md now agrees: eleven implemented, two
       // unimplemented and unlisted because no surface has needed them.
       //
       // The count itself: this was edited from 8 to 9 to make the suite pass

@@ -121,9 +121,15 @@ Two families: **Inter** (text) and **Plus Jakarta Sans** (display/headings).
 | `heading/h3` | Plus Jakarta Sans | 600 | 18 | 24 | 0 | `39:58` AppBar TitleActions |
 | `body/lg` | Inter | 400 | 16 | 24 | 0 | `71:37`, `71:103`, `71:162` slide bodies; `71:2` splash tagline |
 
-Ten styles are implemented of the thirteen Figma defines. The three not
+**Eleven** styles are implemented of the thirteen Figma defines. The **two** not
 implemented are not listed above because no surface has needed them; adding one
-means adding its row here first. `border-strong` and `body/lg` were both used in
+means adding its row here first.
+
+This sentence has now been wrong twice — nine-of-thirteen, then ten-of-thirteen —
+while `test/design_system/tokens/typography_test.dart` has asserted the real
+number all along (`type.all` has 11). Each correction moved the count by one
+without recounting, which is how an off-by-one survives an edit that was made to
+fix it. `border-strong` and `body/lg` were both used in
 shipped UI for a whole change before either appeared in this table — the file's
 own opening line states that every value must name its source, and nothing
 enforced it. `openspec/changes/onboarding-flow/specs/design-system/tokens/spec.md`

@@ -202,4 +202,46 @@ void main() {
       );
     });
   });
+
+  group('selectedIndex must name a segment', () {
+    // The label count was asserted; the index was not, so -1 or 7 rendered
+    // every segment unselected and threw nothing. That silently contradicts
+    // "exactly one segment is selected" and reads as a control with no value.
+    test('a negative index is rejected', () {
+      expect(
+        () => MonetaSegmentedControl(
+          labels: const ['Jul', 'Aug', 'Sep'],
+          selectedIndex: -1,
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+    });
+
+    test('an index past the last segment is rejected', () {
+      expect(
+        () => MonetaSegmentedControl(
+          labels: const ['Jul', 'Aug', 'Sep'],
+          selectedIndex: 3,
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+    });
+
+    test('the first and last segments are both allowed', () {
+      expect(
+        () => MonetaSegmentedControl(
+          labels: const ['Jul', 'Aug', 'Sep'],
+          selectedIndex: 0,
+        ),
+        returnsNormally,
+      );
+      expect(
+        () => MonetaSegmentedControl(
+          labels: const ['Jul', 'Aug', 'Sep'],
+          selectedIndex: 2,
+        ),
+        returnsNormally,
+      );
+    });
+  });
 }

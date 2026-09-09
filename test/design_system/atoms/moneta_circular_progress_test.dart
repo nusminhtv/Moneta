@@ -130,10 +130,21 @@ void main() {
       tester,
     ) async {
       // Reversed, the track would cover the progress it is meant to sit under.
+      //
+      // This asserted only `paintsExactlyCountTimes(#drawArc, 2)`, which
+      // survives reversing the draw order — the thing the test is named after.
+      // The ordered `paints` sequence below is what actually pins it: the track
+      // must be the FIRST arc recorded.
       await pumpRing(tester, 0.4);
       expect(
         find.byType(CustomPaint).last,
         paintsExactlyCountTimes(#drawArc, 2),
+      );
+      expect(
+        find.byType(CustomPaint).last,
+        paints
+          ..arc(color: colors.track)
+          ..arc(color: colors.income),
       );
     });
 

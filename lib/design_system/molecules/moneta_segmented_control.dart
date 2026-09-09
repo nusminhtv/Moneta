@@ -79,6 +79,12 @@ class MonetaSegmentedControl extends StatelessWidget {
          labels.length >= 2 && labels.length <= 4,
          'A segmented control holds 2 to 4 segments. One segment is not a '
          'choice, and five stop fitting the 353px content column.',
+       ),
+       assert(
+         selectedIndex >= 0 && selectedIndex < labels.length,
+         'selectedIndex must name one of the segments. Out of range, every '
+         'segment renders unselected — which looks like a control with no '
+         'value rather than a bug, and the spec requires exactly one selected.',
        );
 
   /// The segments, in order.
