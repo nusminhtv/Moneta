@@ -181,6 +181,22 @@ List<BudgetProgress> progressAtOffset({
 /// A label names a calendar period, so it must not depend on which budgets
 /// exist or on how they are stored. What each budget *does* at a given offset is
 /// still per-budget — see [progressAtOffset].
+///
+/// **The rule all three branches share: a label names the calendar period, not
+/// any budget's window.** Monthly names the calendar month, yearly the calendar
+/// year, weekly the calendar week by its Monday.
+///
+/// A label therefore does not always coincide with the window a card is showing:
+/// a budget anchored on the 20th has windows spanning two calendar months, and a
+/// weekly budget anchored on a Wednesday has windows spanning two calendar
+/// weeks. That is unavoidable, not an oversight — one row of three labels serves
+/// every budget on the screen, and this branch is reached whenever the budgets
+/// merely share a period *type*, never a common anchor. Two weekly budgets
+/// anchored on the 2nd and the 7th both arrive here with different window
+/// starts, which is why "name the window start" cannot be the rule.
+///
+/// The spec scenario says exactly this, and said something else — "the start
+/// date for weekly" — until the weekly branch was found labelling today's date.
 List<String> budgetPeriodLabels({
   required List<Budget> budgets,
   required DateTime now,
@@ -202,8 +218,18 @@ List<String> budgetPeriodLabels({
         BudgetPeriod.yearly => DateFormat.y(locale).format(
           DateTime(local.year - offset),
         ),
+        // The Monday of the calendar week, not today shifted back by weeks.
+        // Shifting today read "Sep 10" over a week that began Sep 7 — the
+        // third time this switcher has been made to say something its window
+        // does not. Built with `DateTime(y, m, d - n)` rather than
+        // `subtract(Duration(days:))` so it is calendar arithmetic and cannot
+        // drift across a daylight-saving boundary.
         BudgetPeriod.weekly => DateFormat.MMMd(locale).format(
-          local.subtract(Duration(days: 7 * offset)),
+          DateTime(
+            local.year,
+            local.month,
+            local.day - (local.weekday - DateTime.monday) - 7 * offset,
+          ),
         ),
       },
     );

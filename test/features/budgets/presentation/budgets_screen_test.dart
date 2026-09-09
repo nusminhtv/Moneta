@@ -295,6 +295,7 @@ void main() {
   group('the card note', () {
     test('says how much is used and how long is left', () {
       final note = BudgetsScreen.noteFor(
+        asOf: now,
         progressFor(
           id: 'food',
           category: SpendCategory.food,
@@ -319,7 +320,10 @@ void main() {
         entries: const [],
         now: DateTime.utc(2026, 9, 30, 12),
       );
-      expect(BudgetsScreen.noteFor(entry), contains('1 day left'));
+      expect(
+        BudgetsScreen.noteFor(entry, asOf: DateTime.utc(2026, 9, 30, 12)),
+        contains('1 day left'),
+      );
     });
   });
 
@@ -453,16 +457,11 @@ void main() {
       expect(note, contains('days left'));
     });
 
-    test('without asOf the days clause is kept, as before', () {
-      final note = BudgetsScreen.noteFor(
-        progressFor(
-          id: 'food',
-          category: SpendCategory.food,
-          limit: 4000000,
-          spent: 1000000,
-        ),
-      );
-      expect(note, contains('days left'));
-    });
+    // A third test used to assert that omitting `asOf` kept the days clause
+    // "as before". That pinned the footgun instead of closing it: the optional
+    // default *was* the bug, so any future caller who omitted it would
+    // reintroduce "31 days left" on a finished month and be certified correct.
+    // `asOf` is now required, which moves the whole class to compile time and
+    // makes that test unwritable.
   });
 }

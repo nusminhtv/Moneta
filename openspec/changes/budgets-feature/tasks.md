@@ -78,8 +78,23 @@
     indistinguishable from one still opening. Fixing it properly means deciding
     how the app surfaces storage failure, which Home shares; it needs its own
     change rather than a local patch here.
-  - `budgetPeriodLabels` calls `.toLocal()` on a UTC date-only window boundary
-    before formatting. Harmless at `TZ=Asia/Ho_Chi_Minh`, wrong in any zone
-    behind UTC, and the same shape as the `startLabel` call in
-    `create_budget_amount_screen.dart` that was already left open. Both belong
-    in one pass over date-only boundaries.
+  - **Labels are built from the local calendar; windows are derived in UTC.**
+    In a zone behind UTC the newest segment can name the previous month while
+    the card beneath it shows the current UTC window. Unreachable from the gate,
+    which pins `TZ=Asia/Ho_Chi_Minh` — ahead of UTC — by design.
+
+    This note previously said `budgetPeriodLabels` "calls `.toLocal()` on a UTC
+    date-only window boundary". It no longer does: that call went with the
+    window-walking labels, and `now.toLocal()` on a real instant is the correct
+    operation. The note described deleted code, which would have sent the next
+    reader looking for a line that is not there. The `startLabel` call in
+    `create_budget_amount_screen.dart` *is* still a date-only `.toLocal()` and
+    is still open.
+
+  - **The route wrappers are largely unexercised.** The argument for testing
+    `budgets_route_screen.dart` — nothing constructed it, so its wiring was
+    correct by reading and unproven — holds verbatim for
+    `create_budget_route_screens.dart` at 2 of 65 lines and
+    `budget_detail_route_screen.dart` at 12 of 23. `lib/app` is outside
+    `tool/coverage_critical.txt`, so the project total hides them. Named here
+    rather than left for the same review to find a fourth time.

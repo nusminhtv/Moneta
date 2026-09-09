@@ -56,11 +56,31 @@ it made a segment able to empty a list of real budgets.
 
 #### Scenario: Segment labels name the periods when they can
 - **WHEN** every budget shares one period
-- **THEN** the labels name that period's windows — the month for monthly, the
-  start date for weekly, the year for yearly
+- **THEN** the labels name the **calendar period** at each offset — the calendar
+  month for monthly, the calendar year for yearly, and the calendar week by its
+  Monday for weekly
 - **AND** when periods are mixed, or there are no budgets to read a period from,
   the labels are relative instead, because a month name beside a weekly window
   would be wrong
+
+This said "the start date for weekly", which is not implementable. The label row
+is reached whenever budgets share a period *type*, never a common anchor, so two
+weekly budgets anchored on the 2nd and the 7th arrive with different window
+starts and one label cannot name both. Left as written, it was satisfied by
+labelling today's date shifted by whole weeks — "Sep 10" over a week beginning
+Sep 7.
+
+#### Scenario: A label may not coincide with the window a card shows
+- **WHEN** a budget's anchor falls inside a calendar period rather than on its
+  boundary
+- **THEN** its card still recomputes against its own window
+- **AND** the segment label still names the calendar period, which may begin
+  earlier than that window
+
+A budget anchored on the 20th has windows spanning two calendar months. The label
+names one of them. This is a consequence of one label row serving every budget on
+the screen, and is stated so that it is not later mistaken for the defect it
+replaced.
 
 #### Scenario: A budget younger than the selected period
 - **WHEN** a budget did not exist during the selected period

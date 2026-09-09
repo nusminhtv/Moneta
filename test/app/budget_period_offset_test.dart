@@ -271,6 +271,112 @@ void main() {
       expect(first.last, 'Sep', reason: 'the newest segment is the month now');
     });
 
+    test('weekly labels name the week Monday, not today', () {
+      // now = Tue 15 Sep 2026. The weeks are those beginning Mon 31 Aug,
+      // Mon 7 Sep and Mon 14 Sep. Labelling `now` shifted by whole weeks gave
+      // "Sep 15" for a week that began Sep 14 -- the third time this switcher
+      // was made to say something its window does not.
+      final labels = budgetPeriodLabels(
+        budgets: [
+          budget(
+            period: BudgetPeriod.weekly,
+            startsOn: DateTime.utc(2026, 9, 2),
+          ),
+        ],
+        now: now,
+        locale: 'en_US',
+      );
+      expect(labels, ['Aug 31', 'Sep 7', 'Sep 14']);
+      expect(
+        labels.last,
+        isNot('Sep 15'),
+        reason: 'the label is naming today rather than the week',
+      );
+    });
+
+    test('weekly labels do not move with the budget anchor', () {
+      // The label names a calendar week; the anchor decides the window. Two
+      // budgets anchored on different weekdays must label identically.
+      List<String> labelsFor(int day) => budgetPeriodLabels(
+        budgets: [
+          budget(
+            period: BudgetPeriod.weekly,
+            startsOn: DateTime.utc(2026, 9, day),
+          ),
+        ],
+        now: now,
+        locale: 'en_US',
+      );
+      expect(labelsFor(2), labelsFor(7));
+      expect(labelsFor(2), ['Aug 31', 'Sep 7', 'Sep 14']);
+    });
+
+    test('weekly labels are distinct and a week apart', () {
+      final labels = budgetPeriodLabels(
+        budgets: [
+          budget(
+            period: BudgetPeriod.weekly,
+            startsOn: DateTime.utc(2026, 9, 2),
+          ),
+        ],
+        now: now,
+        locale: 'en_US',
+      );
+      expect(labels.toSet(), hasLength(budgetPeriodSegments));
+    });
+
+    test('a Monday now labels that same Monday', () {
+      // The boundary: on the first day of a week the newest label is that day,
+      // not the week before.
+      final labels = budgetPeriodLabels(
+        budgets: [
+          budget(
+            period: BudgetPeriod.weekly,
+            startsOn: DateTime.utc(2026, 9, 2),
+          ),
+        ],
+        now: DateTime.utc(2026, 9, 14, 3),
+        locale: 'en_US',
+      );
+      expect(labels.last, 'Sep 14');
+    });
+
+    test('a Sunday now labels the Monday that began its week', () {
+      // Sun 13 Sep belongs to the week beginning Mon 7 Sep.
+      final labels = budgetPeriodLabels(
+        budgets: [
+          budget(
+            period: BudgetPeriod.weekly,
+            startsOn: DateTime.utc(2026, 9, 2),
+          ),
+        ],
+        now: DateTime.utc(2026, 9, 13, 3),
+        locale: 'en_US',
+      );
+      expect(labels.last, 'Sep 7');
+    });
+
+    test('labels roll over a year boundary', () {
+      // Nothing pinned January or February; DateTime normalises month 0 and -1
+      // but only a test says so.
+      expect(
+        budgetPeriodLabels(
+          budgets: [budget()],
+          now: DateTime.utc(2026, 1, 15, 3),
+          locale: 'en_US',
+        ),
+        ['Nov', 'Dec', 'Jan'],
+      );
+      expect(
+        budgetPeriodLabels(
+          budgets: [budget()],
+          now: DateTime.utc(2026, 2, 15, 3),
+          locale: 'en_US',
+        ),
+        ['Dec', 'Jan', 'Feb'],
+      );
+    });
+
     test('mixed periods fall back to relative words', () {
       // "Aug" beside a weekly budget's window would be a lie, and one row of
       // three labels has to serve the whole switcher.

@@ -136,6 +136,7 @@ Money safeToSpend({
 /// undo — reaches Home for free, and there is no invalidation to remember.
 final homeSnapshotProvider = Provider<AsyncValue<HomeSnapshot>>((ref) {
   final currency = ref.watch(walletCurrencyProvider);
+  final now = ref.watch(clockProvider).nowUtc();
   final list = ref.watch(transactionListControllerProvider);
   final progress = ref.watch(budgetProgressProvider);
 
@@ -161,7 +162,7 @@ final homeSnapshotProvider = Provider<AsyncValue<HomeSnapshot>>((ref) {
       // commitments — so safe-to-spend was overstated, and by more the more
       // budgets the user had. A limit on what a screen draws must not be able
       // to change what a number means.
-      budgets: [for (final entry in ranked) toBudgetSummary(entry)],
+      budgets: [for (final entry in ranked) toBudgetSummary(entry, now)],
     ),
   );
 });
@@ -173,11 +174,15 @@ final homeSnapshotProvider = Provider<AsyncValue<HomeSnapshot>>((ref) {
 /// sentence the Budgets screen already builds; writing it twice would let the
 /// same budget describe itself differently on two screens, and only one of them
 /// would get fixed when the wording changed.
-BudgetSummary toBudgetSummary(BudgetProgress progress) => BudgetSummary(
-  id: progress.budget.id,
-  category: progress.budget.category,
-  spent: progress.spent,
-  limit: progress.effectiveLimit,
-  note: BudgetsScreen.noteFor(progress),
-  alertThreshold: progress.budget.alertThreshold,
-);
+BudgetSummary toBudgetSummary(BudgetProgress progress, DateTime now) =>
+    BudgetSummary(
+      id: progress.budget.id,
+      category: progress.budget.category,
+      spent: progress.spent,
+      limit: progress.effectiveLimit,
+      // Home only ever shows the current period, so this window has not ended
+      // and the note keeps its "days left" clause. Passed rather than defaulted
+      // because the default used to be a finished month claiming days left.
+      note: BudgetsScreen.noteFor(progress, asOf: now),
+      alertThreshold: progress.budget.alertThreshold,
+    );

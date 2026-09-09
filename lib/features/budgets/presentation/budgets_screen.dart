@@ -226,20 +226,22 @@ class BudgetsScreen extends StatelessWidget {
   }
 
   /// The card's supporting line: how much used, and how long is left.
-  /// The card's supporting line: how much used, and how long is left.
   ///
-  /// [asOf] is the real current instant. When the window has already ended —
-  /// which the period switcher makes reachable — the "days left" clause is
-  /// dropped rather than reported.
+  /// [asOf] is the real current instant, and is **required**. When the window
+  /// has already ended — which the period switcher makes reachable — the
+  /// "days left" clause is dropped rather than reported.
+  ///
+  /// Required rather than optional because the optional default *was* the bug:
+  /// omit it and a finished month reports "31 days left" again. A caller that
+  /// only ever shows the current period still has to say so.
   ///
   /// `BudgetProgress` for a past period is computed at that window's start, so
   /// `daysRemaining` is the window's whole length. Without [asOf] this rendered
   /// **"0% used · 31 days left"** on a month that finished weeks ago. Omitted
   /// rather than replaced with "0 days left", which reads as a deadline today.
-  static String noteFor(BudgetProgress entry, {DateTime? asOf}) {
+  static String noteFor(BudgetProgress entry, {required DateTime asOf}) {
     final percent = (entry.fraction * 100).round();
-    final ended = asOf != null && !entry.window.end.isAfter(asOf);
-    if (ended) return '$percent% used';
+    if (!entry.window.end.isAfter(asOf)) return '$percent% used';
 
     final days = entry.daysRemaining;
     final dayWord = days == 1 ? 'day' : 'days';
