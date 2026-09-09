@@ -385,16 +385,21 @@ void main() {
     });
 
     test('no goal-progress notice exists, because goals do not', () {
+      // `57:740` authors "You're 68% to your Japan trip". Goals is unbuilt, so
+      // nothing may stand in for it. Asserting every kind is in the enum, as
+      // this test used to, is a tautology over an enum-typed field: it looks
+      // for the notice by its words instead, the way the sync test does.
       final result = deriveNotifications(
         budgets: [overShopping()],
         transactions: [tx()],
         now: now,
       );
-      expect(
-        result.map((n) => n.kind).toSet(),
-        everyElement(isIn(NotificationKind.values)),
-      );
-      expect(NotificationKind.values, hasLength(3));
+      final words = result
+          .map((n) => '${n.title} ${n.detail}'.toLowerCase())
+          .join(' | ');
+      expect(words, isNot(contains('goal')));
+      expect(words, isNot(contains('% to your')));
+      expect(words, isNot(contains('trip')));
     });
   });
 }

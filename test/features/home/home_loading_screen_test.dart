@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moneta/core/money.dart';
 import 'package:moneta/design_system/molecules/skeleton.dart';
@@ -138,9 +138,17 @@ void main() {
     });
 
     testWidgets('no spinner is used anywhere', (tester) async {
-      // "a spinner is not a loading state in this system".
+      // Annotation `52:630`: "a spinner is not a loading state in this system".
+      // Asserting that skeletons exist does not test that, because a spinner
+      // added beside them passes. This looks for the spinner.
       await pumpLoading(tester);
       expect(find.byType(Skeleton), findsWidgets);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(
+        find.byWidgetPredicate((w) => w is ProgressIndicator),
+        findsNothing,
+      );
     });
 
     testWidgets('nothing overflows at the design size', (tester) async {

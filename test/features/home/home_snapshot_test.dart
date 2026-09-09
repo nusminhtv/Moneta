@@ -256,13 +256,26 @@ void main() {
       );
     });
 
-    test('the worst budget is the head of the list, which arrives ranked', () {
-      // The banner names only this one, however many are over.
-      final snapshot = withBudgets([
-        summary(category: SpendCategory.transport, spent: 3000),
+    test('worstBudget reads the head and does NOT re-sort', () {
+      // Asserting that worstBudget equals budgets.first is a tautology — that
+      // is its definition. What is worth pinning is the invariant behind it:
+      // ranking happens upstream in budgetProgressProvider, and this type
+      // trusts it. So feed it a deliberately mis-ordered list and require the
+      // head back, which fails the day someone makes this getter compute a
+      // maximum and quietly moves the ordering contract.
+      //
+      // That the provider really does rank worst-first is verified where it
+      // happens: test/app/home_budget_composition_test.dart.
+      final misordered = withBudgets([
         summary(category: SpendCategory.food, spent: 1500),
+        summary(category: SpendCategory.transport, spent: 3000),
       ]);
-      expect(snapshot.worstBudget?.category, SpendCategory.transport);
+      expect(misordered.worstBudget?.category, SpendCategory.food);
+      expect(misordered.budgets.first.category, SpendCategory.food);
+    });
+
+    test('worstBudget is null when there are no budgets', () {
+      expect(withBudgets(const []).worstBudget, isNull);
     });
   });
 }

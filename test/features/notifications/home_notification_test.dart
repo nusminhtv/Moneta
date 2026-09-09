@@ -45,23 +45,36 @@ void main() {
       );
     });
 
-    test('a caller cannot contradict the kind', () {
-      // isActionable is derived, not a constructor argument, which is what
-      // makes "a chevron over nothing" unrepresentable. If this ever becomes a
-      // field, 57:830's rule stops being enforced by the type.
-      final informational = notification(
-        kind: NotificationKind.budgetPeriodEnding,
-      );
+    test('each kind maps to the actionability 57:830 requires', () {
+      // Written out by hand rather than read off the enum. Comparing
+      // `notification.isActionable` to `kind.isActionable` cannot fail, because
+      // the former delegates to the latter — it asserts a getter against
+      // itself. This table can fail, and it is what 57:830 actually says:
+      // "actionable notifications get a chevron; informational ones do not".
+      const expected = <NotificationKind, bool>{
+        NotificationKind.budgetOverLimit: true,
+        NotificationKind.incomeReceived: true,
+        NotificationKind.budgetPeriodEnding: false,
+      };
       expect(
-        informational.isActionable,
-        NotificationKind.budgetPeriodEnding.isActionable,
+        expected.keys.toSet(),
+        NotificationKind.values.toSet(),
+        reason: 'a kind was added or removed without deciding its accessory',
       );
+      expected.forEach((kind, isActionable) {
+        expect(kind.isActionable, isActionable, reason: kind.name);
+        expect(notification(kind: kind).isActionable, isActionable);
+      });
     });
 
-    test('every kind declares its actionability', () {
-      for (final kind in NotificationKind.values) {
-        expect(kind.isActionable, isA<bool>());
-      }
+    test('at least one kind of each actionability exists', () {
+      // Otherwise the accessory tests below could pass against a feed that only
+      // ever produces one shape of row.
+      expect(NotificationKind.values.where((k) => k.isActionable), isNotEmpty);
+      expect(
+        NotificationKind.values.where((k) => !k.isActionable),
+        isNotEmpty,
+      );
     });
   });
 
@@ -69,6 +82,10 @@ void main() {
     test('there are exactly three, and the two unbuilt ones are absent', () {
       // 57:622 authors five rows. A failed account sync and a goal's funding
       // need Accounts and Goals, so they are documented rather than faked.
+      //
+      // The length check is a deliberate tripwire, not a claim: a fourth kind
+      // should fail here and force whoever adds it to decide its destination
+      // and update specs/notifications/spec.md.
       expect(NotificationKind.values, hasLength(3));
       expect(
         NotificationKind.values.map((k) => k.name),
@@ -78,6 +95,15 @@ void main() {
           'budgetPeriodEnding',
         ]),
       );
+      // This part can actually fail on its own: it catches a seeded stand-in
+      // for either unbuilt feature rather than counting.
+      for (final kind in NotificationKind.values) {
+        expect(
+          kind.name.toLowerCase(),
+          allOf(isNot(contains('sync')), isNot(contains('goal'))),
+          reason: '${kind.name} looks like a faked Accounts or Goals notice',
+        );
+      }
     });
   });
 
