@@ -742,4 +742,77 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+
+  group('the safe-to-spend horizon', () {
+    // Untested until review found it, though BalanceCard renders it directly
+    // beside safe-to-spend. Two mutations passed the whole suite: month + 2,
+    // and dropping .toLocal().
+    Future<void> pumpAt(WidgetTester tester, DateTime now) => pumpMonetaWidget(
+      tester,
+      SizedBox(
+        width: 393,
+        height: 852,
+        child: HomeScreen(
+          snapshot: snapshotWith([]),
+          greeting: 'Hi there',
+          now: now,
+        ),
+      ),
+      surfaceSize: const Size(393, 852),
+    );
+
+    testWidgets('names the last day of the current local month', (
+      tester,
+    ) async {
+      await pumpAt(tester, DateTime.utc(2026, 8, 20, 3));
+      expect(
+        tester.widget<BalanceCard>(find.byType(BalanceCard)).safeToSpendUntil,
+        '31 Aug',
+      );
+    });
+
+    testWidgets('a 30-day month is not reported as 31 days', (tester) async {
+      await pumpAt(tester, DateTime.utc(2026, 9, 20, 3));
+      expect(
+        tester.widget<BalanceCard>(find.byType(BalanceCard)).safeToSpendUntil,
+        '30 Sep',
+      );
+    });
+
+    testWidgets('February is not assumed to have 30 days', (tester) async {
+      await pumpAt(tester, DateTime.utc(2026, 2, 10, 3));
+      expect(
+        tester.widget<BalanceCard>(find.byType(BalanceCard)).safeToSpendUntil,
+        '28 Feb',
+      );
+    });
+
+    testWidgets('a leap February is 29 days', (tester) async {
+      await pumpAt(tester, DateTime.utc(2028, 2, 10, 3));
+      expect(
+        tester.widget<BalanceCard>(find.byType(BalanceCard)).safeToSpendUntil,
+        '29 Feb',
+      );
+    });
+
+    testWidgets('the month is the local one, not the UTC one', (tester) async {
+      // 31 Aug 18:00 UTC is 1 Sep 01:00 at +7. Formatting the UTC instant
+      // names August; the user is in September.
+      await pumpAt(tester, DateTime.utc(2026, 8, 31, 18));
+      expect(
+        tester.widget<BalanceCard>(find.byType(BalanceCard)).safeToSpendUntil,
+        '30 Sep',
+      );
+    });
+
+    testWidgets('December rolls into the next year without breaking', (
+      tester,
+    ) async {
+      await pumpAt(tester, DateTime.utc(2026, 12, 10, 3));
+      expect(
+        tester.widget<BalanceCard>(find.byType(BalanceCard)).safeToSpendUntil,
+        '31 Dec',
+      );
+    });
+  });
 }

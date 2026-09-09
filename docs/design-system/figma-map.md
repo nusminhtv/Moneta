@@ -568,6 +568,21 @@ in plain words. Access returned on a `seat: "Full"`, `tier: "pro"` account.
 Two lessons, neither about Figma: the error message was accurate and was read as
 boilerplate, and the diagnostic tool was in the tool list the whole time.
 
+### Known gaps on Home, recorded by the third review pass
+
+| What | Why it is left |
+| --- | --- |
+| **Safe-to-spend's horizon always names the month end**, while the figure now subtracts remainders from budgets that may be weekly or yearly. `_monthEndLabel` in `home_screen.dart`. | The figure and its horizon can therefore describe different periods. Making the horizon follow the budgets means deciding what to show for a mixed set — a design decision, not a fix. The label is now tested for what it does claim (month end, local, leap years, December rollover); the mismatch is the open part. |
+| **`home_route_screen.dart`'s `data:` arm has no coverage.** Router tests reach Home only through the *error* arm, because `budgetRepositoryProvider` throws with no database in the test binding. | So the route wiring — `onOpenBudget`, `onSeeAllBudgets`, the quick-action handlers and the clock read — is correct by reading and unproven by test. `lib/app` is outside `tool/coverage_critical.txt`, so no gate catches it. Closing it needs one widget test through `HomeRouteScreen` with the repository, budget list and clock overridden. |
+
+### A `dart format` trap worth knowing
+
+Twice in this change a mutation test appeared to pass when the mutation had
+never been applied: `dart format` had wrapped or collapsed the target expression,
+so the search string did not match and the edit silently did nothing. A mutation
+that fails to apply is indistinguishable from a test that fails to catch. Assert
+that the edit landed before believing the result.
+
 ### An oddity, observed and not acted on
 
 Frame **`145:3776`** carries the same name as `52:2` — "02.01 Home & Dashboard /

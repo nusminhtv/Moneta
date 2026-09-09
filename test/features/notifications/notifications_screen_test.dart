@@ -162,6 +162,32 @@ void main() {
     });
   });
 
+  group('a chevron over nothing is not representable', () {
+    testWidgets('an actionable row with no handler gets no chevron', (
+      tester,
+    ) async {
+      // The accessory used to follow the kind alone, so this drew a chevron
+      // over a row that did nothing -- the exact thing the spec forbids. The
+      // first-run checklist already followed the stricter rule, so the two
+      // screens disagreed about a rule they share.
+      await pump(tester, [entry(kind: NotificationKind.budgetOverLimit)]);
+      final row = tester.widget<ListRow>(find.byType(ListRow));
+      expect(row.onTap, isNull);
+      expect(row.accessory, ListRowAccessory.none);
+    });
+
+    testWidgets('the same row with a handler does get one', (tester) async {
+      await pump(
+        tester,
+        [entry(kind: NotificationKind.budgetOverLimit)],
+        onOpen: (_) {},
+      );
+      final row = tester.widget<ListRow>(find.byType(ListRow));
+      expect(row.onTap, isNotNull);
+      expect(row.accessory, ListRowAccessory.chevron);
+    });
+  });
+
   group('Today and Earlier', () {
     testWidgets('both headings appear when both groups have rows', (
       tester,
@@ -249,6 +275,69 @@ void main() {
           occurredAt: earlyToday,
         ),
       ], now);
+      expect(groups.today, hasLength(1));
+      expect(groups.earlier, isEmpty);
+    });
+
+    test('before 07:00 local, yesterday is still Earlier', () {
+      // THE discriminating case, and the one the fixture above cannot reach.
+      //
+      // `groupByRecency` converts **now** to local to find the start of today.
+      // Every other test in this group passes the shared `now` of 12:00 local,
+      // where the UTC and local dates agree -- so dropping that conversion
+      // changed no answer and the whole suite stayed green. The entry-side
+      // conversion is a genuine no-op: `isBefore` compares instants.
+      //
+      // Between 00:00 and 07:00 local the two dates differ. Here now is
+      // 20 Sep 00:30 local (19 Sep 17:30 UTC). Built from the UTC date instead,
+      // "start of today" lands on 19 Sep and the whole of yesterday is filed
+      // under Today.
+      final nowEarlyMorning = DateTime.utc(2026, 9, 19, 17, 30);
+      final yesterdayMidday = DateTime.utc(
+        2026,
+        9,
+        19,
+        5,
+      ); // 19 Sep 12:00 local
+
+      final groups = NotificationsScreen.groupByRecency([
+        HomeNotification(
+          id: 'n',
+          kind: NotificationKind.incomeReceived,
+          title: 't',
+          detail: 'd',
+          icon: MonetaIconName.briefcase,
+          occurredAt: yesterdayMidday,
+        ),
+      ], nowEarlyMorning);
+
+      expect(
+        groups.earlier,
+        hasLength(1),
+        reason:
+            'start of today was computed from the UTC date, not the local '
+            'one, so yesterday was filed under Today',
+      );
+      expect(groups.today, isEmpty);
+    });
+
+    test('before 07:00 local, this morning is still Today', () {
+      // The other side of the same boundary, so the fix cannot be "put
+      // everything in Earlier".
+      final nowEarlyMorning = DateTime.utc(2026, 9, 19, 17, 30);
+      final thisMorning = DateTime.utc(2026, 9, 19, 17, 15); // 20 Sep 00:15
+
+      final groups = NotificationsScreen.groupByRecency([
+        HomeNotification(
+          id: 'n',
+          kind: NotificationKind.incomeReceived,
+          title: 't',
+          detail: 'd',
+          icon: MonetaIconName.briefcase,
+          occurredAt: thisMorning,
+        ),
+      ], nowEarlyMorning);
+
       expect(groups.today, hasLength(1));
       expect(groups.earlier, isEmpty);
     });

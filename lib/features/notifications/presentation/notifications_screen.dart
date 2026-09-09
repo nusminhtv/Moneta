@@ -171,15 +171,18 @@ class _NotificationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Derived from **tappability**, not from the kind alone. The two differ
+    // when no handler is supplied: `isActionable` alone drew a chevron over a
+    // row that did nothing, which is the very thing the spec calls not
+    // representable. `HomeScreen._ChecklistRow` already followed the stricter
+    // rule, so the two screens disagreed about a rule they share.
     final tappable = entry.isActionable && onOpen != null;
     return ListRow(
       key: ValueKey(entry.id),
       title: entry.title,
       subtitle: entry.detail,
       leadingIcon: entry.icon,
-      accessory: entry.isActionable
-          ? ListRowAccessory.chevron
-          : ListRowAccessory.none,
+      accessory: tappable ? ListRowAccessory.chevron : ListRowAccessory.none,
       onTap: tappable ? () => onOpen!(entry) : null,
     );
   }

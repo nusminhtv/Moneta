@@ -373,9 +373,20 @@ class HomeScreen extends StatelessWidget {
 
   /// The label the balance card shows after "Safe to spend … until".
   ///
-  /// Deliberately not a computed budget horizon: there is no budget feature yet,
-  /// so claiming one would be inventing a number. It names the end of the
-  /// current local month, which is true.
+  /// The end of the current **local** month.
+  ///
+  /// The justification here used to read "there is no budget feature yet, so
+  /// claiming one would be inventing a number". That stopped being true when
+  /// `budgets-feature` landed — it is the fourth stale claim found in this file
+  /// by review, all of the same shape: a comment that was accurate when written
+  /// and became false without anyone noticing.
+  ///
+  /// **Known gap, deliberately not closed here.** Safe-to-spend now subtracts
+  /// remainders from budgets that may be weekly or yearly, while this label
+  /// always names the month end. So the figure and its horizon can disagree
+  /// about the period they describe. Making the horizon follow the budgets
+  /// means deciding what to show for a mixed set, which is a design decision
+  /// rather than a fix; recorded in `docs/design-system/figma-map.md`.
   String _monthEndLabel() {
     final local = now.toLocal();
     final end = DateTime(local.year, local.month + 1, 0);
