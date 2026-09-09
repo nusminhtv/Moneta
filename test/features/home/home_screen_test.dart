@@ -271,6 +271,49 @@ void main() {
       );
     });
 
+    testWidgets('draws at most two cards however many budgets exist', (
+      tester,
+    ) async {
+      // The cap is a display decision and lives here. It used to live beside
+      // the snapshot, where it reached safeToSpend and dropped the least-spent
+      // budgets out of the arithmetic.
+      await pumpHome(
+        tester,
+        snapshotWith(
+          [],
+          budgets: [
+            budget(),
+            budget(category: SpendCategory.transport),
+            budget(category: SpendCategory.shopping),
+          ],
+        ),
+      );
+      expect(find.byType(BudgetCard), findsNWidgets(2));
+      expect(HomeScreen.budgetCardLimit, 2);
+    });
+
+    testWidgets('the two it draws are the two worst, which arrive first', (
+      tester,
+    ) async {
+      await pumpHome(
+        tester,
+        snapshotWith(
+          [],
+          budgets: [
+            budget(spent: 4800000),
+            budget(category: SpendCategory.transport, spent: 4000000),
+            budget(category: SpendCategory.shopping, spent: 0),
+          ],
+        ),
+      );
+      final drawn = tester
+          .widgetList<BudgetCard>(find.byType(BudgetCard))
+          .map((c) => c.category)
+          .toList();
+      expect(drawn, [SpendCategory.food, SpendCategory.transport]);
+      expect(drawn, isNot(contains(SpendCategory.shopping)));
+    });
+
     testWidgets('is absent entirely when there are no budgets', (tester) async {
       // A heading with nothing under it reads as a failed load, not an absence.
       await pumpHome(tester, snapshotWith([]));

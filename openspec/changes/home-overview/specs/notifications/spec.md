@@ -100,6 +100,38 @@ Annotation `57:935` sanctions this explicitly: *"the rare legitimate case for
 HasAction=False — there is genuinely nothing for the user to do here"*, and
 contrasts it with `02.02`, where an empty state must offer a next step.
 
+### Requirement: Only notifications the app can justify are produced
+
+The notification centre SHALL contain only entries derived from facts the app can
+compute, and SHALL NOT seed or fabricate the rest.
+
+Frame `57:622` authors five rows. Three are producible: a budget over its limit
+(`57:662`), income received (`57:688`), and budgets about to reset (`57:773`).
+Two are not: a failed account sync (`57:718`) needs Accounts and a goal's funding
+progress (`57:740`) needs Goals, and neither feature exists.
+
+This mirrors the treatment of the scheduled-bills term in `specs/home/spec.md`:
+the shortfall is stated in the contract rather than left for a reader to discover
+by counting rows.
+
+#### Scenario: A kind has no feature behind it
+- **WHEN** a notification kind depends on a feature that does not exist
+- **THEN** no entry of that kind is produced
+- **AND** no placeholder or sample entry stands in for it
+- **AND** the omission is recorded in `docs/design-system/figma-map.md` against
+  the node that authors the row
+
+#### Scenario: The feed is shorter than the frame
+- **WHEN** the notification centre is rendered with every producible fact present
+- **THEN** it may contain fewer kinds than `57:622` draws
+- **AND** that is not a defect, because a feed the user is meant to trust cannot
+  carry invented content
+
+#### Scenario: A new kind arrives with a destination
+- **WHEN** a notification kind is added
+- **THEN** whether it is actionable is declared with the kind, not per entry
+- **AND** an actionable kind without a destination does not compile
+
 ### Requirement: Notifications does not persist read state in this change
 
 Notification read/unread state SHALL NOT introduce persistence as part of

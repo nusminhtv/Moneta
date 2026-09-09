@@ -46,9 +46,11 @@
      none.
   2. Raise the recent-list cap from four to **five** (`homeRecentLimit`). The
      annotation states the cap; the frame drawing four is one instance of it.
-  3. **Safe-to-spend** becomes balance minus committed budget limits, computed in
-     `lib/app`, not the total balance passed through. Omit the scheduled-bills
-     term and record it as a deviation — do not invent the concept.
+  3. **Safe-to-spend** becomes balance minus each current-period budget's
+     unspent remainder, computed in `lib/app`, not the total balance passed
+     through. Over **every** budget, never a display-capped subset. Omit the
+     scheduled-bills term and record it as a deviation — do not invent the
+     concept.
   4. **Quick actions** become Add, Transfer, Budgets, Goals per `52:66`–`52:105`,
      with Transfer and Goals rendered disabled because those features do not
      exist.

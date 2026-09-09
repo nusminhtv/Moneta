@@ -57,8 +57,18 @@ how a drawing was mistaken for a specification.
 ### Requirement: Safe to spend subtracts committed budgets
 
 The balance card's safe-to-spend figure SHALL be the total balance minus the sum
-of committed budget limits for the current period, computed in `lib/app` where
-the coverage gate reaches it.
+of each current-period budget's **unspent remainder**, computed in `lib/app`.
+
+The rule is stated once, here, in these words. An earlier draft of this
+requirement said "committed budget limits" while its own scenarios said
+remainder — the normative sentence and the scenarios under it disagreed about
+money, which is worse than either wording being wrong.
+
+It SHALL be computed over **every** budget in the current period. A cap on how
+many budgets a screen displays SHALL NOT reach this figure: ranking is
+worst-first, so capping drops the least-spent budgets, which hold the largest
+unspent commitments, and the result is optimistic by exactly the amount the user
+most needs to know about.
 
 Annotation `52:362` states: *"safe-to-spend = balance minus committed budgets
 minus scheduled bills to period end."* Merged code passed the total balance

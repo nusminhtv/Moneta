@@ -139,8 +139,13 @@ final class BudgetSummary extends Equatable {
 /// Everything Home needs to render, assembled before it is built.
 ///
 /// Home takes one of these and does no arithmetic of its own beyond grouping the
-/// recent list by day. Totals are computed where the 85% coverage gate reaches
-/// them, which `presentation` is not.
+/// recent list by day. Totals are computed in `lib/app`, which keeps arithmetic
+/// out of a widget's build method.
+///
+/// Note that `lib/app` is **not** in `tool/coverage_critical.txt` — only
+/// `lib/core`, `*/domain/` and `*/data/` are. Earlier comments here claimed the
+/// 85% gate reached these totals; it does not, and the money bug that a display
+/// cap caused lived in exactly that unguarded gap.
 final class HomeSnapshot extends Equatable {
   /// Creates a snapshot.
   const HomeSnapshot({
@@ -176,8 +181,7 @@ final class HomeSnapshot extends Equatable {
   /// What is left after every budget's unspent commitment is set aside.
   ///
   /// From annotation `52:362`: *"safe-to-spend = balance minus committed budgets
-  /// minus scheduled bills to period end."* Computed in `lib/app`, where the
-  /// coverage gate reaches it.
+  /// minus scheduled bills to period end."* Computed in `lib/app`.
   ///
   /// **This figure is short by one term.** Scheduled bills do not exist anywhere
   /// in this codebase, and inventing them from one clause of one annotation is

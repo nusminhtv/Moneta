@@ -100,6 +100,23 @@ class HomeScreen extends StatelessWidget {
   /// Deviation recorded in `docs/design-system/figma-map.md`.
   final VoidCallback? onOpenNotifications;
 
+  /// How many budget cards Home shows.
+  ///
+  /// **Frame-derived, not stated as a rule.** Annotation `52:362` lists
+  /// `BudgetCard x2` in its component inventory and its Data line says nothing
+  /// about a cap — unlike the recent list, where the cap is stated outright. So
+  /// two is what `52:2` instances (`52:125`, `52:143`), labelled here as an
+  /// instance count rather than dressed up as a specification.
+  ///
+  /// **It lives in the screen deliberately.** This began life in `lib/app`
+  /// beside the snapshot, and from there it reached `safeToSpend` and dropped
+  /// every budget past the second out of the arithmetic. Ranking is worst-first,
+  /// so the ones dropped were the least spent — the largest unspent
+  /// commitments — and the figure came out optimistic by exactly the amount the
+  /// user most needed to know about. A cap on what a screen draws must not be
+  /// able to change what a number means.
+  static const int budgetCardLimit = 2;
+
   /// The app bar actions shared by the loaded and loading states.
   ///
   /// One function so the two states cannot drift: annotation `52:630` requires
@@ -202,7 +219,9 @@ class HomeScreen extends StatelessWidget {
                           actionLabel: 'See all',
                           onAction: onSeeAllBudgets,
                         ),
-                        for (final budget in snapshot.budgets) ...[
+                        for (final budget in snapshot.budgets.take(
+                          budgetCardLimit,
+                        )) ...[
                           const SizedBox(height: MonetaSpacing.spaceSm),
                           BudgetCard(
                             key: ValueKey('budget-${budget.category.name}'),

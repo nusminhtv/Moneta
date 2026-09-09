@@ -27,16 +27,6 @@ import 'package:moneta/features/transactions/presentation/transaction_providers.
 /// Counting instances in a drawing is not reading a specification.
 const int homeRecentLimit = 5;
 
-/// How many budget cards Home shows.
-///
-/// **Frame-derived, not stated as a rule.** Annotation `52:362` lists
-/// `BudgetCard x2` in its component inventory and its Data line says nothing
-/// about a cap — unlike the recent list, where the cap is stated outright. So
-/// two is what `52:2` instances (`52:125`, `52:143`), and it is labelled here as
-/// an instance count rather than dressed up as a specification. If a Data line
-/// somewhere states otherwise, that wins.
-const int homeBudgetLimit = 2;
-
 /// One transaction, as Home sees it.
 ///
 /// The title falls back to the category name, matching the transactions list:
@@ -159,10 +149,15 @@ final homeSnapshotProvider = Provider<AsyncValue<HomeSnapshot>>((ref) {
     (state) => buildSnapshot(
       all: [for (final day in state.days) ...day.transactions],
       currency: currency,
-      budgets: [
-        for (final entry in ranked.take(homeBudgetLimit))
-          toBudgetSummary(entry),
-      ],
+      // **Every** current-period budget, uncapped. How many cards Home
+      // *shows* is a display decision and now lives in `HomeScreen`; while it
+      // lived here it reached `safeToSpend` and made the figure wrong. Because
+      // `compareWorstFirst` ranks by fraction used descending, capping drops
+      // the *least*-used budgets — precisely the ones with the largest unspent
+      // commitments — so safe-to-spend was overstated, and by more the more
+      // budgets the user had. A limit on what a screen draws must not be able
+      // to change what a number means.
+      budgets: [for (final entry in ranked) toBudgetSummary(entry)],
     ),
   );
 });

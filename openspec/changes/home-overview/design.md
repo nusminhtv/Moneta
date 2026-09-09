@@ -120,9 +120,9 @@ merged code. Recorded here because the reasoning matters more than the values.
 **Safe-to-spend is partial, and says so.** Annotation `52:362` defines it as
 *"balance minus committed budgets minus scheduled bills to period end"*. Budgets
 exist; scheduled bills do not exist anywhere in this codebase — no table, no
-entity, no concept. So the implemented figure is `balance − committed budget
-limits`, and the missing term is recorded as a deviation in
-`docs/design-system/figma-map.md` naming the annotation.
+entity, no concept. So the implemented figure is
+`balance − Σ each budget's unspent remainder`, and the missing term is recorded
+as a deviation in `docs/design-system/figma-map.md` naming the annotation.
 
 The alternative was to invent a scheduled-bills concept from one clause of one
 annotation. That is precisely how the invented spacing scale happened: a
