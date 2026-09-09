@@ -103,7 +103,7 @@
 
 ## 5. Notifications Screens
 
-- [ ] 5.1 Annotation `57:830` read. Implement the notifications list screen in
+- [x] 5.1 Annotation `57:830` read. Implement the notifications list screen in
   `lib/features/notifications` — the feature directory does not exist yet. What
   the annotation pins beyond the component list:
   - **`AppBar/TitleBack`**, and the Home tab stays the active destination: this is
@@ -119,7 +119,18 @@
     discriminate: a notification late on the local day whose UTC timestamp falls
     on another date must still land under `Today`.
 
-  Read state stays out per D3 — the seed notifications are not durable.
+  Read state stays out per D3. **That decided where notifications come from.**
+  They cannot be stored, so they are *derived* in `lib/app` from budgets and the
+  ledger on every read — which also means a notification disappears when the
+  fact behind it stops being true.
+
+  Reading the frame answered the content-model question the annotation summary
+  could not. The five rows come from five different sources, and only three have
+  a feature behind them: budget over limit (`57:662`), income received
+  (`57:688`) and budget period ending (`57:773`). The other two need Accounts
+  (`57:718`, a failed sync) and Goals (`57:740`, funding progress); both are
+  left out rather than seeded, and `NotificationKind` is an enum so each becomes
+  one case plus one derivation when those features land.
 
   Verify it uses `AppBar`, `BottomNav`, `ListRow` and `SectionHeader`.
 - [ ] 5.2 Read the sibling annotation frame for Notifications -- empty
