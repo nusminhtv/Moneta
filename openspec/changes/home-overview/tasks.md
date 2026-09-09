@@ -61,7 +61,7 @@
 - [x] 4.2 Read the sibling annotation frame for Home -- empty (`52:372`) and
   implement the empty Home screen. Verify it uses `AppBar`, `BottomNav`,
   `EmptyState` and `ListRow`.
-- [ ] 4.3 Annotation `52:630` read. Fix the loading Home screen against it. Two
+- [x] 4.3 Annotation `52:630` read. Fix the loading Home screen against it. Two
   defects in the merged `_HomeLoading`:
   1. It renders **no app bar**. The annotation requires that *"AppBar and
      BottomNav render immediately; only the content area is skeletonised"* — as

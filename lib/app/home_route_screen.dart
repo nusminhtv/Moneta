@@ -7,11 +7,9 @@ import 'package:moneta/app/router.dart';
 import 'package:moneta/app/shell.dart';
 import 'package:moneta/data/app_providers.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
-import 'package:moneta/design_system/molecules/skeleton.dart';
 import 'package:moneta/design_system/organisms/bottom_nav.dart';
-import 'package:moneta/design_system/theme/moneta_theme.dart';
-import 'package:moneta/design_system/tokens/spacing.dart';
 import 'package:moneta/features/home/domain/home_snapshot.dart';
+import 'package:moneta/features/home/presentation/home_loading_screen.dart';
 import 'package:moneta/features/home/presentation/home_screen.dart';
 
 /// Hosts [HomeScreen] and supplies it with data.
@@ -19,6 +17,12 @@ import 'package:moneta/features/home/presentation/home_screen.dart';
 /// The screen itself takes a [HomeSnapshot] and nothing else, so it can be
 /// tested without a database. Everything that knows where the data comes from
 /// lives here, in `lib/app`.
+/// The app bar title on every Home state.
+///
+/// One constant, because annotation `52:630` requires the bar to be identical
+/// while loading and once loaded. Two literals would be free to drift apart.
+const String _greeting = 'Hi there';
+
 class HomeRouteScreen extends ConsumerStatefulWidget {
   /// Creates the route wrapper.
   const HomeRouteScreen({super.key});
@@ -68,14 +72,14 @@ class _HomeRouteScreenState extends ConsumerState<HomeRouteScreen> {
     final snapshot = ref.watch(homeSnapshotProvider);
 
     return snapshot.when(
-      loading: () => const _HomeLoading(),
+      loading: () => const HomeLoadingScreen(greeting: _greeting),
       // A read failure resolves to an empty wallet inside the provider, so this
       // arm is only reached by a genuine crash. Showing the empty screen is
       // still better than a red error box on the app's first surface.
-      error: (_, _) => const _HomeLoading(),
+      error: (_, _) => const HomeLoadingScreen(greeting: _greeting),
       data: (data) => HomeScreen(
         snapshot: data,
-        greeting: 'Hi there',
+        greeting: _greeting,
         now: ref.watch(clockProvider).nowUtc(),
         // Accounts is still not built. A row that goes nowhere is worse than a
         // row that plainly does not respond, so it stays null until it exists.
@@ -92,41 +96,6 @@ class _HomeRouteScreenState extends ConsumerState<HomeRouteScreen> {
           onAdd: () => showAddTransactionSheet(context),
           onBudgets: () => context.go(BudgetRoutes.overview),
         ),
-      ),
-    );
-  }
-}
-
-/// Home's loading state, from Figma `52:547`.
-///
-/// Skeletons in the shape of the content, not a spinner: the layout does not
-/// jump when the data lands.
-class _HomeLoading extends StatelessWidget {
-  const _HomeLoading();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = context.moneta;
-    return ColoredBox(
-      color: theme.colors.canvas,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          MonetaSpacing.spaceLg,
-          MonetaSpacing.space5xl,
-          MonetaSpacing.spaceLg,
-          MonetaSpacing.spaceBase,
-        ),
-        children: const [
-          Skeleton(shape: SkeletonShape.card),
-          SizedBox(height: MonetaSpacing.spaceXl),
-          Skeleton(shape: SkeletonShape.line),
-          SizedBox(height: MonetaSpacing.spaceBase),
-          Skeleton(shape: SkeletonShape.row),
-          SizedBox(height: MonetaSpacing.spaceSm),
-          Skeleton(shape: SkeletonShape.row),
-          SizedBox(height: MonetaSpacing.spaceSm),
-          Skeleton(shape: SkeletonShape.row),
-        ],
       ),
     );
   }
