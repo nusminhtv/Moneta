@@ -58,7 +58,7 @@
   `TransactionRow`. **Check the variant of each `TransactionRow` instance on
   `52:2` (`52:177`, `52:214`, `52:246`, `52:276`) first**: if any is `Transfer` or
   `Pending`, stop and report it per D4 rather than implementing it.
-- [ ] 4.2 Read the sibling annotation frame for Home -- empty (`52:372`) and
+- [x] 4.2 Read the sibling annotation frame for Home -- empty (`52:372`) and
   implement the empty Home screen. Verify it uses `AppBar`, `BottomNav`,
   `EmptyState` and `ListRow`.
 - [ ] 4.3 Annotation `52:630` read. Fix the loading Home screen against it. Two

@@ -119,6 +119,37 @@ sibling annotation frame `52:537`.
 - **WHEN** the empty Home state is rendered
 - **THEN** it carries a primary action and a three-step checklist, per
   annotation `52:537`
+- **AND** the primary action leads somewhere that exists
+
+#### Scenario: The primary action is a step the app can perform
+- **WHEN** the first-run screen's primary action is rendered
+- **THEN** it offers logging a first expense, which the app supports
+- **AND** it does not offer linking an account while no Accounts feature exists
+
+Figma's authored CTA at `52:389` is the account one. Wiring the app's first
+screen to a feature that is not built would produce the dead end the annotation
+exists to prevent: a primary action that does nothing, above a checklist whose
+first row also does nothing. The divergence is recorded in
+`docs/design-system/figma-map.md` and reverts when Accounts lands.
+
+#### Scenario: A checklist step with no destination makes no promise
+- **WHEN** a checklist step has no destination because its feature is unbuilt
+- **THEN** the step is still listed, so the checklist reads as three steps
+- **AND** it renders no chevron, because a chevron advertises navigation that
+  would not happen
+
+#### Scenario: Completed checklist steps show as done, independently
+- **WHEN** one checklist step is already complete and the others are not
+- **THEN** that step alone reads as done
+- **AND** it no longer responds to being tapped, because re-doing a finished
+  step is not a step
+
+Annotation `52:537`: *"checklist items tick off independently."* `52:372` authors
+no completed state — nothing is finished on a first-run frame — so the done form
+composes `ListRow`'s authored `Badge` accessory rather than inventing a visual.
+Setting a budget is the only step that can complete while this screen is
+showing: any transaction replaces the screen with `52:2`, and the account step
+has no feature to complete.
 
 ### Requirement: Home renders the loading dashboard from node 52:547
 

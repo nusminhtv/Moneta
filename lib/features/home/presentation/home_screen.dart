@@ -195,10 +195,26 @@ class HomeScreen extends StatelessWidget {
   /// Home before there is anything to show, from Figma `52:372`.
   ///
   /// A different screen, not the normal one with a blank middle: no balance
-  /// card over zero, no quick actions to nowhere. An empty state with one real
-  /// action, then the three things that make the app useful — which is what
-  /// `35:138` means by *"an empty state without a primary action is a dead
-  /// end"*.
+  /// card over zero, no quick actions to nowhere. Annotation `52:537`:
+  /// *"An empty state with no action is a dead end, so this one carries both a
+  /// primary CTA and a 3-step checklist."*
+  ///
+  /// **The primary action is "Log your first expense", not "Link an account".**
+  /// Figma's CTA is the account one, and Accounts (page 05) is not built, so
+  /// wiring the app's very first screen to it would have produced exactly the
+  /// dead end the annotation exists to prevent — a CTA that does nothing, above
+  /// a checklist whose first row also does nothing. Logging an expense is the
+  /// step that actually works and the one that replaces this screen. The
+  /// account row is kept, disabled, so the checklist still reads as three steps.
+  ///
+  /// This is a deliberate divergence from the authored copy, recorded in
+  /// `docs/design-system/figma-map.md`. It should be revisited when Accounts
+  /// lands, at which point Figma's CTA becomes the correct one.
+  ///
+  /// **The copy here is not verified against the nodes.** It was written while
+  /// this change believed no Figma tool was callable, and `52:389`, `52:428`,
+  /// `52:459` and `52:481` still have not been read — access was unavailable
+  /// throughout this task. Treat every string below as unconfirmed.
   Widget _firstRun(BuildContext context) {
     final theme = context.moneta;
     return ListView(
@@ -213,10 +229,10 @@ class HomeScreen extends StatelessWidget {
           icon: MonetaIconName.shoppingBag,
           title: "Let's set up your money",
           message:
-              'Add an account and log one transaction. Moneta needs about a '
-              'week of data before budgets get useful.',
-          actionLabel: 'Link an account',
-          onAction: onLinkAccount,
+              'Log one transaction to get started. Moneta needs about a week '
+              'of data before budgets get useful.',
+          actionLabel: 'Log your first expense',
+          onAction: onLogFirstExpense,
         ),
         const SizedBox(height: MonetaSpacing.spaceMd),
         DecoratedBox(
@@ -232,25 +248,28 @@ class HomeScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                ListRow(
+                _ChecklistRow(
                   title: 'Link an account',
                   subtitle: 'Bank, cash or e-wallet',
-                  leadingIcon: MonetaIconName.creditCard,
-                  accessory: ListRowAccessory.chevron,
+                  icon: MonetaIconName.creditCard,
                   onTap: onLinkAccount,
                 ),
-                ListRow(
+                _ChecklistRow(
                   title: 'Log your first expense',
                   subtitle: 'Takes about five seconds',
-                  leadingIcon: MonetaIconName.plus,
-                  accessory: ListRowAccessory.chevron,
+                  icon: MonetaIconName.plus,
                   onTap: onLogFirstExpense,
                 ),
-                ListRow(
+                _ChecklistRow(
                   title: 'Set one budget',
                   subtitle: 'Start with your biggest category',
-                  leadingIcon: MonetaIconName.target,
-                  accessory: ListRowAccessory.chevron,
+                  icon: MonetaIconName.target,
+                  // Annotation `52:537`: "checklist items tick off
+                  // independently". This is the only one that can tick while
+                  // the screen is still showing — the screen is replaced by
+                  // `52:2` as soon as any transaction exists, and the account
+                  // step has no feature to complete.
+                  done: snapshot.budgets.isNotEmpty,
                   onTap: onSetBudget,
                 ),
               ],
@@ -284,6 +303,57 @@ class HomeScreen extends StatelessWidget {
       'Dec',
     ];
     return '${end.day} ${months[end.month - 1]}';
+  }
+}
+
+/// One step of the first-run checklist, from the rows at `52:428`–`52:481`.
+///
+/// Two things it will not do, both for the same reason — an accessory must not
+/// promise something the row cannot deliver:
+///
+/// - **A step with no destination gets no chevron.** Figma authors all three as
+///   `Trailing=Chevron`, but "Link an account" has nowhere to go until Accounts
+///   is built. A chevron on it would advertise navigation that does not happen.
+///   Deviation recorded in `docs/design-system/figma-map.md`.
+/// - **A completed step gets a badge, not a chevron.** `52:372` authors no
+///   ticked state — nothing is complete on a first-run frame — so rather than
+///   invent a visual, this composes `ListRow`'s authored `Badge` accessory. The
+///   row also stops responding, because re-doing a finished step is not a step.
+class _ChecklistRow extends StatelessWidget {
+  const _ChecklistRow({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    this.done = false,
+    this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final MonetaIconName icon;
+  final bool done;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    if (done) {
+      return ListRow(
+        title: title,
+        subtitle: subtitle,
+        leadingIcon: icon,
+        accessory: ListRowAccessory.badge,
+        badgeLabel: 'Done',
+      );
+    }
+    return ListRow(
+      title: title,
+      subtitle: subtitle,
+      leadingIcon: icon,
+      accessory: onTap == null
+          ? ListRowAccessory.none
+          : ListRowAccessory.chevron,
+      onTap: onTap,
+    );
   }
 }
 

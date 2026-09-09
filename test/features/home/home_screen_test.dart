@@ -403,4 +403,153 @@ void main() {
       expect(card.safeToSpend, isNot(card.totalBalance));
     });
   });
+
+  group('the first-run checklist', () {
+    // Annotation `52:537`: "An empty state with no action is a dead end, so
+    // this one carries both a primary CTA and a 3-step checklist."
+    HomeSnapshot firstRun({List<BudgetSummary> budgets = const []}) =>
+        HomeSnapshot(
+          totalBalance: const Money.zero(vnd),
+          income: const Money.zero(vnd),
+          expenses: const Money.zero(vnd),
+          recent: const [],
+          safeToSpend: const Money.zero(vnd),
+          budgets: budgets,
+        );
+
+    Future<void> pump(
+      WidgetTester tester,
+      HomeSnapshot snapshot, {
+      VoidCallback? onLogFirstExpense,
+      VoidCallback? onSetBudget,
+      VoidCallback? onLinkAccount,
+    }) => pumpMonetaWidget(
+      tester,
+      SizedBox(
+        width: 393,
+        height: 852,
+        child: HomeScreen(
+          snapshot: snapshot,
+          greeting: 'Hi there',
+          now: DateTime.utc(2026, 8, 20, 3),
+          onLogFirstExpense: onLogFirstExpense,
+          onSetBudget: onSetBudget,
+          onLinkAccount: onLinkAccount,
+        ),
+      ),
+      surfaceSize: const Size(393, 852),
+    );
+
+    testWidgets('the primary action logs an expense, which the app can do', (
+      tester,
+    ) async {
+      // Figma's CTA is "Link an account". Accounts does not exist, so wiring
+      // the first screen to it would be the dead end 52:537 warns about.
+      var logged = 0;
+      await pump(tester, firstRun(), onLogFirstExpense: () => logged++);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(EmptyState),
+          matching: find.text('Log your first expense'),
+        ),
+      );
+      expect(logged, 1);
+    });
+
+    testWidgets('the primary action is never the unbuilt account step', (
+      tester,
+    ) async {
+      var linked = 0;
+      await pump(tester, firstRun(), onLinkAccount: () => linked++);
+      expect(
+        find.descendant(
+          of: find.byType(EmptyState),
+          matching: find.text('Link an account'),
+        ),
+        findsNothing,
+      );
+      expect(linked, 0);
+    });
+
+    testWidgets('all three steps are always listed', (tester) async {
+      await pump(tester, firstRun());
+      expect(find.byType(ListRow), findsNWidgets(3));
+    });
+
+    testWidgets('a step with no destination shows no chevron', (tester) async {
+      // A chevron would advertise navigation that cannot happen.
+      await pump(tester, firstRun(), onSetBudget: () {});
+      final account = tester.widget<ListRow>(
+        find.ancestor(
+          of: find.text('Bank, cash or e-wallet'),
+          matching: find.byType(ListRow),
+        ),
+      );
+      expect(account.onTap, isNull);
+      expect(account.accessory, ListRowAccessory.none);
+    });
+
+    testWidgets('a step with a destination keeps its chevron', (tester) async {
+      await pump(tester, firstRun(), onSetBudget: () {});
+      final budgetStep = tester.widget<ListRow>(
+        find.ancestor(
+          of: find.text('Start with your biggest category'),
+          matching: find.byType(ListRow),
+        ),
+      );
+      expect(budgetStep.accessory, ListRowAccessory.chevron);
+    });
+
+    testWidgets('setting a budget ticks that step and only that step', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        firstRun(
+          budgets: [
+            budget(),
+          ],
+        ),
+        onSetBudget: () {},
+      );
+      final rows = tester.widgetList<ListRow>(find.byType(ListRow)).toList();
+      final done = rows.where((r) => r.accessory == ListRowAccessory.badge);
+      expect(done, hasLength(1));
+      expect(done.single.title, 'Set one budget');
+      expect(done.single.badgeLabel, 'Done');
+    });
+
+    testWidgets('a ticked step stops responding to taps', (tester) async {
+      var setBudget = 0;
+      await pump(
+        tester,
+        firstRun(budgets: [budget()]),
+        onSetBudget: () => setBudget++,
+      );
+      final done = tester.widget<ListRow>(
+        find.ancestor(
+          of: find.text('Set one budget'),
+          matching: find.byType(ListRow),
+        ),
+      );
+      expect(done.onTap, isNull);
+      expect(setBudget, 0);
+    });
+
+    testWidgets('with no budget set, nothing is ticked', (tester) async {
+      await pump(tester, firstRun(), onSetBudget: () {});
+      expect(
+        tester
+            .widgetList<ListRow>(find.byType(ListRow))
+            .where((r) => r.accessory == ListRowAccessory.badge),
+        isEmpty,
+      );
+    });
+
+    testWidgets('the first-run screen shows no balance card', (tester) async {
+      // No hero over zero, and no quick actions to nowhere.
+      await pump(tester, firstRun());
+      expect(find.byType(BalanceCard), findsNothing);
+    });
+  });
 }
