@@ -163,17 +163,20 @@ void main() {
       final weekly = BudgetWindow(
         start: DateTime.utc(2026, 9, 14),
         end: DateTime.utc(2026, 9, 21),
-      ).previous(BudgetPeriod.weekly);
+      ).previous(BudgetPeriod.weekly, anchor: DateTime.utc(2026, 8, 31))!;
       expect(weekly.start, DateTime.utc(2026, 9, 7));
       expect(weekly.end, DateTime.utc(2026, 9, 14));
 
       final yearly = BudgetWindow(
         start: DateTime.utc(2026, 3, 15),
         end: DateTime.utc(2027, 3, 15),
-      ).previous(BudgetPeriod.yearly);
+      ).previous(BudgetPeriod.yearly, anchor: DateTime.utc(2024, 3, 15))!;
       expect(yearly.start, DateTime.utc(2025, 3, 15));
 
-      final monthly = w.previous(BudgetPeriod.monthly);
+      final monthly = w.previous(
+        BudgetPeriod.monthly,
+        anchor: DateTime.utc(2026, 1),
+      )!;
       expect(monthly.start, DateTime.utc(2026, 8));
     });
   });

@@ -191,9 +191,14 @@ class BudgetProgress extends Equatable {
     final currency = budget.limit.currency;
     if (!budget.rollsOver) return Money(0, currency);
 
-    final previous = window.previous(budget.period);
-    // A window before the budget existed carries nothing.
-    if (previous.start.isBefore(budget.startsOn)) return Money(0, currency);
+    // Null when this is the budget's first window, which carries nothing.
+    // `previous` is anchor-derived, so it can no longer return a window that
+    // starts before `startsOn`; the old guard against that is gone with it.
+    final previous = window.previous(
+      budget.period,
+      anchor: budget.startsOn,
+    );
+    if (previous == null) return Money(0, currency);
 
     var spentMinor = 0;
     for (final t in entries) {

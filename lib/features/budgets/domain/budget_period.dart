@@ -79,9 +79,36 @@ class BudgetWindow {
     return days < 1 ? 1 : days;
   }
 
-  /// The window immediately before this one, for a rollover carry.
-  BudgetWindow previous(BudgetPeriod period) =>
-      BudgetWindow(start: _step(start, period, -1), end: start);
+  /// The window immediately before this one, or null if this is the first.
+  ///
+  /// Requires the [anchor] because a window cannot work this out from its own
+  /// bounds. It used to try — `_step(start, period, -1)` — which stepped
+  /// backwards from the window start and so broke the rule stated on
+  /// [_stepFromAnchor] below: *always measured from the anchor, never from the
+  /// previous window's start.*
+  ///
+  /// For a budget anchored on 31 January that produced `28 Jan → 28 Feb` where
+  /// the true preceding window is `31 Jan → 28 Feb`. Two consequences, both
+  /// money: the wrong start fell before `startsOn`, so the rollover carry was
+  /// silently dropped after every February; and in later years the three-day
+  /// overlap counted 28–30 January twice — once as January's spend, again as
+  /// the basis for February's carry.
+  ///
+  /// Derived by asking which window contains the instant just before this one
+  /// begins, so it reuses the same anchor walk as [BudgetWindow.currentFor] and
+  /// cannot drift away from it.
+  ///
+  /// Null rather than a window equal to this one when [start] is the anchor: a
+  /// first window has no predecessor, and returning itself would let a budget
+  /// carry its own spend forward.
+  BudgetWindow? previous(BudgetPeriod period, {required DateTime anchor}) {
+    if (!start.isAfter(anchor)) return null;
+    return BudgetWindow.currentFor(
+      anchor: anchor,
+      period: period,
+      now: start.subtract(const Duration(microseconds: 1)),
+    );
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -109,13 +136,6 @@ class BudgetWindow {
     BudgetPeriod.monthly => _clampedMonth(anchor, count),
     BudgetPeriod.yearly => _clampedMonth(anchor, 12 * count),
   };
-
-  static DateTime _step(DateTime from, BudgetPeriod period, int count) =>
-      switch (period) {
-        BudgetPeriod.weekly => from.add(Duration(days: 7 * count)),
-        BudgetPeriod.monthly => _clampedMonth(from, count),
-        BudgetPeriod.yearly => _clampedMonth(from, 12 * count),
-      };
 
   /// [from] advanced by [months], with the day clamped to the target month's
   /// length.

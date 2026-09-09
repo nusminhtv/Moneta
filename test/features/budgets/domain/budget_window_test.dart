@@ -180,9 +180,76 @@ void main() {
         BudgetPeriod.monthly,
         DateTime.utc(2026, 9, 20),
       );
-      final p = w.previous(BudgetPeriod.monthly);
+      final p = w.previous(
+        BudgetPeriod.monthly,
+        anchor: DateTime.utc(2026, 1),
+      )!;
       expect(p.end, w.start);
       expect(p.start, DateTime.utc(2026, 8));
+    });
+
+    test('a clamped anchor gets the real preceding window, not start minus a '
+        'month', () {
+      // The defect this pins: `previous` used to step back from the window
+      // start, so a 31 January anchor gave `28 Jan → 28 Feb` where the true
+      // preceding window is `31 Jan → 28 Feb`. Stepping from the anchor
+      // restores the 31st as soon as a month is long enough; stepping from the
+      // start does not.
+      final anchor = DateTime.utc(2026, 1, 31);
+      final march = windowFor(
+        anchor,
+        BudgetPeriod.monthly,
+        DateTime.utc(2026, 3, 10),
+      );
+      expect(march.start, DateTime.utc(2026, 2, 28));
+
+      final p = march.previous(BudgetPeriod.monthly, anchor: anchor)!;
+      expect(p.start, DateTime.utc(2026, 1, 31));
+      expect(p.end, DateTime.utc(2026, 2, 28));
+
+      // And it agrees with asking for February directly.
+      final february = windowFor(
+        anchor,
+        BudgetPeriod.monthly,
+        DateTime.utc(2026, 2, 10),
+      );
+      expect(p.start, february.start);
+      expect(p.end, february.end);
+    });
+
+    test('the first window has no predecessor', () {
+      // Returning a window equal to this one would let a budget carry its own
+      // spend forward as if it were last period's underspend.
+      final anchor = DateTime.utc(2026, 9);
+      final first = windowFor(
+        anchor,
+        BudgetPeriod.monthly,
+        DateTime.utc(2026, 9, 5),
+      );
+      expect(first.start, anchor);
+      expect(first.previous(BudgetPeriod.monthly, anchor: anchor), isNull);
+    });
+
+    test('every window chains back to the anchor without gaps or overlap', () {
+      // Walks a clamped anchor across the February boundary, which is where
+      // stepping from the start drifted.
+      final anchor = DateTime.utc(2026, 1, 31);
+      var w = windowFor(
+        anchor,
+        BudgetPeriod.monthly,
+        DateTime.utc(2026, 6, 15),
+      );
+      var hops = 0;
+      while (true) {
+        final p = w.previous(BudgetPeriod.monthly, anchor: anchor);
+        if (p == null) break;
+        expect(p.end, w.start, reason: 'gap or overlap before ${w.start}');
+        w = p;
+        hops++;
+        expect(hops, lessThan(24), reason: 'previous() is not terminating');
+      }
+      expect(w.start, anchor, reason: 'the chain did not reach the anchor');
+      expect(hops, greaterThan(3), reason: 'five months should take steps');
     });
   });
 }

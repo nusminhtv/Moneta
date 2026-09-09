@@ -245,6 +245,56 @@ void main() {
       );
     });
 
+    test('a clamped anchor still carries February forward', () {
+      // The money consequence of the `previous()` defect. Anchored 31 January,
+      // February is 31 Jan → 28 Feb and March is 28 Feb → 31 Mar. Stepping back
+      // from March's start gave 28 Jan, which falls before `startsOn`, so the
+      // guard fired and the carry was silently dropped — every February, for
+      // every budget anchored on a day no shorter month has.
+      final p = progressOf(
+        [entry(3000000, at: DateTime.utc(2026, 2, 10))],
+        b: budget(rollsOver: true, startsOn: DateTime.utc(2026, 1, 31)),
+        now: DateTime.utc(2026, 3, 10),
+      );
+      expect(
+        p.carriedIn,
+        const Money(1000000, vnd),
+        reason: 'February underspent by 1,000,000; it must reach March',
+      );
+      expect(p.effectiveLimit, const Money(5000000, vnd));
+    });
+
+    test('a clamped anchor does not count the same days twice', () {
+      // The other half of the defect: the wrong 31-day previous window
+      // overlapped the real January window by three days, so 28-30 January was
+      // counted once as January spend and again as the basis for February's
+      // carry. Spending on 29 January must not affect February's carry-in,
+      // because January is not February's predecessor here.
+      final p = progressOf(
+        [
+          entry(4000000, at: DateTime.utc(2026, 1, 29)),
+          entry(0, id: 'e2', at: DateTime.utc(2026, 2, 10)),
+        ],
+        b: budget(rollsOver: true, startsOn: DateTime.utc(2026, 1, 31)),
+        now: DateTime.utc(2026, 3, 10),
+      );
+      // February's window is 31 Jan → 28 Feb and holds nothing, so the whole
+      // limit carries. The 29 January entry belongs to no window at all.
+      expect(p.carriedIn, const Money(4000000, vnd));
+    });
+
+    test('the first window carries nothing even with rollover on', () {
+      // previous() returns null rather than a window equal to this one, so a
+      // budget cannot carry its own spend forward as last period's underspend.
+      final p = progressOf(
+        [entry(1000000, at: DateTime.utc(2026, 9, 5))],
+        b: budget(rollsOver: true, startsOn: DateTime.utc(2026, 9)),
+        now: DateTime.utc(2026, 9, 20),
+      );
+      expect(p.carriedIn, const Money(0, vnd));
+      expect(p.effectiveLimit, const Money(4000000, vnd));
+    });
+
     test('a window before the budget existed carries nothing', () {
       final p = progressOf(
         [],
