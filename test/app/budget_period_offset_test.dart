@@ -201,6 +201,76 @@ void main() {
       expect(labels, ['2024', '2025', '2026']);
     });
 
+    test('a wallet younger than the switcher still gets distinct labels', () {
+      // The defect: walking back through BudgetWindow.previous stopped at the
+      // anchor and reused the last window reached, so a budget created this
+      // month produced [Sep, Sep, Sep] -- three identical segments, two of
+      // which showed "nothing to show for this period". First-run path.
+      final labels = budgetPeriodLabels(
+        budgets: [budget(startsOn: DateTime.utc(2026, 9))],
+        now: now,
+        locale: 'en_US',
+      );
+      expect(labels, ['Jul', 'Aug', 'Sep']);
+      expect(labels.toSet(), hasLength(budgetPeriodSegments));
+    });
+
+    test('a budget created last month gets distinct labels too', () {
+      final labels = budgetPeriodLabels(
+        budgets: [budget(startsOn: DateTime.utc(2026, 8))],
+        now: now,
+        locale: 'en_US',
+      );
+      expect(labels, ['Jul', 'Aug', 'Sep']);
+    });
+
+    test('labels never repeat, for any start date', () {
+      for (final month in [1, 5, 8, 9]) {
+        final labels = budgetPeriodLabels(
+          budgets: [budget(startsOn: DateTime.utc(2026, month))],
+          now: now,
+          locale: 'en_US',
+        );
+        expect(
+          labels.toSet(),
+          hasLength(budgetPeriodSegments),
+          reason: 'duplicate labels for a budget starting month $month',
+        );
+      }
+    });
+
+    test('labels do not depend on which budget comes back first', () {
+      // BudgetDao.all() has no ORDER BY, and the labels used to read an anchor
+      // from budgets.first -- so the same wallet could label the current
+      // segment "Aug" on 15 September depending on row order.
+      final first = budgetPeriodLabels(
+        budgets: [
+          budget(id: 'a', startsOn: DateTime.utc(2026, 1, 20)),
+          budget(
+            id: 'z',
+            category: SpendCategory.transport,
+            startsOn: DateTime.utc(2026, 1),
+          ),
+        ],
+        now: now,
+        locale: 'en_US',
+      );
+      final reversed = budgetPeriodLabels(
+        budgets: [
+          budget(
+            id: 'z',
+            category: SpendCategory.transport,
+            startsOn: DateTime.utc(2026, 1),
+          ),
+          budget(id: 'a', startsOn: DateTime.utc(2026, 1, 20)),
+        ],
+        now: now,
+        locale: 'en_US',
+      );
+      expect(first, reversed);
+      expect(first.last, 'Sep', reason: 'the newest segment is the month now');
+    });
+
     test('mixed periods fall back to relative words', () {
       // "Aug" beside a weekly budget's window would be a lie, and one row of
       // three labels has to serve the whole switcher.

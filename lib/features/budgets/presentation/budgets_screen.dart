@@ -22,6 +22,7 @@ class BudgetsScreen extends StatelessWidget {
     required this.periodLabels,
     required this.selectedPeriod,
     required this.currency,
+    required this.now,
     this.hasAnyBudget = true,
     this.onPeriodChanged,
     this.onAdd,
@@ -47,6 +48,10 @@ class BudgetsScreen extends StatelessWidget {
 
   /// The wallet's currency, for the totals when there is nothing to add up.
   final Currency currency;
+
+  /// The real current instant, so a finished period is not told it has days
+  /// left. Injected rather than read, per the project's clock rule.
+  final DateTime now;
 
   /// Called with the newly selected segment index.
   final ValueChanged<int>? onPeriodChanged;
@@ -210,7 +215,7 @@ class BudgetsScreen extends StatelessWidget {
             category: entry.budget.category,
             spent: entry.spent,
             limit: entry.effectiveLimit,
-            note: noteFor(entry),
+            note: noteFor(entry, asOf: now),
             nearLimitThreshold: entry.budget.alertThreshold,
             onTap: onOpen == null ? null : () => onOpen!(entry.budget.id),
           ),
@@ -221,8 +226,21 @@ class BudgetsScreen extends StatelessWidget {
   }
 
   /// The card's supporting line: how much used, and how long is left.
-  static String noteFor(BudgetProgress entry) {
+  /// The card's supporting line: how much used, and how long is left.
+  ///
+  /// [asOf] is the real current instant. When the window has already ended —
+  /// which the period switcher makes reachable — the "days left" clause is
+  /// dropped rather than reported.
+  ///
+  /// `BudgetProgress` for a past period is computed at that window's start, so
+  /// `daysRemaining` is the window's whole length. Without [asOf] this rendered
+  /// **"0% used · 31 days left"** on a month that finished weeks ago. Omitted
+  /// rather than replaced with "0 days left", which reads as a deadline today.
+  static String noteFor(BudgetProgress entry, {DateTime? asOf}) {
     final percent = (entry.fraction * 100).round();
+    final ended = asOf != null && !entry.window.end.isAfter(asOf);
+    if (ended) return '$percent% used';
+
     final days = entry.daysRemaining;
     final dayWord = days == 1 ? 'day' : 'days';
     return '$percent% used · $days $dayWord left';

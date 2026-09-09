@@ -68,6 +68,7 @@ void main() {
         selectedPeriod: selectedPeriod,
         hasAnyBudget: hasAnyBudget,
         currency: vnd,
+        now: now,
         onPeriodChanged: onPeriodChanged,
         onAdd: onAdd,
         onOpen: onOpen,
@@ -416,6 +417,52 @@ void main() {
     test('an empty list totals zero in the wallet currency', () {
       expect(BudgetsScreen.totalSpent(const [], vnd), const Money(0, vnd));
       expect(BudgetsScreen.overallFraction(const [], vnd), 0);
+    });
+  });
+
+  group('a finished period is not told it has days left', () {
+    test('an ended window drops the days clause', () {
+      // Past periods are computed at their own window start, so daysRemaining
+      // is the whole window length: "0% used · 31 days left" on a month that
+      // ended weeks ago.
+      final august = progressFor(
+        id: 'food',
+        category: SpendCategory.food,
+        limit: 4000000,
+        spent: 1000000,
+      );
+      final note = BudgetsScreen.noteFor(
+        august,
+        asOf: DateTime.utc(2026, 12, 1),
+      );
+      expect(note, contains('% used'));
+      expect(note, isNot(contains('days left')));
+      expect(note, isNot(contains('day left')));
+    });
+
+    test('a live window still reports the days', () {
+      final note = BudgetsScreen.noteFor(
+        progressFor(
+          id: 'food',
+          category: SpendCategory.food,
+          limit: 4000000,
+          spent: 1000000,
+        ),
+        asOf: DateTime.utc(2026, 9, 21),
+      );
+      expect(note, contains('days left'));
+    });
+
+    test('without asOf the days clause is kept, as before', () {
+      final note = BudgetsScreen.noteFor(
+        progressFor(
+          id: 'food',
+          category: SpendCategory.food,
+          limit: 4000000,
+          spent: 1000000,
+        ),
+      );
+      expect(note, contains('days left'));
     });
   });
 }

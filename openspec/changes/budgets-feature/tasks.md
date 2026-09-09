@@ -59,5 +59,27 @@
 
 - [x] 7.1 Home's first-run checklist "Set one budget" gets its destination,
       null since `a9d3a8f`.
-- [x] 7.2 `figma-map.md`: six screens done, `04.07` recorded as blocked on
-      `BarChart`, and the threshold correction added to the deviations table.
+- [x] 7.2 `figma-map.md`: six screens done, `04.07` recorded as **deferred**,
+  and the threshold correction added to the deviations table.
+
+  It said "blocked on `BarChart`" until 2026-09-09. `BarChart` is `48:34` on
+  `🧩 Components / Charts` (`5:12`) — a fourth component page nobody had
+  queried, so the screen was never blocked on a missing component. Corrected in
+  `proposal.md`, `design.md` and `figma-map.md`; this line had been left behind.
+
+  **Known gaps recorded rather than fixed here**, both found by the second
+  `change-verifier` pass and both wider than this change:
+
+  - A failed budget read resolves to an empty list (`budget_providers.dart`),
+    so a storage failure renders as a wallet with no budgets and offers
+    "Create a budget" — the same lie the period-switcher fix removed, from a
+    different cause. `BudgetsRouteScreen` also renders its loading skeleton
+    forever on `AsyncError`, making a database that cannot open
+    indistinguishable from one still opening. Fixing it properly means deciding
+    how the app surfaces storage failure, which Home shares; it needs its own
+    change rather than a local patch here.
+  - `budgetPeriodLabels` calls `.toLocal()` on a UTC date-only window boundary
+    before formatting. Harmless at `TZ=Asia/Ho_Chi_Minh`, wrong in any zone
+    behind UTC, and the same shape as the `startLabel` call in
+    `create_budget_amount_screen.dart` that was already left open. Both belong
+    in one pass over date-only boundaries.

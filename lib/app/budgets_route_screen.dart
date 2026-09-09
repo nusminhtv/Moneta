@@ -84,6 +84,7 @@ class _BudgetsRouteScreenState extends ConsumerState<BudgetsRouteScreen> {
       selectedPeriod: _selected,
       hasAnyBudget: budgetList.isNotEmpty,
       currency: currency,
+      now: now,
       onPeriodChanged: (i) => setState(() => _selected = i),
       onAdd: () => context.go(BudgetRoutes.createCategory),
       onOpen: (id) => context.go(BudgetRoutes.detailFor(id)),

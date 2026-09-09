@@ -161,13 +161,26 @@ List<BudgetProgress> progressAtOffset({
 /// **The labelling rule is a decision, not a transcription.** `66:117` authors
 /// `Jul / Aug / Sep`, which is what a set of monthly budgets should read — but
 /// the file only ever shows monthly budgets, and one row of three labels has to
-/// serve a mixed set too.
+/// serve a mixed set too. So: when every budget shares a period, the labels name
+/// that kind of calendar period; when periods are mixed, or there are no budgets
+/// to read a period from, they fall back to relative words.
 ///
-/// So: when every budget shares a period, the labels name that period's windows
-/// (month for monthly, start date for weekly, year for yearly), which reproduces
-/// the authored labels exactly for the monthly case. When periods are mixed, or
-/// there are no budgets to read a period from, they fall back to relative words,
-/// because "Aug" would be a lie next to a weekly budget's window.
+/// **They are computed from [now] alone, never from a budget's windows.** Two
+/// defects came from doing the latter, both found by review:
+///
+/// - Walking back through `BudgetWindow.previous` stopped at the budget's anchor
+///   and reused the last window it reached, so a wallet younger than three
+///   periods got the *same label three times* — `[Sep, Sep, Sep]` on a budget
+///   created this month. That is the first-run path, and tapping two of three
+///   identical segments showed "nothing to show for this period".
+/// - The walk needed one budget to read an anchor from, and took
+///   `budgets.first`. `BudgetDao.all()` has no `ORDER BY`, so the labels moved
+///   with database row order: the same wallet could label the current segment
+///   `Aug` on 15 September depending on which row came back first.
+///
+/// A label names a calendar period, so it must not depend on which budgets
+/// exist or on how they are stored. What each budget *does* at a given offset is
+/// still per-budget — see [progressAtOffset].
 List<String> budgetPeriodLabels({
   required List<Budget> budgets,
   required DateTime now,
@@ -178,22 +191,22 @@ List<String> budgetPeriodLabels({
     return const ['Two back', 'Last', 'This'];
   }
 
-  final period = periods.single;
-  final reference = budgets.first;
+  final local = now.toLocal();
   final labels = <String>[];
   for (var offset = budgetPeriodSegments - 1; offset >= 0; offset--) {
-    var window = reference.windowAt(now);
-    for (var i = 0; i < offset; i++) {
-      final earlier = window.previous(period, anchor: reference.startsOn);
-      if (earlier == null) break;
-      window = earlier;
-    }
-    final local = window.start.toLocal();
-    labels.add(switch (period) {
-      BudgetPeriod.monthly => DateFormat.MMM(locale).format(local),
-      BudgetPeriod.weekly => DateFormat.MMMd(locale).format(local),
-      BudgetPeriod.yearly => DateFormat.y(locale).format(local),
-    });
+    labels.add(
+      switch (periods.single) {
+        BudgetPeriod.monthly => DateFormat.MMM(locale).format(
+          DateTime(local.year, local.month - offset),
+        ),
+        BudgetPeriod.yearly => DateFormat.y(locale).format(
+          DateTime(local.year - offset),
+        ),
+        BudgetPeriod.weekly => DateFormat.MMMd(locale).format(
+          local.subtract(Duration(days: 7 * offset)),
+        ),
+      },
+    );
   }
   return labels;
 }
