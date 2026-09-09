@@ -333,3 +333,40 @@ recorded in code as derived rather than presented as transcriptions.
 | 2026-09-09 | checkpoint | 4.1 default Home: budgets section, cap of 5, safe-to-spend, authored quick actions | `a77867d` | `verify-runs/2026-09-09T07-40-25Z_home-overview.md` |
 | 2026-09-09 | checkpoint | 4.2 first-run: a primary action that works, and steps that tick independently | `cf180e9` | `verify-runs/2026-09-09T07-53-28Z_home-overview.md` |
 | 2026-09-09 | checkpoint | 4.3 loading: the app bar stays, and the authored skeleton counts | `699c42b` | `verify-runs/2026-09-09T07-58-18Z_home-overview.md` |
+| 2026-09-09 | partial 6.2 | The fourth component page (`5:12` Charts) and page 02's deviations 21–34 | `8fd7bdf` | `verify-runs/2026-09-09T08-00-36Z_home-overview.md` |
+| 2026-09-09 | implemented, **not ticked** | 4.4 over-budget alert — built and green; `57:517`/`57:551` variant check unperformed | `dafce7d` | `verify-runs/2026-09-09T08-05-11Z_home-overview.md` |
+
+### Where this change stopped, and why
+
+Six checkpoints in, `home-overview` is at 11/18 ticked with 4.4 built but
+deliberately unticked. The remainder is blocked on one external thing and one
+open question.
+
+**Figma access failed mid-task and did not recover.** Partway through 4.1 every
+Figma tool — `get_design_context`, `get_metadata`, `get_screenshot` — began
+returning *"Looks like you don't have edit access to this file"* on nodes that
+had answered minutes earlier; `52:116` succeeded and then failed on retry, which
+is how it was identified as an outage rather than a bad node. It was retested
+four times across the session. What that leaves unread:
+
+| Task | Needs | Nodes |
+| --- | --- | --- |
+| 4.4 (close) | the two `TransactionRow` variants | `57:517`, `57:551` |
+| 4.2 (verify) | the first-run copy, still unconfirmed | `52:389`, `52:428`, `52:459`, `52:481` |
+| 4.1 (verify) | the four quick-action glyphs | `52:67`, `52:81`, `52:94`, `52:106` |
+| 5.1 | five notification rows, two section headings | under `57:622` |
+| 5.2 | the empty-state copy | `57:861` |
+
+Work continued on everything that did not depend on reading a node, and stopped
+at the point where continuing would have meant inventing screen copy. That line
+is drawn deliberately: the invented spacing scale is in this repository's history
+because a plausible value was applied consistently, and screen copy fabricated
+from an annotation's summary would be the same mistake wearing different clothes.
+
+**Notifications also need a decision, not just copy.** `02.05` lists five
+notifications, and D3 forbids persistence in this change, so they cannot be
+stored. They would have to be derived — most plausibly from budget state, which
+is the only thing Home can already see — and that is a content model nobody has
+specified. `57:830` splits the rows into actionable and informational, which
+implies at least two sources. Deriving one from scratch is a design decision that
+belongs to the user, not to an implementer working around an outage.
