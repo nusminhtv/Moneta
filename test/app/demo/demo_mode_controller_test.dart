@@ -174,6 +174,27 @@ void main() {
       );
     });
 
+    test('a database that cannot open is reported, not thrown', () async {
+      // `hydrate` runs on the startup path, where a throw would leave the
+      // splash unable to leave. Every other method here lets the provider's
+      // throw through on purpose; this one must not, and the router tests
+      // proved it — four of them broke the moment startup began reading this.
+      final container = ProviderContainer(
+        overrides: [
+          // A directory is not a database file.
+          realDatabasePathProvider.overrideWithValue(temporaryDirectory.path),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final hydrated = await controllerIn(container).hydrate();
+      expect(hydrated.isOk, isFalse);
+      expect(
+        container.read(demoModeProvider),
+        isFalse,
+        reason: 'the safe direction is the real ledger',
+      );
+    });
     test(
       'a corrupt stored value surfaces rather than reading as off',
       () async {

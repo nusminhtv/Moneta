@@ -996,3 +996,22 @@ One test bug found while fixing this: `isNot(contains(9))` on transaction months
 matched September **2025**, which a fifteen-month window from September 2026 also
 contains. Year and month now, which is the assertion that was meant.
 
+### Demo mode did not survive a restart, and nothing said so
+
+`DemoModeController.hydrate()` existed, had tests, and **was never called.**
+The preference was written durably and never read back at launch, so turning the
+switch on, closing the app and reopening it landed on the real ledger with the
+switch showing off. No test covered it because every test built its own
+container and called `hydrate` directly.
+
+Fixed with `StartupRouteScreen` in `lib/app`, which hydrates and then shows the
+splash — the splash itself lives in `features/onboarding` and may not import
+`lib/app/demo`.
+
+That immediately broke four router tests, and they were right to break:
+`preferencesStoreProvider` **throws** when the database cannot be opened, by
+design, so a screen can render an error state. On the startup path a throw is
+different — it leaves the splash unable to leave. `hydrate` is now the one
+method here that catches, returning `Err` and leaving demo mode off, which is
+the safe direction. A mutation narrowing the catch to `on Never` fails.
+

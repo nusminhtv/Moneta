@@ -38,13 +38,26 @@ class DemoModeController {
   /// Called at startup. Absence reads as off, and is distinguished from a
   /// stored `false` by the store rather than collapsed into it.
   Future<Result<bool>> hydrate() async {
-    final store = await ref.read(preferencesStoreProvider.future);
-    final stored = await store.readBool(PreferenceKey.demoMode);
-    if (stored case Err(:final failure)) return Err(failure);
+    // Wrapped, unlike every other method here. This one runs on the startup
+    // path, and `preferencesStoreProvider` *throws* when the database cannot be
+    // opened — by design, so a screen can render an error state. A throw at
+    // startup is different: it would leave the splash unable to leave, which is
+    // worse than not knowing whether demo mode was on. Reported as an `Err`,
+    // and the settings list surfaces the same failure when it reads the value.
+    try {
+      final store = await ref.read(preferencesStoreProvider.future);
+      final stored = await store.readBool(PreferenceKey.demoMode);
+      if (stored case Err(:final failure)) return Err(failure);
 
-    final active = stored.valueOrNull ?? false;
-    ref.read(demoModeProvider.notifier).active = active;
-    return Ok(active);
+      final active = stored.valueOrNull ?? false;
+      ref.read(demoModeProvider.notifier).active = active;
+      return Ok(active);
+    } on Object catch (error) {
+      // Demo mode stays off, which is the safe direction: the real ledger.
+      return Err(
+        AppFailure.storage('Could not read the demo setting', cause: error),
+      );
+    }
   }
 
   /// Turns demo mode on or off.

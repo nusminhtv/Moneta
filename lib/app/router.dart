@@ -11,10 +11,10 @@ import 'package:moneta/app/insights_route_screens.dart';
 import 'package:moneta/app/notifications_route_screen.dart';
 import 'package:moneta/app/settings_route_screens.dart';
 import 'package:moneta/app/shell.dart';
+import 'package:moneta/app/startup_route_screen.dart';
 import 'package:moneta/design_system/organisms/bottom_nav.dart';
 import 'package:moneta/features/onboarding/presentation/onboarding_providers.dart';
 import 'package:moneta/features/onboarding/presentation/onboarding_screen.dart';
-import 'package:moneta/features/onboarding/presentation/splash_screen.dart';
 import 'package:moneta/features/transactions/presentation/add_transaction_sheet.dart';
 import 'package:moneta/features/transactions/presentation/transactions_screen.dart';
 
@@ -116,7 +116,7 @@ GoRouter buildRouter({String initialLocation = defaultInitialRoute}) {
       ),
       GoRoute(
         path: SplashRoute.path,
-        builder: (context, state) => SplashScreen(
+        builder: (context, state) => StartupRouteScreen(
           onDecided: ({required showOnboarding}) => context.go(
             showOnboarding
                 ? OnboardingRoute.path
