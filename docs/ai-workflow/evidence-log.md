@@ -416,7 +416,8 @@ rather than adding a HorizontalBarChart component."*
 | 2026-09-10 | checkpoint | 6.3 Radio gallery count tests | `59ee0e9` | `docs/ai-workflow/verify-runs/2026-09-10T02-18-23Z_insight-components.md` |
 | 2026-09-10 | checkpoint | 5.1 MonetaBottomSheet, sized by its content | `61760e6` | `docs/ai-workflow/verify-runs/2026-09-10T02-22-08Z_insight-components.md` |
 | 2026-09-10 | checkpoint | 5.2 BottomSheet gallery registration | `b30fedd` | `docs/ai-workflow/verify-runs/2026-09-10T02-23-34Z_insight-components.md` |
-| 2026-09-10 | checkpoint | 7.2 deviation 12 resolved by annotation `81:498` | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T02-25-12Z_insight-components.md` |
+| 2026-09-10 | checkpoint | 7.2 deviation 12 resolved by annotation `81:498` | `69a769a` | `docs/ai-workflow/verify-runs/2026-09-10T02-25-12Z_insight-components.md` |
+| 2026-09-10 | partial | 7.1/7.3 provenance and deviations 41–44 recorded; both tasks stay open | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T02-26-59Z_insight-components.md` |
 
 ### Two tasks, one checkpoint, and why
 
@@ -547,3 +548,20 @@ taps when it is already selected, and it sits inside the row's opaque
 over the *selected* control would be the one dead spot on the row. It does not —
 the row's detector wins — and there is now a test that would fail if that
 changed.
+
+### Why 7.1 and 7.3 are recorded but not ticked
+
+Both ask for something that includes `LineChart`: 7.1 marks *five* components
+done, and 7.3 records two accessibility deviations, one of which is the axis
+that cannot be doubled. Four components and one deviation exist; the fifth and
+the second do not.
+
+The findings were written into `figma-map.md` anyway rather than held in this
+session — provenance for derived values is exactly what gets lost when a change
+pauses — and the tasks stay `[ ]`, because ticking a task whose specified
+content is partly absent is the failure mode the apply workflow names outright.
+
+Remaining: 4.1–4.4 (`LineChart`), 7.1 and 7.3 (their `LineChart` halves), 7.4
+(this log, kept current as each checkpoint lands) and 7.5 (the full gate plus
+`figma-fidelity` against `47:48` and `48:76`, which needs file access).
+

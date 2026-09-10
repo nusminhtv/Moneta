@@ -590,3 +590,80 @@ Home — default" — with the same children, at 1215px tall instead of 852 (con
 962 instead of 599). Two frames with one name, one of them a taller variant.
 Candidate for the file's twelve deliberate mistakes; the answer key at
 `🔧 Utilities / Known Deviations` has still never been read.
+
+## 🧩 Components / Charts and friends — built by `insight-components`, 2026-09-10
+
+Four of the five components this change owns are built. `LineChart` is not: see
+**Held on `48:76`** below.
+
+| Component | Node | Variants | State |
+| --- | --- | --- | --- |
+| ChartLegendItem | `47:47` | 9 (`Slot=1`–`8`, `Other`) | **done** |
+| DonutChart | `47:48` | 1 authored; 4 gallery fixtures | **done** |
+| Radio | `25:238` | 4 (selected × disabled) | **done** |
+| BottomSheet | `59:211` | 1 authored; 3 gallery fixtures | **done** |
+| LineChart | `48:76` | 1, 353×226 | **held** |
+| BarChart | `48:34` | 1, 353×223 | not built — instanced on Budgets `04.07`, on no page 07 screen. Belongs to whichever change builds Budgets history. |
+| Sparkline | `48:94` | 1, 104×34 | not built — on the Charts page, instanced nowhere on page 07. |
+
+A horizontal bar chart was **not** added, and that is a rule rather than an
+omission. Annotation `77:587`: *"ProgressBar is reused as the bar mark rather
+than adding a HorizontalBarChart component; one series means one hue, so every
+bar is the same colour and rank is carried by length and order."*
+
+**No token was added.** Both colours that looked like candidates were confirmed
+against existing ones by fetching the exported SVGs: the donut's segment fill
+`#AA7705` is `chart/7`, and the `Other` swatch `#7C8595` is `textTertiary`.
+
+### Provenance: what was measured, what was derived, what was transcribed
+
+The distinction matters because two of these are weaker than a bound variable,
+and a future reader should not have to guess which.
+
+| Value | Where | Provenance |
+| --- | --- | --- |
+| `DonutChart.ringThickness = 39.5` | `donut_chart.dart` | **measured** off `47:50`'s exported path, which runs `y=0`→`y=39.5182` at twelve o'clock in the 208 box. The segments export as filled annular paths, so there is no stroke width to read. The trailing `0.0182` is Figma's arc-to-path conversion; 39.5 is also the only nearby value `Paint.strokeWidth`, a 32-bit float, returns unchanged. |
+| `DonutChart.segmentGapDegrees = 1` | `donut_chart.dart` | **measured** at two boundaries: 0.898° at twelve o'clock (`47:57` ends 0.554° early, `47:50` starts 0.344° late) and 1.099° between `47:50` and `47:51`. No style carries it. |
+| The donut's **track** ring | `donut_chart.dart` | **added.** `47:49` has eight ellipses and no track, because its sample fills the circle. The spec's "empty ring with no segments" needs something to be the ring. |
+| `MonetaRadio`'s four colour roles | `moneta_radio.dart` | **derived from `25:229`**, the Checkbox set beside it on the same Atoms page — `25:238` itself could not be read. Two sub-decisions the sibling does not settle are stated in the code: disabled beats selected for the fill, and the dot survives disabling. |
+| `MonetaRadioRow`'s layout | `moneta_radio_row.dart` | **derived.** `07.05` could not be read; the row follows `ListRow`'s arrangement for the same shape. |
+| `MonetaBottomSheet`'s colour roles and corner radius | `bottom_sheet.dart` | **derived.** The geometry (20px handle area, 40×4 handle, 60px header, 44×44 close, 20px inset) is transcribed from `proposal.md`, recorded while access was live. No header divider was invented: nothing recorded says there is one. |
+
+Everything marked derived is queued for task 7.5's `figma-fidelity` pass, which
+cannot run until `48:76` is readable.
+
+### Deviations recorded by `insight-components`
+
+| # | What | Resolution |
+| --- | --- | --- |
+| 41 | `47:47` is a public component set with nine variants, so it must appear in the gallery — which makes it a component a caller can compose beside a chart. | `DonutChart` accepts **no** legend parameter of any kind, so a public `ChartLegendItem` does not make the donut's legend optional. Annotation `77:284`: *"the DonutChart legend is part of the component and not optional: two of the eight chart slots fall below 3:1 against the dark surface, so the visible labels ARE the required contrast relief."* A `showLegend` flag would turn an accessibility guarantee into a caller's convenience; a sibling `ChartLegend` widget would let a screen show rows that disagree with the arcs, which is harder to notice than no legend. Guarded by a test that reads the constructor's parameter list out of the source, because a widget test cannot prove a parameter's absence. |
+| 42 | `47:62` assigns its eight categories slots **7, 4, 2, 8, 6, 3, 5, Other** — Food & drink is `Slot=7`, and `chart/1` is never used. The file does not colour by rank. | `DonutChart` honours each caller's slot and ranks only the *order*, so a category keeps one colour across every screen that charts it. Overriding by rank would have been a deviation from the design as well as a worse behaviour. The ring's exported fills (`#AA7705`, `#027ED8`, `#769200`) agree with the legend's slots, so the two halves of `47:48` are consistent; it is only the *choice* of slots that is arbitrary. |
+| 43 | `ChartLegendItem` pins its percentage and amount (`shrink-0` on `47:5` and `47:6`) and flexes only its label. | Reproduced as authored, and it has a real upper bound: once the label reaches zero width the row is over-subscribed and `RenderFlex` reports an overflow — at 2^61 minor units, by 47px. **This is not fixable, only choosable.** No 353px row can show an unbounded amount, and making the amount flexible is worse: `RenderFlex` gives each flexible child `freeSpace / totalFlex` and does not hand a loose child's leftover back to its sibling, so the row would sit un-flush and the label would shrink in the normal case. The design already answers which part is lost — the label. Tested at both ends: the arithmetic at 2^61 without rendering, the layout at ~10^15 minor units, which is past any real ledger. |
+| 44 | `59:211` authors a 34px bottom inset. | Taken from `MediaQuery.paddingOf(context).bottom` instead. The authored 34 describes one handset, the same reason `MonetaAppBar` refuses to paint a fake status bar. Asserted at 34, 21 and 0, because a single fixture at 34 would coincide exactly with a hardcoded value. |
+
+### Held on `48:76`
+
+`LineChart` is specified, planned and **not implemented**, because the Figma MCP
+connection lost access to this file mid-change. `whoami` reports
+`jeff@relayvault.ai`, seat **View**, tier **starter** — not the NIK Technology
+Full/pro account. Same root cause as the 2026-09-09 outage: two accounts behind
+one connection. Restoring it is the file owner's action.
+
+What is recorded about `48:76` is counts, not geometry: 353×226, a title and
+subtitle, a 353×140 plot with three gridlines, two series each ending in a 9×9
+marker, y labels outside the plot, and a two-item legend whose swatch is a 14×3
+line rather than a dot. Gridline positions, axis-label layout and the plot's own
+colour roles are not recorded.
+
+That is the line this change drew, and it is worth stating because the same
+change built `Radio` and `BottomSheet` from partial information:
+
+- a **derived** value is one this design system already answers somewhere else,
+  and a fidelity pass can confirm — `Radio`'s fill colour, from the Checkbox
+  beside it;
+- an **invented** value is one nothing in the repository constrains — a
+  gridline's y position.
+
+This change's own proposal names the cost of the second: *"the alternative is
+approximating a chart, which is how this repository's invented spacing scale
+happened."* So the charts wait for the file.
