@@ -27,7 +27,7 @@ guarantees first, then data, then surfaces.
   completing the introduction is not undone by turning demo mode on; and that
   the demo database's `settings` table holds no row whose key is a declared
   `PreferenceKey`.
-- [ ] 1.3 The toggle-undoes-itself guard, in
+- [x] 1.3 The toggle-undoes-itself guard, in
   `test/data/demo_flag_scope_test.dart`.
   Verify: the store is **re-resolved after** the swap, not held from before it —
   a test holding the pre-swap `PreferencesStore` reads from the still-open old

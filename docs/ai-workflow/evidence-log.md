@@ -576,7 +576,8 @@ manual entry still working.
 | 2026-09-10 | propose | four artifacts, `openspec validate` clean | `76e106a` | — |
 | 2026-09-10 | audit | `spec-auditor`: NOT READY, 11 required fixes | — | — |
 | 2026-09-10 | checkpoint | 1.1 control/active database split | `29debb0` | `docs/ai-workflow/verify-runs/2026-09-10T07-37-43Z_demo-data.md` |
-| 2026-09-10 | checkpoint | 1.2 `demoMode` key, every preference control-scoped | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T07-40-04Z_demo-data.md` |
+| 2026-09-10 | checkpoint | 1.2 `demoMode` key, every preference control-scoped | `84293c3` | `docs/ai-workflow/verify-runs/2026-09-10T07-40-04Z_demo-data.md` |
+| 2026-09-10 | checkpoint | 1.3 the toggle-undoes-itself guard | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T07-44-23Z_demo-data.md` |
 
 ### The spec-auditor earned its place in the workflow
 
@@ -646,4 +647,21 @@ mode is on fixed it, and the mutation now fails.
 The third is expected at 1.1 and is exactly what task 1.3 exists for — the
 toggle-undoing-itself guard, which is not written yet. Recorded rather than
 treated as covered, because 1.1's own verify line does not claim it.
+
+### 1.3 closed the mutation 1.1 could not, and hit the FakeAsync trap doing it
+
+The mutation that survived 1.1 — `preferencesStoreProvider` bound to
+`activeDatabaseProvider` — now fails three behavioural tests plus a source-level
+check. The assertion that makes it work is **re-resolving the store after the
+swap**: a test that holds the store obtained beforehand reads from the
+still-open control connection and passes even with the store bound to the
+database that moves. That is the precise shape the auditor flagged, and the
+first draft of this test would have had it.
+
+I also wrote these as `testWidgets` and **the run hung** rather than failing.
+`CLAUDE.md` says exactly why: a `testWidgets` body runs inside a `FakeAsync`
+zone, so real database I/O never completes, and a hang looks like a slow machine
+rather than a bug. It cost one 120-second timeout instead of the seven minutes
+it cost during `design-system-foundation`, because the warning was already
+written down. Plain `test()`, and the file now says so at the top.
 
