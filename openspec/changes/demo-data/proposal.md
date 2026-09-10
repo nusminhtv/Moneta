@@ -1,10 +1,12 @@
 ## Why
 
 A fresh install has nothing in it. Home shows its first-run checklist, Budgets
-shows an empty wallet, and the Insights screens this repository is now building
-have nothing to chart — so every screen that exists to *summarise* data can only
-be reviewed by hand-entering months of transactions first, which nobody does.
-The screens that most need looking at are the ones least visible.
+shows an empty wallet, and Budget detail's whole point — spend against a limit
+over time — has nothing to draw. Every screen that exists to *summarise* data
+can only be reviewed by hand-entering months of transactions first, which nobody
+does, so the screens that most need looking at are the ones least visible. The
+Insights screens, when `insights-feature` builds them, will be worse: a donut
+and a line chart with no history are blank by definition.
 
 A demo mode with a substantial seeded dataset makes every screen reviewable in
 one tap, and — because the demo lives in its own database — does it without ever
@@ -13,10 +15,11 @@ mixing dummy money into a real ledger.
 ## What Changes
 
 - **A new `demo-data` capability.** A deterministic dataset covering roughly
-  fifteen months: about 1,200 transactions across the nine spend categories with
-  realistic weightings, income on a monthly cycle, budgets of all three periods
-  including one over its limit and one near it, and the notifications those
-  budgets imply.
+  fifteen months: about 1,200 transactions across the seven expense categories
+  with realistic weightings, salary on a monthly cycle, and budgets of all three
+  periods including one over its limit and one near it. `SpendCategory` declares
+  eight categories, `salary` being the income one — not nine, and no new
+  category is added here.
 - **A demo toggle.** On, the application reads and writes `moneta_demo.db`; off,
   `moneta.db`. Flipping it rebuilds the provider graph onto the other database.
 - **Real data is never touched.** No dummy row is ever written to the real
@@ -41,6 +44,31 @@ Not breaking for stored data: the real database's schema, version and contents
 are unchanged, and an install that never turns demo on is byte-identical to one
 on the current build.
 
+## Non-goals
+
+Each is out of scope for a reason, not for convenience.
+
+- **A settings screen from Figma.** `📱 08 Profile & Settings` is unbuilt, its
+  page has never been read, and the Figma connection is currently on an account
+  that cannot read the file. The surface this adds is two controls and a route,
+  named as unauthored, for `profile-feature` to absorb.
+- **Exercising the donut's eight-segment fold.** It cannot be reached from
+  category data: seven categories can carry expense and the cap is eight.
+  Reaching it means adding categories to `lib/core/spend_category.dart`, which
+  is a change about categories, not about demo data. `donut_chart_test.dart`
+  already covers the fold with its own data.
+- **Seeding notifications.** They are derived from budgets and transactions at
+  read time (`lib/app/notification_providers.dart`) and never stored, so there
+  is nothing to seed. The dataset produces them as a consequence.
+- **Accounts.** There is no accounts feature, so no account data is invented and
+  Home's "add an account" checklist row is left exactly as it is.
+- **Multiple demo profiles**, or choosing the dataset's size, currency or seed
+  from the UI. One dataset, one seed.
+- **A `Toggle` design-system atom.** `25:198` is authored with four variants and
+  unbuilt; building it needs the Figma file, and this change does not need a new
+  atom — see design D12.
+- **Seeding the real database**, ever, under any flag.
+
 ## Capabilities
 
 ### New Capabilities
@@ -62,12 +90,23 @@ on the current build.
 
 ## Impact
 
-- **Modules touched:** `lib/data/database` (`AppDatabase` already takes a path;
-  the providers gain the control/active split), a new `lib/app/demo/` holding
-  the generator and the seeder, `lib/app` (providers, router), a new
-  `lib/features/settings/presentation` for the provisional screen, and
-  `docs/design-system/figma-map.md` only to record that the settings surface is
-  provisional and unauthored.
+- **Modules touched**, named because this change spans four of them:
+  - `lib/data/app_providers.dart` — the control/active split and the demo flag.
+  - `lib/data/database/app_database.dart` — a delete API, which reset needs and
+    which does not exist today. This file is inside the ≥85% coverage band.
+  - `lib/data/preferences/preference_key.dart` — the `demoMode` key.
+  - `lib/app/demo/` (new) — the generator, the seeder and the controller.
+  - `lib/app/budget_providers.dart` and
+    `lib/features/transactions/presentation/transaction_providers.dart` — both
+    watch the database provider directly and both move to the active one.
+  - `lib/app/router.dart` and the route wrappers — the demo indication is
+    injected here, because a feature may not import `lib/app`.
+  - `lib/features/settings/presentation/` (new) — the provisional screen, as a
+    callback-only widget.
+  - `lib/features/transactions/presentation/transaction_list_controller.dart` —
+    pending undo must not survive a ledger change.
+  - `docs/design-system/figma-map.md` — to record the unauthored surface and the
+    banner deviation.
 - **Why the seeder lives in `lib/app`:** it must write `Transaction` and
   `Budget`, whose domain types belong to their features, and
   `tool/check_architecture.dart` forbids `lib/data` from importing a feature.

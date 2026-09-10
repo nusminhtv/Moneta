@@ -20,7 +20,7 @@ import 'package:moneta/features/transactions/presentation/transaction_list_contr
 
 /// Storage for budgets.
 final budgetRepositoryProvider = FutureProvider<BudgetRepository>((ref) async {
-  final opened = await ref.watch(appDatabaseProvider).open();
+  final opened = await ref.watch(activeDatabaseProvider).open();
   return opened.when(
     ok: (db) => SqliteBudgetRepository(BudgetDao(db)),
     // Same reasoning as the transaction repository: a repository that cannot be

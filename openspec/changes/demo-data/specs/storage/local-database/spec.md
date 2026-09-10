@@ -6,9 +6,16 @@ The application SHALL open **two** databases: a *control* database, always the
 same file, and an *active data* database chosen by the demo setting. Each SHALL
 use a single connection per process, opened lazily and closed deterministically.
 
-At most one data database SHALL be open at a time. Switching the active data
-database SHALL close the connection it replaces before serving a read or write
-against the new one.
+At most one **demo** connection SHALL be open at a time, and switching away from
+the demo database SHALL close it before serving a read or write against the
+other.
+
+The control connection SHALL NOT be closed by a switch, in either direction.
+When demo mode is off the control database *is* the active data database, so
+"close the connection you replace" would close the connection holding the
+setting that decides which database is active — and the store answering the next
+read of that setting. The rule is therefore about the demo connection
+specifically, not about whichever connection was previously active.
 
 The control database exists because the setting that chooses the data database
 cannot live inside the file it chooses. When demo mode is off, the control
@@ -19,10 +26,21 @@ connection is shared rather than opened twice.
 - **WHEN** two callers request the database before it has finished opening
 - **THEN** both receive the same connection and the open work happens once
 
-#### Scenario: Switching the active database closes the old connection
-- **WHEN** the demo setting changes and a different data database becomes active
-- **THEN** the previously active connection is closed
+#### Scenario: Leaving demo mode closes the demo connection
+- **WHEN** the demo setting changes from on to off
+- **THEN** the demo connection is closed
 - **AND** no subsequent read or write is served against it
+
+#### Scenario: A switch never closes the control connection
+- **WHEN** the demo setting changes in either direction
+- **THEN** the control connection is still open
+- **AND** a preference read immediately afterwards is served without reopening
+  the file
+
+Entering demo mode replaces the control database *as the active one*, and the
+control connection stays open regardless — closing it would take the settings
+store down with it, and the very next thing that happens after the toggle is a
+read of the setting the toggle just wrote.
 
 #### Scenario: The control and data databases coincide outside demo mode
 - **WHEN** demo mode is off

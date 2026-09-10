@@ -4,15 +4,17 @@ import 'package:moneta/features/transactions/data/sqlite_transaction_repository.
 import 'package:moneta/features/transactions/data/transaction_dao.dart';
 import 'package:moneta/features/transactions/domain/transaction_repository.dart';
 
-// clockProvider, idGeneratorProvider, walletCurrencyProvider and
-// appDatabaseProvider used to live here. They moved to lib/data/app_providers.dart
-// when a second feature needed them — a feature may not import another feature,
-// and the architecture checker said so. Re-exported so existing call sites and
+// clockProvider, idGeneratorProvider, walletCurrencyProvider and the database
+// providers used to live here. They moved to lib/data/app_providers.dart when a
+// second feature needed them — a feature may not import another feature, and
+// the architecture checker said so. Re-exported so existing call sites and
 // their test overrides keep working with one import.
 export 'package:moneta/data/app_providers.dart'
     show
-        appDatabaseProvider,
+        activeDatabaseProvider,
         clockProvider,
+        controlDatabaseProvider,
+        demoModeProvider,
         idGeneratorProvider,
         walletCurrencyProvider;
 
@@ -20,7 +22,7 @@ export 'package:moneta/data/app_providers.dart'
 final transactionRepositoryProvider = FutureProvider<TransactionRepository>((
   ref,
 ) async {
-  final database = ref.watch(appDatabaseProvider);
+  final database = ref.watch(activeDatabaseProvider);
   final opened = await database.open();
   return opened.when(
     ok: (db) => SqliteTransactionRepository(

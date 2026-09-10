@@ -8,8 +8,13 @@ single feature.
 
 **Both** databases SHALL carry it, since both are built by the same migration
 set. Every preference SHALL be read from and written to the *control* database,
-so no preference changes value when the active data database changes. The
-`settings` table in the demo database SHALL therefore stay empty.
+so no preference changes value when the active data database changes.
+
+The demo database's `settings` table SHALL therefore hold no preference. It is
+not required to be empty: the demo ledger's own seed-completion marker lives
+there, because it describes that database and must not claim the real ledger was
+seeded. A marker is not a preference and is not reachable through the typed
+preference accessor.
 
 A setting stored in the database it selects cannot work: writing "use the demo
 database" to the real database and then reading the value back from the demo
@@ -25,7 +30,14 @@ whether demo mode is on — so all of them belong on the side that does not move
 
 #### Scenario: A first-run database
 - **WHEN** a database is created from nothing
-- **THEN** it is at v2 with both tables present and `settings` empty
+- **THEN** it is at the declared schema version with every table that version
+  defines present, and `settings` empty
+
+The previous wording said "at v2 with both tables present". That was true when
+it was written and is now wrong: the declared version is 3 and there are three
+tables — `transactions` (v1), `settings` (v2), `budgets` (v3). Corrected here
+because this change edits this requirement, and a MODIFIED block replaces the
+whole thing.
 
 #### Scenario: No preference changes value when the database swaps
 - **WHEN** the active data database changes in either direction
@@ -35,9 +47,12 @@ whether demo mode is on — so all of them belong on the side that does not move
 - **WHEN** the introduction has been completed and demo mode is then turned on
 - **THEN** the introduction is not shown again
 
-#### Scenario: The demo database's settings table stays empty
+#### Scenario: The demo database's settings table holds no preference
 - **WHEN** the demo database is inspected after any amount of use
-- **THEN** its `settings` table has no rows
+- **THEN** its `settings` table contains no row whose key is a declared
+  `PreferenceKey`
+- **AND** the only row it may contain is the demo ledger's seed-completion
+  marker
 
 ### Requirement: Typed preference access
 

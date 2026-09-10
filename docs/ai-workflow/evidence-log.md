@@ -565,3 +565,84 @@ Remaining: 4.1–4.4 (`LineChart`), 7.1 and 7.3 (their `LineChart` halves), 7.4
 (this log, kept current as each checkpoint lands) and 7.5 (the full gate plus
 `figma-fidelity` against `47:48` and `48:76`, which needs file access).
 
+## demo-data — in progress, opened 2026-09-10
+
+A demo mode: a toggle that points the app at a second SQLite file seeded with
+about fifteen months of generated ledger data, with real data untouched and
+manual entry still working.
+
+| Date | Step | Task | Commit | Evidence |
+| --- | --- | --- | --- | --- |
+| 2026-09-10 | propose | four artifacts, `openspec validate` clean | `76e106a` | — |
+| 2026-09-10 | audit | `spec-auditor`: NOT READY, 11 required fixes | — | — |
+| 2026-09-10 | checkpoint | 1.1 control/active database split | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T07-37-43Z_demo-data.md` |
+
+### The spec-auditor earned its place in the workflow
+
+Eleven findings, and I verified every load-bearing one against the source before
+acting. All six I checked held.
+
+**Two were fatal to the spec as written.**
+
+1. **An impossible requirement.** I required "more than eight categories in the
+   current month, so the eight-segment cap and the neutral `Other` fold are both
+   visible". `SpendCategory` declares **eight** categories and `salary` is the
+   only income one, so at most **seven** can carry expense — against a cap of
+   eight. The fold is unreachable from category data, and task 2.2's test could
+   not have been written. The proposal also said "nine spend categories", which
+   is simply wrong. Requirement replaced with what the dataset *can* show, and
+   D14 records the impossibility rather than quietly reaching for a ninth
+   category, which would be a `lib/core` change smuggled in under a demo-data
+   proposal.
+
+2. **A contradiction between the two specs I wrote in the same sitting.**
+   `storage/local-database` said a switch "SHALL close the connection it
+   replaces"; `design.md` said that connection *is* the control connection when
+   demo mode is off. Closing it would take down the settings store holding the
+   flag — and the very next thing after a toggle is a read of the flag the
+   toggle just wrote. The requirement now names the demo connection
+   specifically, with a scenario that fails if the control connection is ever
+   closed by a swap.
+
+**Others acted on:** production ids come from `Random.secure()`, so my
+determinism requirement was false in production while every test passed — the
+generator now takes an `IdGenerator` parameter (D4a). D3's fail-fast contradicted
+D7's "seed if there are no transactions": a seed failing after row one leaves
+transactions and would never retry, so there is a seed-completion marker, and it
+cannot be a preference because preferences are control-scoped and shared (D7,
+extended). A stale scenario I copied forward said the schema is "at v2 with both
+tables" — it is v3 with three. The proposal had no `## Non-goals`, which
+`openspec/config.yaml` requires.
+
+**The best finding was a hole in the flagship guarantee.** `PendingUndo` holds a
+deleted `Transaction` in memory for five seconds and restores it through the
+ordinary repository. Delete a demo transaction, turn demo mode off inside the
+window, press undo — and a demo record lands in the real ledger. The file
+separation does not cover in-flight state. That is now a requirement of its own
+(D11) and task 2.1, ahead of all the dataset work.
+
+Also restructured: the capability's first requirement — real data untouched end
+to end — had been task 7.2, the *last* task. It is now 1.4, and it gates the
+rest.
+
+### 1.1: two mutations, one of which found a real hole
+
+The provider split went in and the gate passed at 1404 tests. Then three
+mutations:
+
+| Mutation | Result |
+| --- | --- |
+| demo-off returns a second `AppDatabase` on the real path instead of the shared instance | fails |
+| the control connection is also closed on a swap | **survived** |
+| `preferencesStoreProvider` bound to `activeDatabaseProvider` | **survived** |
+
+The second was my test's fault, and it is the useful kind. **Riverpod is lazy:**
+the test flipped the flag but never *read* `activeDatabaseProvider`, so the demo
+branch was never built, no `onDispose` was ever registered, and the assertion
+about the control connection could not fail. Reading the provider while demo
+mode is on fixed it, and the mutation now fails.
+
+The third is expected at 1.1 and is exactly what task 1.3 exists for — the
+toggle-undoing-itself guard, which is not written yet. Recorded rather than
+treated as covered, because 1.1's own verify line does not claim it.
+
