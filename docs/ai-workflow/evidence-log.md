@@ -407,5 +407,16 @@ rather than adding a HorizontalBarChart component."*
 
 | Date | Step | Task | Commit | Evidence |
 | --- | --- | --- | --- | --- |
-| 2026-09-10 | checkpoint | 1.1 ChartSeries value type | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T01-43-14Z_insight-components.md` |
+| 2026-09-10 | checkpoint | 1.1 ChartSeries value type | `2e564b5` | `docs/ai-workflow/verify-runs/2026-09-10T01-43-14Z_insight-components.md` |
+| 2026-09-10 | checkpoint | 2.1 + 2.2 ChartLegendItem and its nine gallery slots | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T01-49-42Z_insight-components.md` |
+
+### Two tasks, one checkpoint, and why
+
+2.1 (the widget) and 2.2 (its gallery registration) were committed together.
+They cannot be separate checkpoints: `gallery_test.dart` asserts that every
+class declared under `lib/design_system` is either in the gallery or in a live
+exemption list, so a widget committed without its section fails the gate, and a
+checkpoint requires a passing gate. Splitting them would have meant exempting
+`ChartLegendItem` for one commit and un-exempting it in the next — a temporary
+hole in the check that catches exactly this.
 

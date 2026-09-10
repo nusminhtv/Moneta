@@ -10,7 +10,7 @@
 
 ## 2. ChartLegendItem
 
-- [ ] 2.1 `lib/design_system/molecules/chart_legend_item.dart` from `47:47` —
+- [x] 2.1 `lib/design_system/molecules/chart_legend_item.dart` from `47:47` —
   all nine slots (`1`–`8` and `Other`), swatch 10, label filling and
   truncating, percentage and amount. Takes a `Money`, formats it itself.
   `Other` uses `textTertiary`, transcribed from `47:42`.
@@ -18,7 +18,7 @@
   test per slot that the swatch is that slot's palette colour while the three
   text roles are identical across slots, plus a long label truncating without
   displacing the figures.
-- [ ] 2.2 Register all nine slots in the gallery with a count test.
+- [x] 2.2 Register all nine slots in the gallery with a count test.
   Verify: `test/app/gallery_test.dart` fails if fewer than nine are registered.
 
 ## 3. DonutChart

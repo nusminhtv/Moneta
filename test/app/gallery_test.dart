@@ -11,6 +11,7 @@ import 'package:moneta/design_system/atoms/moneta_icon_button.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/molecules/budget_status.dart';
 import 'package:moneta/design_system/molecules/category_icon.dart';
+import 'package:moneta/design_system/molecules/chart_series.dart';
 import 'package:moneta/design_system/molecules/onboarding_illustration.dart';
 import 'package:moneta/design_system/molecules/pagination_dots.dart';
 import 'package:moneta/design_system/molecules/progress_bar.dart';
@@ -26,6 +27,7 @@ import 'package:moneta/features/transactions/domain/transaction.dart';
 import 'gallery_describe_auth.dart';
 import 'gallery_describe_budgets.dart';
 import 'gallery_describe_home.dart';
+import 'gallery_describe_insights.dart';
 
 /// The gallery's builders take a `BuildContext` and none of them reads it, so a
 /// throwaway element is enough to invoke them outside a pump. If a builder ever
@@ -582,6 +584,29 @@ void main() {
       );
     });
   });
+
+  group('ChartLegendItem is registered in full', () {
+    test('all nine slots of 47:47 are present, named as Figma names them', () {
+      final section = galleryCatalog.singleWhere(
+        (s) => s.component == 'ChartLegendItem',
+      );
+      expect(section.figmaNodeId, '47:47');
+      // Nine: `Slot=1`-`Slot=8` plus `Slot=Other`. Asserted against the enum
+      // rather than against the literal 9, so adding a palette slot fails here
+      // instead of quietly shipping a legend that cannot name it.
+      expect(section.variants, hasLength(ChartSlot.values.length));
+      expect(
+        section.variants.map((v) => v.label),
+        ChartSlot.values.map((slot) => slot.figmaName),
+        reason: 'the labels are Figma variant names, in Figma order',
+      );
+      expect(
+        section.variants.map((v) => v.label),
+        contains('Slot=Other'),
+        reason: 'the neutral fold is an authored variant, not an absence',
+      );
+    });
+  });
 }
 
 /// The checkable claims a variant label makes, lowercased.
@@ -636,10 +661,12 @@ String _describe(Widget widget) =>
     describeAuth(widget) ??
     describeHome(widget) ??
     describeBudgets(widget) ??
+    describeInsights(widget) ??
     (throw UnsupportedError(
       'No describer knows ${widget.runtimeType}. Add a case to the file you own '
-      '(gallery_describe_auth.dart, _budgets.dart or _home.dart), so the '
-      'variant-distinctness check keeps covering every section.',
+      '(gallery_describe_auth.dart, _budgets.dart, _home.dart or '
+      '_insights.dart), so the variant-distinctness check keeps covering every '
+      'section.',
     ));
 
 String? _describeCore(Widget widget) => switch (widget) {
