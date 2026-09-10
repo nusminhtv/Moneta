@@ -97,6 +97,35 @@ final class AppDatabase {
     _db = null;
     await db?.close();
   }
+
+  /// Closes the connection and deletes the file.
+  ///
+  /// Lives here rather than in a caller because this object owns the path and
+  /// the factory; a caller reconstructing the path would be a second place that
+  /// has to agree about it.
+  ///
+  /// Deleting the file rather than emptying the tables is deliberate: the next
+  /// [open] runs the whole migration set from nothing, so the result is
+  /// identical to a first run. `DELETE FROM` every table needs a list of tables
+  /// kept in step with the migrations by hand, and that list is exactly what
+  /// drifts.
+  ///
+  /// Reported, never thrown: "the file could not be deleted" is a real outcome,
+  /// not a programming error.
+  Future<Result<void>> deleteFile() async {
+    try {
+      await close();
+      await factory.deleteDatabase(path);
+      // The next open is a fresh one, so the memoised count would otherwise
+      // claim work that no longer exists.
+      _openCount = 0;
+      return const Ok(null);
+    } on Object catch (error) {
+      return Err(
+        AppFailure.storage('Could not delete the database', cause: error),
+      );
+    }
+  }
 }
 
 /// Raised when the stored schema is newer than this build of the app.

@@ -9,6 +9,7 @@ import 'package:moneta/app/gallery/gallery_screen.dart';
 import 'package:moneta/app/home_route_screen.dart';
 import 'package:moneta/app/insights_route_screens.dart';
 import 'package:moneta/app/notifications_route_screen.dart';
+import 'package:moneta/app/settings_route_screens.dart';
 import 'package:moneta/app/shell.dart';
 import 'package:moneta/design_system/organisms/bottom_nav.dart';
 import 'package:moneta/features/onboarding/presentation/onboarding_providers.dart';
@@ -91,9 +92,12 @@ GoRouter buildRouter({String initialLocation = defaultInitialRoute}) {
             builder: (context, state) => const CategoryBreakdownRouteScreen(),
           ),
           GoRoute(
+            // The Profile tab lands on `08.03` Settings for now: `08.01`
+            // Profile needs `Avatar` (`21:121`, 12 variants), which is not
+            // built, and building it inside a settings change would be a
+            // design-system obligation smuggled in sideways.
             path: DestinationRoutes.paths[MonetaDestination.profile]!,
-            builder: (context, state) =>
-                const PlaceholderScreen(title: 'Profile'),
+            builder: (context, state) => const SettingsRouteScreen(),
           ),
         ],
       ),

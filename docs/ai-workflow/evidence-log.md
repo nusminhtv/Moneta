@@ -924,3 +924,42 @@ it belongs to `salary`, which is income. `33:311`'s description says as much —
 *"Colour and glyph are baked in together — pick a category, never a colour."*
 Deviation 42 corrected.
 
+## profile-feature — Settings, and the demo switch finally has a home
+
+`08.03` built from `100:428`; the Profile tab points at it. Ten of the eleven
+page-08 screens are deferred with the blocker for each recorded in
+`figma-map.md` — `Avatar`, `Numpad`, `Chip` and `SearchField` are all authored
+and unbuilt, and several screens have no behaviour behind them at all.
+
+Gate: **1561 tests, all 8 checks green.**
+
+### The provisional screen was never built
+
+`demo-data` group 7 planned one while Figma was unreadable. Access returned, so
+the authored screen got built instead and group 7 is ticked **superseded** with
+this change named. Two screens for one control would have been the wrong answer
+to a temporary outage.
+
+### The information design is enforced by the type
+
+`100:728` names the mistake this screen exists to avoid, so `SettingsRow` has
+three constructors and **derives** its accessory: `push` → chevron, `toggle` →
+toggle, `value` → value. There is no accessory parameter to get wrong.
+
+The test asserts it as an invariant over every row — a row that toggles must not
+also navigate, a row that navigates must carry a chevron — rather than checking
+each row individually, because the failure mode being guarded is *a new row
+added with the wrong trailing*, and per-row assertions pass for that.
+
+### Two things the tests caught
+
+A row whose destination does not exist was passing its `onTap` through, so
+tapping "Edit profile" would have navigated to nothing. It now drops the handler
+when `available` is false, and there is a test for both directions — the
+unavailable row reports nothing, the available one still works.
+
+And an ambiguous finder: the group heading "Security" and a row titled
+"Security" both render as `Text`, so `find.text` matched two widgets. The
+fixture now uses distinct strings, which is a fixture problem rather than a
+product one but would have read as a flaky test later.
+

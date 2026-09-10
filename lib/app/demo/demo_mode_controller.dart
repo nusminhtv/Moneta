@@ -65,6 +65,30 @@ class DemoModeController {
     return seedIfNeeded();
   }
 
+  /// Deletes the demo ledger and generates it again.
+  ///
+  /// Refuses unless demo mode is active — the same guard [seedIfNeeded] makes,
+  /// and for the same reason: this is a destructive call and the real ledger
+  /// must never be reachable from it.
+  ///
+  /// Deletes the **file**, so the reopen runs the shared migration set from
+  /// nothing and the result is identical to a first run.
+  Future<Result<int>> resetDemoLedger() async {
+    if (!ref.read(demoModeProvider)) {
+      return const Err(
+        AppFailure.validation('The demo ledger is not the active one'),
+      );
+    }
+
+    final deleted = await ref.read(activeDatabaseProvider).deleteFile();
+    if (deleted case Err(:final failure)) return Err(failure);
+
+    // Every repository is built over the old connection, so the graph has to
+    // be rebuilt before anything reads or writes again.
+    ref.invalidate(activeDatabaseProvider);
+    return seedIfNeeded();
+  }
+
   /// Seeds the demo ledger if it has not been seeded in full.
   ///
   /// Safe to call repeatedly: the marker makes the second call a no-op.

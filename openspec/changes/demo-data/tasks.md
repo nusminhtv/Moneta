@@ -120,7 +120,7 @@ guarantees first, then data, then surfaces.
   Verify: `test/app/demo/demo_mode_controller_test.dart` asserts the flag
   persists; absence reads as off and is distinguishable from a stored `false`;
   and a storage failure surfaces rather than silently reading as off.
-- [ ] 5.2 `AppDatabase.deleteFile()` returning `Result<void>` (D6a), and reset
+- [x] 5.2 `AppDatabase.deleteFile()` returning `Result<void>` (D6a), and reset
   built on it: close, delete, reopen through the shared migration set, reseed.
   Verify: `test/data/database/app_database_test.dart` covers the delete and its
   failure branch — this file is in the ≥85% band. Reset after adding and
@@ -153,9 +153,19 @@ guarantees first, then data, then surfaces.
   on, and correct the stale row still listing `Banner` `42:329` as not started.
   Verify: the entry names the node, the collision and the dependency.
 
-## 7. The Provisional Settings Surface
+## 7. The Provisional Settings Surface — SUPERSEDED
 
-- [ ] 7.1 `lib/features/settings/presentation/demo_settings_screen.dart` as a
+**Not built.** Figma access returned, so `profile-feature` builds the authored
+`08.03` Settings list (`100:428`) and puts the demo switch on it as a
+**Toggle** row — which is what annotation `100:728` says a control that changes
+something immediately must be. Building a provisional screen and then replacing
+it would have been two screens for one control.
+
+`5.2` (reset) and `5.4` (starting states) are also delivered by that change's
+route wiring plus `AppDatabase.deleteFile`, which landed there. The original
+task text is kept below.
+
+- [x] 7.1 SUPERSEDED — `lib/features/settings/presentation/demo_settings_screen.dart` as a
   **callback-only** widget — current value in, two callbacks out, no provider
   read — because a feature may not import `lib/app` (D15). The ledger control is
   a two-option `MonetaRadioGroup`, not a new `Toggle` atom (D12).
@@ -164,11 +174,11 @@ guarantees first, then data, then surfaces.
   one ledger reads selected and it is the active one; choosing the other reports
   it; reset asks before acting and declining changes nothing; and the surface
   states it is provisional.
-- [ ] 7.2 Route and wiring in `lib/app`, reachable from Home.
+- [x] 7.2 SUPERSEDED — route and wiring in `lib/app`, reachable from Home.
   Verify: `test/app/router_test.dart` reaches the screen and back, and the
   controller is wired from `lib/app` so the architecture gate stays green. If a
   Home test's expectations change, the diff says which and why.
-- [ ] 7.3 Record the provisional surface in `figma-map.md` as unauthored, naming
+- [x] 7.3 SUPERSEDED — record the provisional surface in `figma-map.md` as unauthored, naming
   the nodes deliberately **not** consulted, and that `profile-feature` absorbs
   both controls.
   Verify: the entry names them and says why.

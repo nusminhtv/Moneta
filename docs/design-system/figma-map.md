@@ -774,3 +774,41 @@ halves of one sentence cannot both hold. `80:407` breaks the tie: every fill on
 the frame is `chart/1`. Resolved with a `MonetaProgressBar.series` constructor
 taking a `ChartSlot`; recorded as added scope in the change's `tasks.md` group 7
 rather than slipped in.
+
+### 📱 08 Profile & Settings — one of eleven built, 2026-09-10
+
+| Screen | Node | State | What blocks it |
+| --- | --- | --- | --- |
+| 08.01 Profile — default | `100:2` | **deferred** | `Avatar` (`21:121`, 12 variants) is not built |
+| 08.02 Edit profile | `100:276` | deferred | needs `Avatar`; `Select` and `TextField` exist |
+| 08.03 Settings — list | `100:428` | **done** | — |
+| 08.04 Settings — security | `100:729` | deferred | no auth or biometrics behind it |
+| 08.05 Change PIN | `101:488` | deferred | `Numpad` (`36:92`) is not built |
+| 08.06 Settings — notifications | `101:618` | deferred | rows exist; no scheduling behind them |
+| 08.07 Currency & language | `101:863` | deferred | needs multi-currency, which the wallet does not have |
+| 08.08 Manage categories | `101:978` | deferred | `Chip` (`17:65`) is not built; categories are a fixed enum |
+| 08.09 Edit category | `102:794` | deferred | same, plus custom colours |
+| 08.10 Premium — paywall | `102:1044` | deferred | no purchases |
+| 08.11 Help & FAQ | `102:1189` | deferred | `SearchField` is not built |
+
+**The Profile tab lands on `08.03`**, not `08.01`, and that is a deviation worth
+naming: the tab root in Figma is Profile. `08.01` needs `Avatar`, an authored
+set of twelve variants, and building it inside a settings change would be a
+design-system obligation smuggled in sideways. Reverts when `Avatar` lands.
+
+**Rows whose destination is unbuilt are shown and disabled, not hidden.**
+`100:722` hides Face ID's row *on a device without biometrics* — an absent
+capability. A screen not yet built is a different fact, so those rows stay
+visible, carry no chevron and do not navigate. Hiding them would make the list
+look complete and shorter than the design; letting them navigate would land on a
+blank screen.
+
+**The trailing variant is derived, not passed.** `100:728`: *"The Trailing
+variant is the whole information design of a settings list. Chevron promises
+another screen, Toggle promises an immediate change, Value shows state. Getting
+that mapping wrong is the most common settings-screen mistake."* So
+`SettingsRow` has three constructors — `push`, `toggle`, `value` — and computes
+the accessory from which one was used. The mistake is not expressible, and the
+test asserts the invariant over every row rather than row by row, because a
+per-row assertion would pass a list where a *new* row was added wrongly.
+
