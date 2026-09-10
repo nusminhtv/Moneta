@@ -963,3 +963,36 @@ And an ambiguous finder: the group heading "Security" and a row titled
 fixture now uses distinct strings, which is a fixture problem rather than a
 product one but would have read as a flaky test later.
 
+### The demo data was tuned by looking at what it actually said
+
+The generator passed every test and produced a month that read badly:
+
+```
+before   spend 24.5M   income 0 ₫
+         Bills 43% · Shopping 27% · Food 9% · Health 6% · Transport 6% ...
+after    spend 9.8M    income 32.0M
+         Shopping 23% · Bills 22% · Food 21% · Transport 15% · Health 9% ...
+```
+
+Two real defects, neither of which any assertion covered because neither is
+wrong — only implausible:
+
+**Income read 0 ₫ for the current month.** Payday was the 25th and the demo
+anchor is the 17th, so the newest point on the cash-flow chart's income line sat
+on the baseline and Insights reported no income at all. Payday moved to the 5th,
+and the test now pins the boundary *both* ways — a clock on the 3rd has one
+salary fewer, a clock on the 6th does not.
+
+**Bills were 43% of spending and food 9%**, because a 1.9M ceiling on a
+12%-frequency category beats a 420k ceiling on a 34% one. The ceilings were cut
+so food is near the top, which is also the shape `47:62`'s own sample has.
+
+The notes are now merchant-flavoured — Highlands Coffee, Grab Bike, Shopee, EVN,
+CGV, Pharmacity, Tết lucky money — because a demo of a finance app is much
+easier to read when the rows look like somewhere you have been. Still invented,
+still recorded as invented, and no test depends on any particular string.
+
+One test bug found while fixing this: `isNot(contains(9))` on transaction months
+matched September **2025**, which a fifteen-month window from September 2026 also
+contains. Year and month now, which is the assertion that was meant.
+

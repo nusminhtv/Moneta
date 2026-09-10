@@ -97,6 +97,12 @@ class DemoCategoryWeight {
 
 /// The weights, largest first. Salary is absent: it is income and is generated
 /// on its own cycle.
+///
+/// The ceilings were tuned once, after looking at what the generated month
+/// actually said: `bills` came out at **43%** of spending and `food` at 9%,
+/// because a 1.9M ceiling on a 12%-frequency category beats a 420k ceiling on
+/// a 34% one. Plausible-looking dummy data is the whole point, so the ceilings
+/// now put food first — which is also the shape `47:62`'s own sample has.
 @visibleForTesting
 const List<DemoCategoryWeight> demoCategoryWeights = [
   DemoCategoryWeight(
@@ -115,44 +121,106 @@ const List<DemoCategoryWeight> demoCategoryWeights = [
     category: SpendCategory.shopping,
     share: 14,
     lowMinor: 90000,
-    highMinor: 2400000,
+    highMinor: 600000,
   ),
   DemoCategoryWeight(
     category: SpendCategory.bills,
     share: 12,
     lowMinor: 180000,
-    highMinor: 1900000,
+    highMinor: 500000,
   ),
   DemoCategoryWeight(
     category: SpendCategory.entertainment,
     share: 9,
     lowMinor: 60000,
-    highMinor: 700000,
+    highMinor: 500000,
   ),
   DemoCategoryWeight(
     category: SpendCategory.health,
     share: 7,
     lowMinor: 50000,
-    highMinor: 1500000,
+    highMinor: 600000,
   ),
   DemoCategoryWeight(
     category: SpendCategory.gift,
     share: 4,
     lowMinor: 100000,
-    highMinor: 1200000,
+    highMinor: 800000,
   ),
 ];
 
-/// Notes, so the list does not read as seven repeated rows.
+/// Merchant-flavoured notes, so the ledger reads like someone's actual month
+/// rather than seven repeated rows.
+///
+/// **Invented, like the weights** — see the note on [demoCategoryWeights].
+/// Recognisable Vietnamese and international names because the wallet is VND
+/// and a demo of a finance app is much easier to read when the rows look like
+/// somewhere you have been. Nothing here is a real transaction and no test
+/// depends on any particular string.
 const Map<SpendCategory, List<String>> _notes = {
-  SpendCategory.food: ['Coffee', 'Lunch', 'Groceries', 'Bánh mì', 'Dinner out'],
-  SpendCategory.transport: ['Grab', 'Fuel', 'Bus pass', 'Parking'],
-  SpendCategory.shopping: ['Shoes', 'Jacket', 'Headphones', 'Kitchen things'],
-  SpendCategory.bills: ['Electricity', 'Water', 'Internet', 'Phone'],
-  SpendCategory.entertainment: ['Cinema', 'Concert', 'Streaming', 'Books'],
-  SpendCategory.health: ['Pharmacy', 'Dentist', 'Gym', 'Check-up'],
-  SpendCategory.gift: ['Birthday', 'Wedding', 'Tết', 'Thank-you'],
-  SpendCategory.salary: ['Salary'],
+  SpendCategory.food: [
+    'Highlands Coffee',
+    'The Coffee House',
+    'Bánh mì Huỳnh Hoa',
+    'Phở Thìn',
+    'Cơm tấm Ba Ghiền',
+    'VinMart+',
+    'Circle K',
+    'Bún bò Huế',
+    "Pizza 4P's",
+    'Trà sữa Phúc Long',
+  ],
+  SpendCategory.transport: [
+    'Grab Bike',
+    'Grab Car',
+    'Be',
+    'Xăng Petrolimex',
+    'Metro card top-up',
+    'Parking — Vincom',
+    'Xanh SM taxi',
+  ],
+  SpendCategory.shopping: [
+    'Shopee',
+    'Uniqlo',
+    'Lazada',
+    'Muji',
+    'Nhà sách Fahasa',
+    'Decathlon',
+    'Điện Máy Xanh',
+  ],
+  SpendCategory.bills: [
+    'EVN — electricity',
+    'SAWACO — water',
+    'Viettel fibre',
+    'Mobifone top-up',
+    'Apartment service fee',
+    'Netflix',
+    'Spotify',
+  ],
+  SpendCategory.entertainment: [
+    'CGV Cinemas',
+    'Galaxy Cinema',
+    'Bowling — Vincom',
+    'Concert ticket',
+    'Steam',
+    'Bể bơi Lan Anh',
+  ],
+  SpendCategory.health: [
+    'Pharmacity',
+    'Long Châu pharmacy',
+    'Dentist — Nha khoa Kim',
+    'California Fitness',
+    'Vinmec check-up',
+    'Eye test',
+  ],
+  SpendCategory.gift: [
+    'Birthday — Linh',
+    'Wedding — Minh & Hà',
+    'Tết lucky money',
+    'Flowers',
+    'Housewarming',
+  ],
+  SpendCategory.salary: ['Salary — NIK Technology'],
 };
 
 /// Generates the demo ledger.
@@ -207,7 +275,7 @@ DemoDataset generateDemoDataset({
           category: SpendCategory.salary,
           at: payday,
           createdAt: createdAt,
-          note: 'Salary',
+          note: _notes[SpendCategory.salary]!.first,
         ),
       );
     }
@@ -300,7 +368,7 @@ DemoDataset generateDemoDataset({
       category: SpendCategory.shopping,
       at: largeAt,
       createdAt: createdAt,
-      note: 'Laptop',
+      note: 'MacBook Air — Thế Giới Di Động',
     ),
   );
 
@@ -328,7 +396,13 @@ const int defaultDemoSeed = 20260910;
 const int defaultMonthsOfHistory = 15;
 
 /// Day of the month salary arrives.
-const int salaryDayOfMonth = 25;
+///
+/// Early in the month on purpose. On the 25th, a demo opened before the 25th
+/// showed **zero income for the current month** — so the cash-flow chart's
+/// income line dropped to the baseline for its most recent point and Insights
+/// reported income of 0 ₫. The 5th means any demo after the 5th has a full
+/// month of both directions.
+const int salaryDayOfMonth = 5;
 
 /// Monthly salary, in minor units.
 const int salaryMinor = 32000000;

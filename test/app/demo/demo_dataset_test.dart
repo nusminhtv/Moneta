@@ -250,8 +250,40 @@ void main() {
           reason: 'a cycle means the same day, not roughly monthly',
         );
       }
-      // One per month, except the current one when payday has not arrived.
-      expect(salary, hasLength(defaultMonthsOfHistory - 1));
+      // One per month, and the current month counts because payday (the 5th)
+      // is before the anchor (the 17th).
+      expect(salary, hasLength(defaultMonthsOfHistory));
+    });
+
+    test('a clock before payday has one salary fewer', () {
+      // The rule, both ways round. Payday moved from the 25th to the 5th
+      // precisely because a demo opened mid-month showed **zero income for the
+      // current month** — the cash-flow chart's newest income point sat on the
+      // baseline. This pins the boundary rather than the happy side of it.
+      final beforePayday = generate(at: DateTime.utc(2026, 9, 3, 10));
+      final salaryBefore = beforePayday.transactions
+          .where((t) => t.category == SpendCategory.salary)
+          .toList();
+      expect(salaryBefore, hasLength(defaultMonthsOfHistory - 1));
+      // Year AND month: a fifteen-month window from September 2026 also
+      // contains September *2025*, so matching on the month alone finds a
+      // salary that is not the one being asked about.
+      expect(
+        salaryBefore.where(
+          (t) => t.occurredAt.year == 2026 && t.occurredAt.month == 9,
+        ),
+        isEmpty,
+        reason: 'September 2026 payday has not happened on the 3rd',
+      );
+
+      final afterPayday = generate(at: DateTime.utc(2026, 9, 6, 10));
+      expect(
+        afterPayday.transactions
+            .where((t) => t.category == SpendCategory.salary)
+            .length,
+        defaultMonthsOfHistory,
+        reason: 'and it has by the 6th',
+      );
     });
 
     test('income is only salary, and expense is never salary', () {
