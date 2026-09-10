@@ -86,22 +86,26 @@ guarantees first, then data, then surfaces.
 
 ## 4. Seeding Through The Repositories
 
-- [ ] 4.1 `lib/app/demo/demo_seeder.dart`: writes via
+- [x] 4.1 `lib/app/demo/demo_seeder.dart`: writes via
   `TransactionRepository.add` and `BudgetRepository.add` (D3), reporting the
   first failure rather than continuing.
   Verify: `test/app/demo/demo_seeder_test.dart` seeds an in-memory database and
   asserts the repositories return the dataset; that a repository failure stops
   seeding and surfaces; and a source-level check that the seeder holds no SQL.
-- [ ] 4.2 The seed-completion marker in the demo database's `settings` table,
+- [x] 4.2 The seed-completion marker in the demo database's `settings` table,
   written only after the whole dataset lands (D7).
   Verify: a completed seed is not repeated; a seed that fails after the first
   record **is** retried on the next activation — the row-count check this
   replaces would never retry it; and the marker is absent from the control
   database, so turning demo mode off does not make the real ledger look seeded.
-- [ ] 4.3 Measure the seed and record the number.
+- [x] 4.3 Measure the seed and record the number.
   Verify: the timing appears in `docs/ai-workflow/evidence-log.md`. Measure
   only — do not change anything in this task.
-- [ ] 4.4 Only if 4.3 exceeds two seconds: wrap the seed in one database
+- [x] 4.4 **Not needed.** 4.3 measured 584ms for 1,177 records against a real
+  file, against a two-second budget, so the cross-feature repository change this
+  task describes is not justified. Original text kept below.
+
+  Only if 4.3 exceeds two seconds: wrap the seed in one database
   transaction, still through the repositories.
   Verify: both timings recorded. **This needs a transaction-scoped executor
   threaded through two repository constructors — a cross-feature API change, not

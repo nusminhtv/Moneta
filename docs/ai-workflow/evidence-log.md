@@ -580,7 +580,8 @@ manual entry still working.
 | 2026-09-10 | checkpoint | 1.3 the toggle-undoes-itself guard | `c98f740` | `docs/ai-workflow/verify-runs/2026-09-10T07-44-23Z_demo-data.md` |
 | 2026-09-10 | checkpoint | 1.4 real ledger untouched, end to end | `ca3d574` | `docs/ai-workflow/verify-runs/2026-09-10T07-47-12Z_demo-data.md` |
 | 2026-09-10 | checkpoint | 2.1 in-flight state does not cross ledgers | `6623f58` | `docs/ai-workflow/verify-runs/2026-09-10T07-52-09Z_demo-data.md` |
-| 2026-09-10 | checkpoint | 3.1–3.5 the dataset generator | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T07-59-44Z_demo-data.md` |
+| 2026-09-10 | checkpoint | 3.1–3.5 the dataset generator | `fcd1c62` | `docs/ai-workflow/verify-runs/2026-09-10T07-59-44Z_demo-data.md` |
+| 2026-09-10 | checkpoint | 4.1–4.4 seeding through the repositories | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T08-05-06Z_demo-data.md` |
 
 ### The spec-auditor earned its place in the workflow
 
@@ -753,4 +754,33 @@ unless something says so. Python's traceback did. This is the second form of the
 trap `figma-map.md` records for `dart format`: **verify the edit landed before
 believing the result.** The assertion inside the helper is what turned six
 false negatives into six visible errors.
+
+### 4.3: the measurement, and 4.4 not needed
+
+Against a real file on the Dart VM, seeding the full fifteen-month dataset:
+
+| Step | Records | Time |
+| --- | --- | --- |
+| generate (pure) | 1,177 | **13 ms** |
+| seed through the repositories | 1,177 | **584 ms** |
+
+The budget was two seconds. So **4.4 is not needed** and is ticked as such with
+the number that says so, rather than performed because it was written down. That
+matters more than the milliseconds: 4.4 would have threaded a
+transaction-scoped executor through two repository constructors — a cross-feature
+API change — and the task's own rule was to measure first. This is the
+measurement deciding it.
+
+### What the marker tests recorded that a reader would otherwise assume
+
+`seedOnce` retries a failed seed, because the marker is only written after every
+record lands. But **retrying does not recover**: the rows from the failed
+attempt are still there, so the retry collides on duplicate ids and fails too.
+The answer is reset, which deletes the file. There is a test named for exactly
+that, because "a failed seed is retried" reads like "it heals itself" and it
+does not.
+
+Three mutations, all failing: marking before seeding instead of after, skipping
+the already-seeded check, and the marker reading *any* row under its key as
+seeded rather than only its own value.
 
