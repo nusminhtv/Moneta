@@ -29,20 +29,20 @@
   Verify: `test/design_system/organisms/donut_chart_test.dart` asserts the
   painted arcs with an ordered `paints..arc(color:)` sequence, and **a mutation
   swapping two segment colours must fail it** — the `budget-components` lesson.
-- [ ] 3.2 The eight-segment cap and the `Other` fold, with percentages.
+- [x] 3.2 The eight-segment cap and the `Other` fold, with percentages.
   Verify: nine categories give eight coloured segments plus a neutral `Other`;
   eight give no `Other`; the segment sum equals the supplied sum and equals the
   centre total.
-- [ ] 3.3 The legend, rendered unconditionally and never suppressible (D1).
+- [x] 3.3 The legend, rendered unconditionally and never suppressible (D1).
   Verify: a source-level check that the constructor exposes no legend parameter —
   the same technique `near_limit_threshold_test.dart` now uses, since an
   always-empty diagnostics list proves nothing — plus a test that every segment
   has exactly one legend row whose colour matches its arc.
-- [ ] 3.4 Boundary behaviour: no categories, one category, a zero amount, all
+- [x] 3.4 Boundary behaviour: no categories, one category, a zero amount, all
   zeros, a negative amount, near-maximum amounts, mixed currencies.
   Verify: each spec scenario has a test; nothing throws and no arc exceeds a
   full turn.
-- [ ] 3.5 Gallery registration with a count test.
+- [x] 3.5 Gallery registration with a count test.
   Verify: `test/app/gallery_test.dart`.
 
 ## 4. LineChart

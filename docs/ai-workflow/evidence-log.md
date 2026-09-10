@@ -409,7 +409,8 @@ rather than adding a HorizontalBarChart component."*
 | --- | --- | --- | --- | --- |
 | 2026-09-10 | checkpoint | 1.1 ChartSeries value type | `2e564b5` | `docs/ai-workflow/verify-runs/2026-09-10T01-43-14Z_insight-components.md` |
 | 2026-09-10 | checkpoint | 2.1 + 2.2 ChartLegendItem and its nine gallery slots | `1147f4e` | `docs/ai-workflow/verify-runs/2026-09-10T01-49-42Z_insight-components.md` |
-| 2026-09-10 | checkpoint | 3.1 DonutChart ring, centre and painted-arc assertions | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T01-59-46Z_insight-components.md` |
+| 2026-09-10 | checkpoint | 3.1 DonutChart ring, centre and painted-arc assertions | `c425af2` | `docs/ai-workflow/verify-runs/2026-09-10T01-59-46Z_insight-components.md` |
+| 2026-09-10 | checkpoint | 3.2–3.5 cap, fold, unsuppressible legend, boundaries, gallery count | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T02-06-54Z_insight-components.md` |
 
 ### Two tasks, one checkpoint, and why
 
@@ -469,4 +470,34 @@ be run against the *old* code, not the new.
 - The track behind the segments is an **addition**. `47:49` has eight ellipses
   and no track, because its sample fills the circle; the spec's "empty ring with
   no segments" needs something to be the ring.
+
+### Four tasks in one checkpoint — a deviation, stated
+
+3.2, 3.3, 3.4 and 3.5 are committed together. That breaks "one checkpoint per
+task", and it is a real deviation rather than a technicality: all four are
+test-only additions to one file for one component, and I wrote them in sequence
+before committing. Splitting them afterwards would produce three commits whose
+verify evidence describes the final state rather than the state each commit
+leaves behind, which is the thing a checkpoint is for. Recorded rather than
+tidied away; the remaining groups (4, 5, 6) go back to one commit per task.
+
+### The legend row has a real upper bound, and it is not fixable
+
+3.4's near-maximum scenario surfaced a genuine defect, not in the donut but in
+`ChartLegendItem`: at 2^61 minor units the row overflows by 47px. `47:2` pins
+the percentage and the amount (`shrink-0`) and flexes only the label, so once
+the label reaches zero width the row is over-subscribed and `RenderFlex`
+reports it.
+
+There is no arrangement of a 353px row that can show an unbounded amount. Making
+the amount flexible does not fix it either — `RenderFlex` gives each flexible
+child `freeSpace / totalFlex` and does not hand a loose child's leftover back to
+its sibling, so a flexible amount would leave the row un-flush and shrink the
+label in the normal case. The only real choice is which part is lost, and the
+design already answers that: the label goes first.
+
+So the scenario is split. The arithmetic is asserted at 2^61 without rendering,
+and a separate widget test asserts the largest magnitude the authored row does
+hold (~10^15 minor units, past any real ledger). The bound is recorded in
+`figma-map.md` rather than papered over with a test that avoids the question.
 

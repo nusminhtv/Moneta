@@ -607,6 +607,38 @@ void main() {
       );
     });
   });
+
+  group('DonutChart is registered in full', () {
+    test('the cap, the fold and both degenerate cases are all rendered', () {
+      final section = galleryCatalog.singleWhere(
+        (s) => s.component == 'DonutChart',
+      );
+      expect(section.figmaNodeId, '47:48');
+      // `47:48` is a single variant, so a count of one would satisfy Figma and
+      // show a reviewer nothing. The four here are the cases that can differ
+      // visually: the authored eight, nine folding into Other, one segment
+      // filling the ring, and none at all.
+      expect(
+        section.variants.map((v) => v.label),
+        [
+          'Categories=8, Fold=None',
+          'Categories=9, Fold=Other',
+          'Categories=1, Fold=None',
+          'Categories=0, Fold=None',
+        ],
+      );
+      final folded = section.variants.where(
+        (v) => v.label.contains('Fold=Other'),
+      );
+      expect(
+        folded,
+        hasLength(1),
+        reason:
+            'the eight-segment cap is only visible in the folded variant, '
+            'so removing it would leave the cap unreviewable',
+      );
+    });
+  });
 }
 
 /// The checkable claims a variant label makes, lowercased.
