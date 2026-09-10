@@ -54,30 +54,30 @@ guarantees first, then data, then surfaces.
 
 ## 3. The Dataset Generator
 
-- [ ] 3.1 `lib/app/demo/demo_dataset.dart`: the pure generator (D5) with its own
+- [x] 3.1 `lib/app/demo/demo_dataset.dart`: the pure generator (D5) with its own
   fixed-seed linear-congruential sequence (D4) and an **injected `IdGenerator`**
   (D4a), because the production one is `Random.secure()`. No I/O.
   Verify: `test/app/demo/demo_dataset_test.dart` asserts two runs at one fixed
   clock and one seeded id source are equal field for field including ids and
   order; and a signature check that the clock and id source are parameters.
-- [ ] 3.2 Span and anchoring: fifteen whole months up to the clock's month,
+- [x] 3.2 Span and anchoring: fifteen whole months up to the clock's month,
   transactions in every one, nothing dated after the clock.
   Verify: the no-future-dates case uses a clock late in a month, so an
   off-by-one day is caught rather than absorbed; a clock a month later yields
   the same relative span.
-- [ ] 3.3 Category and direction coverage: every **expense** category present
+- [x] 3.3 Category and direction coverage: every **expense** category present
   with distinct totals, and salary on a repeating day-of-month cycle.
   Verify: asserted as properties, not as a transcribed count — a fixture
   asserting "1,203 transactions" would fail on every tuning of the weight table
   and prove nothing. The cycle test asserts the same day-of-month, not "roughly
   monthly".
-- [ ] 3.4 Budget states: budgets of all three periods, with one over its limit,
+- [x] 3.4 Budget states: budgets of all three periods, with one over its limit,
   one near it and one on track **when evaluated at the generating clock**.
   Verify: evaluated through `BudgetProgress` at that clock. Record in
   `design.md` that a demo ledger left unseeded for weeks drifts out of these
   states, since the dataset is anchored and seeded once — reset is the answer,
   and pretending otherwise would be a claim no test can hold.
-- [ ] 3.5 Raw-value boundaries: whole positive minor units in the wallet
+- [x] 3.5 Raw-value boundaries: whole positive minor units in the wallet
   currency asserted on the generator's **raw values before construction**, since
   `Transaction.create` already enforces them and asserting afterwards would test
   `transaction.dart`. Plus one deliberately large amount and a larger

@@ -579,7 +579,8 @@ manual entry still working.
 | 2026-09-10 | checkpoint | 1.2 `demoMode` key, every preference control-scoped | `84293c3` | `docs/ai-workflow/verify-runs/2026-09-10T07-40-04Z_demo-data.md` |
 | 2026-09-10 | checkpoint | 1.3 the toggle-undoes-itself guard | `c98f740` | `docs/ai-workflow/verify-runs/2026-09-10T07-44-23Z_demo-data.md` |
 | 2026-09-10 | checkpoint | 1.4 real ledger untouched, end to end | `ca3d574` | `docs/ai-workflow/verify-runs/2026-09-10T07-47-12Z_demo-data.md` |
-| 2026-09-10 | checkpoint | 2.1 in-flight state does not cross ledgers | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T07-52-09Z_demo-data.md` |
+| 2026-09-10 | checkpoint | 2.1 in-flight state does not cross ledgers | `6623f58` | `docs/ai-workflow/verify-runs/2026-09-10T07-52-09Z_demo-data.md` |
+| 2026-09-10 | checkpoint | 3.1–3.5 the dataset generator | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T07-59-44Z_demo-data.md` |
 
 ### The spec-auditor earned its place in the workflow
 
@@ -697,4 +698,59 @@ existing test ever refreshes while an undo is open, because `delete` refreshes
 *before* it opens the window. Changing the filter within five seconds of a
 deletion does, and there is now a test for it. Both halves of the parameter are
 guarded; both mutations fail.
+
+### The dataset, measured
+
+**1,174 transactions, 14 salary payments and 3 budgets** at the 2026-09-17
+anchor, across fifteen months. Pure generation, no database involved.
+
+### Group 3: six mutations, two survivors, and one of them mattered
+
+| Mutation | Result |
+| --- | --- |
+| future dates allowed | fails |
+| per-month category coverage dropped | fails |
+| salary day randomised | fails |
+| over-budget budget made comfortable | fails |
+| the seed offset by one | **survived — equivalent** |
+| the LCG replaced by `_state + 1` | **survived — a real gap, now closed** |
+
+The seed survivor is equivalent with respect to the spec: no requirement pins a
+*particular* dataset, only that the same seed reproduces it and that a different
+seed changes it, both of which still hold. Recorded as equivalent rather than as
+a gap.
+
+The counter survivor was real, and interesting. `_state = _state + 1` satisfies
+**every** assertion in the `DemoRandom` group — it replays from a seed, it
+advances, it covers `between`'s full range — and every dataset-level test too,
+because cycling through all residues uniformly hits each category in exact
+proportion to its share. What it breaks is the one thing dummy data exists for:
+amounts march upward in lockstep and categories cycle in order, which a reviewer
+sees immediately and the suite could not. The new assertion is objective rather
+than a claim about realism: over 200 draws the sequence must decrease at least a
+quarter of the time. A counter never decreases.
+
+### Two things the tests forced changes to
+
+*Category coverage was probabilistic.* The spec requires every expense category
+in the current month; at a 4% share, `gift` was simply absent from a 17-day
+month and the test failed. The generator now guarantees at least one transaction
+per expense category per month, current month included. A guarantee that holds
+for one seed and breaks on the next tuning of the weight table is not one.
+
+*A source-level check that failed on its own rationale.* The "no global clock or
+random source" check grepped for `SystemIdGenerator` and `Random.secure` — both
+of which the class doc *names*, to explain why they are not used. It now strips
+comments first, and the guard-the-guard test asserts both halves: that the
+stripper removes prose and that it does not remove code.
+
+### A mutation harness that silently did nothing
+
+The first run of these six reported every mutation as surviving. The shell
+helper never forwarded its arguments to `python3 -c`, so no edit was applied —
+and "mutation did not apply" is indistinguishable from "test did not catch"
+unless something says so. Python's traceback did. This is the second form of the
+trap `figma-map.md` records for `dart format`: **verify the edit landed before
+believing the result.** The assertion inside the helper is what turned six
+false negatives into six visible errors.
 
