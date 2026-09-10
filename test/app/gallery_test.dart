@@ -376,10 +376,15 @@ void main() {
       // with no render of its own. What renders it — RadioRow and RadioGroup —
       // is in the gallery, and RadioGroup's variants are built from options,
       // so an option that stopped working would fail there.
+      //
+      // LineSeries is the same shape as ChartSeries: a label and a list of
+      // `Money`, rendering nothing. What renders it — LineChart — is in the
+      // gallery at four point counts.
       const exempt = <String>{
         'AmountSlot',
         'ChartSeries',
         'MonetaRadioOption',
+        'LineSeries',
       };
       final deadExemptions = exempt.difference(declared.keys.toSet());
       expect(
@@ -646,6 +651,22 @@ void main() {
             'the eight-segment cap is only visible in the folded variant, '
             'so removing it would leave the cap unreviewable',
       );
+    });
+  });
+
+  group('LineChart is registered in full', () {
+    test('four point counts, so the zero baseline is reviewable', () {
+      final section = sectionFor('LineChart');
+      expect(section.figmaNodeId, '48:76');
+      // `48:76` is one authored variant, and one fixture would show nothing
+      // about the requirement that matters: the axis starts at zero even when
+      // the data does not. `Max=35` is the narrow-band case.
+      expect(section.variants.map((v) => v.label), [
+        'Points=12',
+        'Points=6, Max=35',
+        'Points=1',
+        'Points=0',
+      ]);
     });
   });
 

@@ -47,23 +47,23 @@
 
 ## 4. LineChart
 
-- [ ] 4.1 `lib/design_system/organisms/line_chart.dart` from `48:76` — title,
+- [x] 4.1 `lib/design_system/organisms/line_chart.dart` from `48:76` — title,
   subtitle, three gridlines, two series with end markers, y labels, and the
   two-item legend whose swatch is a line. Two named series, not a list (D6);
   fresh `Paint` per draw (D4).
   Verify: `test/design_system/organisms/line_chart_test.dart` asserts an ordered
   `paints` sequence — gridlines before series — and a mutation reversing that
   order must fail it.
-- [ ] 4.2 The single zero-based axis: no second axis, no per-series scale, no
+- [x] 4.2 The single zero-based axis: no second axis, no per-series scale, no
   axis minimum in the API, and both series scaled to one maximum.
   Verify: a source-level check that no such parameter exists, plus a test that
   two series in a narrow band well above zero still render against a zero
   baseline with labels stating the range.
-- [ ] 4.3 Boundary behaviour: empty series, a single point, all zeros, very
+- [x] 4.3 Boundary behaviour: empty series, a single point, all zeros, very
   large values, series of unequal length, mixed currencies.
   Verify: each spec scenario has a test; the all-zeros case must not divide by
   zero and unequal lengths must be reported rather than plotted.
-- [ ] 4.4 Gallery registration with a count test.
+- [x] 4.4 Gallery registration with a count test.
   Verify: `test/app/gallery_test.dart`.
 
 ## 5. BottomSheet
@@ -94,7 +94,7 @@
 
 ## 7. Close-Out
 
-- [ ] 7.1 `docs/design-system/figma-map.md`: mark the five components done with
+- [x] 7.1 `docs/design-system/figma-map.md`: mark the five components done with
   their nodes and variant counts; add the Charts page components not built and
   why (`BarChart` belongs to Budgets `04.07`, `Sparkline` is instanced nowhere on
   page 07); record the donut's ring thickness as **observed from the exported
@@ -107,7 +107,7 @@
   decision and identifies the green "+12.4% spent" sample as the error, so the
   entry stops being an unverified candidate.
   Verify: the deviation table no longer calls it unverified and cites `81:498`.
-- [ ] 7.3 Record the two accessibility rules in
+- [x] 7.3 Record the two accessibility rules in
   `docs/design-system/figma-map.md` as deviations-with-reasons — a legend that
   cannot be suppressed and an axis that cannot be doubled — since both are
   places where the component is deliberately less flexible than a caller might

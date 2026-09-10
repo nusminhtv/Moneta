@@ -818,3 +818,26 @@ nothing and asserts the real ledger is still empty.
 Four mutations, all failing: the real-ledger guard removed, absence read as a
 stored true, a corrupt stored value swallowed, and the preference never written.
 
+### insight-components resumed and finished its charts, 2026-09-10
+
+Figma access returned (NIK Technology, Full/pro), so `LineChart` was built from
+`48:76` rather than from the counts `proposal.md` had recorded. Tasks 4.1–4.4,
+7.1 and 7.3 are done; 7.2 was already done; 7.5's fidelity pass runs against
+`47:48` and `48:76` now that the file is readable.
+
+Six mutations on the chart. Four failed immediately. **Two survived, and both
+were my tests' fault rather than equivalent mutants** — the same lesson this
+project keeps relearning, that a test naming a property is not the same as a
+test asserting it:
+
+| Survivor | Why it survived | Fix |
+| --- | --- | --- |
+| a negative value plotted below the baseline | the clamp lived in the painter, and the test compared the plot's height to itself, then asserted `math.min(0, -5) == -5` — a tautology | the value→position mapping moved to a public `fractionsOf`, asserted directly: the negative month sits at zero, and fractions are measured from zero rather than from the data's minimum |
+| the marker's surface ring drawn at radius zero | the test counted four `drawCircle` calls, which a zero-radius ring satisfies | radii asserted in the ordered `paints` sequence, plus the ring asserted larger than the mark |
+
+The clamp mutation also had to be re-run: `dart format` had collapsed the target
+expression onto one line between writes, so the first attempt reported
+`NOT FOUND` instead of silently passing. The assertion inside the mutation
+helper is what made that visible — the trap `figma-map.md` records, caught by
+the guard put there for it.
+

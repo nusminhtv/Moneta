@@ -6,6 +6,7 @@ import 'package:moneta/design_system/molecules/chart_series.dart';
 import 'package:moneta/design_system/molecules/moneta_radio_row.dart';
 import 'package:moneta/design_system/organisms/bottom_sheet.dart';
 import 'package:moneta/design_system/organisms/donut_chart.dart';
+import 'package:moneta/design_system/organisms/line_chart.dart';
 
 /// Gallery sections for 📱 07 Insights & Reports and 🧩 Components / Charts.
 ///
@@ -154,6 +155,51 @@ final List<GallerySection> insightSections = [
             onChanged: (_) {},
           ),
         ),
+    ],
+  ),
+  GallerySection(
+    component: 'LineChart',
+    figmaNodeId: '48:76',
+    variants: [
+      // `48:76` is one authored variant. The four here are the cases that look
+      // different: the authored twelve months, a narrow band well above zero
+      // (which is what the zero baseline is *for*), a single point, and none.
+      GalleryVariant(
+        'Points=12',
+        (_) => MonetaLineChart(
+          title: 'Cash flow',
+          subtitle: 'Income vs expenses · VND millions',
+          income: _line('Income', _incomeMillions),
+          expenses: _line('Expenses', _expenseMillions),
+        ),
+      ),
+      GalleryVariant(
+        'Points=6, Max=35',
+        (_) => MonetaLineChart(
+          title: 'Cash flow',
+          subtitle: 'A narrow band, well above zero',
+          income: _line('Income', const [33, 34, 33, 35, 34, 34]),
+          expenses: _line('Expenses', const [30, 31, 30, 32, 31, 30]),
+        ),
+      ),
+      GalleryVariant(
+        'Points=1',
+        (_) => MonetaLineChart(
+          title: 'Cash flow',
+          subtitle: 'One month only',
+          income: _line('Income', const [32]),
+          expenses: _line('Expenses', const [26]),
+        ),
+      ),
+      GalleryVariant(
+        'Points=0',
+        (_) => MonetaLineChart(
+          title: 'Cash flow',
+          subtitle: 'Nothing recorded yet',
+          income: _line('Income', const []),
+          expenses: _line('Expenses', const []),
+        ),
+      ),
     ],
   ),
   GallerySection(
@@ -322,3 +368,40 @@ const Map<ChartSlot, Money> _legendAmounts = {
   ChartSlot.slot8: Money(1040000, Currency.vnd),
   ChartSlot.other: Money(780000, Currency.vnd),
 };
+
+/// Twelve months of income, in millions, as `48:76`'s sample reads.
+const List<int> _incomeMillions = [
+  28,
+  30,
+  29,
+  32,
+  31,
+  33,
+  32,
+  34,
+  33,
+  35,
+  34,
+  32,
+];
+
+/// Twelve months of expenses, in millions.
+const List<int> _expenseMillions = [
+  22,
+  24,
+  21,
+  26,
+  23,
+  27,
+  25,
+  28,
+  24,
+  29,
+  26,
+  26,
+];
+
+LineSeries _line(String label, List<int> millions) => LineSeries(
+  label: label,
+  points: [for (final m in millions) Money(m * 1000000, Currency.vnd)],
+);

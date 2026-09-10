@@ -4,6 +4,7 @@ import 'package:moneta/design_system/molecules/chart_legend_item.dart';
 import 'package:moneta/design_system/molecules/moneta_radio_row.dart';
 import 'package:moneta/design_system/organisms/bottom_sheet.dart';
 import 'package:moneta/design_system/organisms/donut_chart.dart';
+import 'package:moneta/design_system/organisms/line_chart.dart';
 
 /// Describes gallery variants for 📱 07 Insights & Reports.
 ///
@@ -45,5 +46,10 @@ String? describeInsights(Widget widget) => switch (widget) {
   MonetaBottomSheet(:final title, :final child) =>
     'BottomSheet($title,'
         '${child is MonetaRadioGroup<String> ? '${child.options.length} options' : 'opaque content'})',
+  // Names the point count, which the labels claim, and the axis maximum, so a
+  // chart whose scale silently changed is caught.
+  MonetaLineChart(:final income, :final expenses, :final axisMaxMinor) =>
+    'LineChart(points=${income.points.length},'
+        'expenses=${expenses.points.length},max=$axisMaxMinor)',
   _ => null,
 };

@@ -602,7 +602,7 @@ Four of the five components this change owns are built. `LineChart` is not: see
 | DonutChart | `47:48` | 1 authored; 4 gallery fixtures | **done** |
 | Radio | `25:238` | 4 (selected × disabled) | **done** |
 | BottomSheet | `59:211` | 1 authored; 3 gallery fixtures | **done** |
-| LineChart | `48:76` | 1, 353×226 | **held** |
+| LineChart | `48:76` | 1, 353×226 | **done** |
 | BarChart | `48:34` | 1, 353×223 | not built — instanced on Budgets `04.07`, on no page 07 screen. Belongs to whichever change builds Budgets history. |
 | Sparkline | `48:94` | 1, 104×34 | not built — on the Charts page, instanced nowhere on page 07. |
 
@@ -641,7 +641,28 @@ cannot run until `48:76` is readable.
 | 43 | `ChartLegendItem` pins its percentage and amount (`shrink-0` on `47:5` and `47:6`) and flexes only its label. | Reproduced as authored, and it has a real upper bound: once the label reaches zero width the row is over-subscribed and `RenderFlex` reports an overflow — at 2^61 minor units, by 47px. **This is not fixable, only choosable.** No 353px row can show an unbounded amount, and making the amount flexible is worse: `RenderFlex` gives each flexible child `freeSpace / totalFlex` and does not hand a loose child's leftover back to its sibling, so the row would sit un-flush and the label would shrink in the normal case. The design already answers which part is lost — the label. Tested at both ends: the arithmetic at 2^61 without rendering, the layout at ~10^15 minor units, which is past any real ledger. |
 | 44 | `59:211` authors a 34px bottom inset. | Taken from `MediaQuery.paddingOf(context).bottom` instead. The authored 34 describes one handset, the same reason `MonetaAppBar` refuses to paint a fake status bar. Asserted at 34, 21 and 0, because a single fixture at 34 would coincide exactly with a hardcoded value. |
 
-### Held on `48:76`
+### `48:76` unblocked and built, 2026-09-10
+
+Figma access returned — `whoami` reports **NIK Technology, seat Full, tier
+pro** — and `LineChart` was built from the node rather than from the counts.
+What the node gave that the counts did not: gridlines at y=35/70/105 of the 140
+plot, `heading/h3` title and `caption/md` subtitle, y labels *outside* the plot
+at 0 / half / max only, a 2px stroke, a 9px end marker with a 2px surface ring,
+and a legend swatch that is a 14×3 **line** rather than a dot.
+
+Its own description is the requirement, and it repeats the donut's: *"TWO
+series, so a legend is mandatory — identity is never colour-alone. One y-axis
+only; a second scale would be a dual-axis chart, which this system never
+ships."*
+
+Both series' slots are **fixed**, not parameters: `48:89` binds `chart/1` and
+`48:92` binds `chart/3`. A chart whose two series could be given the same slot
+is a chart whose mandatory legend cannot tell them apart.
+
+The former text of this section, recording why the chart was held, is below for
+the record.
+
+### Previously held on `48:76`
 
 `LineChart` is specified, planned and **not implemented**, because the Figma MCP
 connection lost access to this file mid-change. `whoami` reports
@@ -667,3 +688,20 @@ change built `Radio` and `BottomSheet` from partial information:
 This change's own proposal names the cost of the second: *"the alternative is
 approximating a chart, which is how this repository's invented spacing scale
 happened."* So the charts wait for the file.
+
+### Deviations 45 and 46 — the two accessibility rules, as rules
+
+| # | What | Resolution |
+| --- | --- | --- |
+| 45 | A legend is the kind of thing a cramped screen turns off. | **Neither chart accepts one.** `DonutChart` and `MonetaLineChart` expose no legend parameter of any kind, and both are guarded by a source-level check that reads the constructor's parameter list and compares it exactly, with a counterfeit guarding the extractor. Annotation `77:284` for the donut: two of the eight chart slots fall below 3:1 against the dark surface, so the visible labels *are* the required contrast relief. `48:76`'s own description for the line chart: identity is never colour-alone. |
+| 46 | A dual axis is the obvious way to make two series of different magnitude both look interesting. | **Not representable.** `MonetaLineChart` has no second axis, no per-series scale, no axis minimum and no maximum parameter; the maximum is computed from both series together and the baseline is always zero. Annotation `77:430`: *"a dual-axis chart would let the two lines cross wherever the scales were chosen to make them cross."* The parameter-list check pins the API to exactly `title`, `subtitle`, `income`, `expenses`, `key`, and `fractionsOf` — the single place a value becomes a position — is asserted to measure from zero rather than from the data's minimum. |
+
+`MonetaLineChart` also carries one recorded lesson of its own. Two mutations
+survived the first pass: a negative value plotted below the baseline, and the
+marker's surface ring drawn at radius zero. Both were the tests' fault. The
+clamp lived inside the painter, where arithmetic is only visible through what it
+draws, so it moved to `fractionsOf` and is asserted directly; and the ring was
+covered only by a `drawCircle` **count**, which a zero-radius ring satisfies, so
+the radii are asserted in the ordered sequence and the ring is asserted larger
+than the mark.
+
