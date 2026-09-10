@@ -114,7 +114,7 @@ guarantees first, then data, then surfaces.
 
 ## 5. The Toggle, Reset, And Starting States
 
-- [ ] 5.1 `lib/app/demo/demo_mode_controller.dart`: persists the flag, seeds on
+- [x] 5.1 `lib/app/demo/demo_mode_controller.dart`: persists the flag, seeds on
   first activation, discards in-flight state, and sets `demoModeProvider` last —
   only after the durable write succeeded (D15).
   Verify: `test/app/demo/demo_mode_controller_test.dart` asserts the flag

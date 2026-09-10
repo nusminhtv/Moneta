@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:moneta/app/demo/demo_dataset.dart';
 import 'package:moneta/app/demo/demo_seed_marker.dart';
+import 'package:moneta/core/id_generator.dart';
 import 'package:moneta/core/result.dart';
 import 'package:moneta/features/budgets/domain/budget_repository.dart';
 import 'package:moneta/features/transactions/domain/transaction_repository.dart';
@@ -82,3 +85,24 @@ class DemoSeeder {
     return written;
   }
 }
+
+/// The identifier source a demo seed uses.
+///
+/// A `SystemIdGenerator` with **both** of its sources fixed. The production
+/// default is `Random.secure()` plus the wall clock, which would make the
+/// dataset irreproducible — so ids come from a seeded sequence and a fixed
+/// timestamp prefix, and the same dataset comes out every time.
+///
+/// It lives here rather than beside the generator on purpose. `demo_dataset.dart`
+/// is asserted to construct no id source at all — a source-level check that
+/// caught this function when it was there — because the generator's whole claim
+/// is that both sources of non-determinism arrive as parameters. *Choosing* a
+/// deterministic one is the seeder's business, not the generator's.
+///
+/// A function rather than a constant because the generator is stateful: each
+/// call must start its counter over, or two datasets generated in one process
+/// would disagree.
+IdGenerator demoIdGenerator({int seed = defaultDemoSeed}) => SystemIdGenerator(
+  random: Random(seed),
+  now: () => DateTime.utc(2026),
+);

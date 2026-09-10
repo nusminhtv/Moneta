@@ -581,7 +581,8 @@ manual entry still working.
 | 2026-09-10 | checkpoint | 1.4 real ledger untouched, end to end | `ca3d574` | `docs/ai-workflow/verify-runs/2026-09-10T07-47-12Z_demo-data.md` |
 | 2026-09-10 | checkpoint | 2.1 in-flight state does not cross ledgers | `6623f58` | `docs/ai-workflow/verify-runs/2026-09-10T07-52-09Z_demo-data.md` |
 | 2026-09-10 | checkpoint | 3.1–3.5 the dataset generator | `fcd1c62` | `docs/ai-workflow/verify-runs/2026-09-10T07-59-44Z_demo-data.md` |
-| 2026-09-10 | checkpoint | 4.1–4.4 seeding through the repositories | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T08-05-06Z_demo-data.md` |
+| 2026-09-10 | checkpoint | 4.1–4.4 seeding through the repositories | `6cfd444` | `docs/ai-workflow/verify-runs/2026-09-10T08-05-06Z_demo-data.md` |
+| 2026-09-10 | checkpoint | 5.1 the demo-mode controller | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T08-11-45Z_demo-data.md` |
 
 ### The spec-auditor earned its place in the workflow
 
@@ -783,4 +784,37 @@ does not.
 Three mutations, all failing: marking before seeding instead of after, skipping
 the already-seeded check, and the marker reading *any* row under its key as
 seeded rather than only its own value.
+
+### 5.1: a source-level check earned its keep on my own code
+
+Task 3.1's check asserts `demo_dataset.dart` constructs no id source, because
+the generator's whole claim is that both sources of non-determinism arrive as
+parameters. Writing the controller, I added `demoIdGenerator()` — a
+`SystemIdGenerator` with a seeded `Random` — to that very file, and **the check
+failed the gate**. It was right: choosing a deterministic id source is the
+seeder's business, not the generator's. The function moved to
+`demo_seeder.dart` and the check's reason now records why.
+
+That is the second time in this change a guard written for a hypothetical caught
+the person who wrote it.
+
+### The order the controller does things, and what a failed seed leaves behind
+
+Preference first, flag second, seed last. The preference is the durable answer;
+everything after it can be redone.
+
+So a failed seed leaves demo mode **on** with an unseeded ledger, deliberately.
+The marker was never written, so the next activation retries, and meanwhile the
+screens show an empty ledger under the demo banner — which the spec calls an
+empty ledger rather than an error. Rolling the preference back instead would
+hide a storage failure behind a toggle that silently refused to move.
+
+`seedIfNeeded` also refuses outright when demo mode is off, and returns a
+*validation* failure rather than a storage one. It is the single call in this
+change that could write generated data into a real wallet, so it checks its own
+precondition instead of trusting its caller — and there is a test that seeds
+nothing and asserts the real ledger is still empty.
+
+Four mutations, all failing: the real-ledger guard removed, absence read as a
+stored true, a corrupt stored value swallowed, and the preference never written.
 

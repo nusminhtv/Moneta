@@ -83,8 +83,17 @@ void main() {
         File('lib/app/demo/demo_dataset.dart').readAsStringSync(),
       );
       expect(source, isNot(contains('DateTime.now(')));
-      expect(source, isNot(contains('SystemIdGenerator(')));
       expect(source, isNot(contains('Random.secure')));
+      expect(
+        source,
+        isNot(contains('SystemIdGenerator(')),
+        reason:
+            'the generator must construct no id source at all. This check '
+            'caught `demoIdGenerator` living here, and it moved to '
+            'demo_seeder.dart: choosing a deterministic id source is the '
+            "seeder's business, and the generator's whole claim is that both "
+            'sources of non-determinism arrive as parameters',
+      );
       expect(
         source,
         contains('required IdGenerator ids'),
