@@ -23,7 +23,7 @@
 
 ## 3. DonutChart
 
-- [ ] 3.1 `lib/design_system/organisms/donut_chart.dart` — the ring from `47:49`
+- [x] 3.1 `lib/design_system/organisms/donut_chart.dart` — the ring from `47:49`
   with a fresh `Paint` per arc (design D4), the centre's label/value/period, and
   the ring thickness recorded as observed from the exported asset (D5).
   Verify: `test/design_system/organisms/donut_chart_test.dart` asserts the

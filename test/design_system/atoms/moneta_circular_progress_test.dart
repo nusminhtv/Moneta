@@ -94,6 +94,13 @@ void main() {
     // flagship requirement of this component, unguarded. The parity tests above
     // compare two identical expressions to each other, which is not the same as
     // checking what reaches the canvas.
+    //
+    // Correction (insight-components, task 3.1): the commit that added these
+    // tests also rewrote the painter to build a fresh Paint per draw, and said
+    // the shared mutated Paint was why the swap went unnoticed. It was not.
+    // Reverting the painter to one shared instance leaves these fourteen tests
+    // passing, so the aliasing story was wrong; the assertions below are what
+    // catch the swap, and their absence is what let it through.
     testWidgets('under the threshold the arc is drawn in income', (
       tester,
     ) async {

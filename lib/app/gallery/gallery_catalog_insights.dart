@@ -2,6 +2,7 @@ import 'package:moneta/app/gallery/gallery_catalog.dart';
 import 'package:moneta/core/money.dart';
 import 'package:moneta/design_system/molecules/chart_legend_item.dart';
 import 'package:moneta/design_system/molecules/chart_series.dart';
+import 'package:moneta/design_system/organisms/donut_chart.dart';
 
 /// Gallery sections for 📱 07 Insights & Reports and 🧩 Components / Charts.
 ///
@@ -27,6 +28,104 @@ final List<GallerySection> insightSections = [
           ),
         ),
     ],
+  ),
+  GallerySection(
+    component: 'DonutChart',
+    figmaNodeId: '47:48',
+    variants: [
+      // `47:62`'s own eight categories, in its own scrambled slot order —
+      // Food & drink is `Slot=7`, not `Slot=1`. Reproduced as authored so the
+      // gallery and the Figma canvas can be compared directly.
+      GalleryVariant(
+        'Categories=8, Fold=None',
+        (_) => const DonutChart(
+          categories: _donutAuthored,
+          centreLabel: 'Total spent',
+          periodLabel: 'August 2026',
+        ),
+      ),
+      // Nine, so the eight-segment cap and the neutral fold are visible to a
+      // reviewer rather than only to the suite.
+      GalleryVariant(
+        'Categories=9, Fold=Other',
+        (_) => const DonutChart(
+          categories: _donutNine,
+          centreLabel: 'Total spent',
+          periodLabel: 'August 2026',
+        ),
+      ),
+      GalleryVariant(
+        'Categories=1, Fold=None',
+        (_) => DonutChart(
+          categories: _donutAuthored.take(1).toList(),
+          centreLabel: 'Total spent',
+          periodLabel: 'August 2026',
+        ),
+      ),
+      GalleryVariant(
+        'Categories=0, Fold=None',
+        (_) => const DonutChart(
+          categories: [],
+          centreLabel: 'Total spent',
+          periodLabel: 'August 2026',
+        ),
+      ),
+    ],
+  ),
+];
+
+/// `47:62`'s eight categories with the slots it actually assigns them.
+const List<ChartSeries> _donutAuthored = [
+  ChartSeries(
+    label: 'Food & drink',
+    amount: Money(6760000, Currency.vnd),
+    slot: ChartSlot.slot7,
+  ),
+  ChartSeries(
+    label: 'Transport',
+    amount: Money(4420000, Currency.vnd),
+    slot: ChartSlot.slot4,
+  ),
+  ChartSeries(
+    label: 'Shopping',
+    amount: Money(3900000, Currency.vnd),
+    slot: ChartSlot.slot2,
+  ),
+  ChartSeries(
+    label: 'Bills & utilities',
+    amount: Money(3380000, Currency.vnd),
+    slot: ChartSlot.slot8,
+  ),
+  ChartSeries(
+    label: 'Entertainment',
+    amount: Money(2600000, Currency.vnd),
+    slot: ChartSlot.slot6,
+  ),
+  ChartSeries(
+    label: 'Health',
+    amount: Money(2340000, Currency.vnd),
+    slot: ChartSlot.slot3,
+  ),
+  ChartSeries(
+    label: 'Gifts',
+    amount: Money(1560000, Currency.vnd),
+    slot: ChartSlot.slot5,
+  ),
+  ChartSeries(
+    label: 'Other',
+    amount: Money(1040000, Currency.vnd),
+    slot: ChartSlot.other,
+  ),
+];
+
+/// Nine categories: `47:62`'s eight plus one more, so the cap has something to
+/// fold. `chart/1` is the one slot `47:62` never uses.
+const List<ChartSeries> _donutNine = [
+  ..._donutAuthored,
+  ChartSeries(
+    label: 'Education',
+    amount: Money(520000, Currency.vnd),
+    slot: ChartSlot.slot1,
   ),
 ];
 

@@ -9,9 +9,10 @@ See `proposal.md` — Why. Constraints that shape the approach:
   literal, so every value has to arrive from a token or a parameter.
 - The `budget-components` review is fresh and directly relevant: swapping
   `arcColor` and `trackColor` in `MonetaCircularProgress` left all 1196 tests
-  green, because the painter mutated one shared `Paint` and the recording canvas
-  therefore reported the same colour twice. That mistake is available to be
-  repeated in two new painters.
+  green. **The cause recorded here was wrong** — see D4, corrected during task
+  3.1. It was not the painter's shared `Paint`; it was that no test asserted
+  what reached the canvas. That mistake — a painted requirement with no canvas
+  assertion — is the one available to be repeated in two new painters.
 - The eight-slot chart palette is already token-backed as `MonetaChartPalette`,
   with `base(slot)` and `subtle(slot)`, and was validated as a set.
 
@@ -88,13 +89,28 @@ This keeps the component "takes domain types, not pre-formatted strings":
 
 Every painter in this change builds a fresh `Paint` per draw call.
 
-This is not a style preference. Skia copies a `Paint` at the call site, so a
-shared mutated instance renders correctly on a device — and a recording canvas
-keeps the reference, so `paints..arc(color:)` sees the last colour on every
-entry and cannot discriminate. That is exactly how the ring's colour requirement
-went unguarded through a whole change. Both new painters will be asserted with
-ordered `paints` sequences, and the fresh-`Paint` rule is what makes those
-assertions capable of failing.
+**Corrected during 3.1 — the original rationale for this decision was false.**
+As written, D4 claimed that a shared mutated `Paint` is what made the ring's
+colour requirement untestable, because "a recording canvas keeps the reference,
+so `paints..arc(color:)` sees the last colour on every entry". That was asserted
+without being checked. Two probes show it is wrong in this Flutter version:
+
+- a throwaway two-arc painter that mutates one `Paint` between `drawArc` calls
+  reports **both** colours correctly to an ordered `paints..arc(color:)`;
+- reverting `MonetaCircularProgress`'s painter to a shared mutated instance
+  leaves all fourteen of its tests passing.
+
+The ring's colour requirement went unguarded because **no test asserted what
+reached the canvas at all**. `budget-components` fixed two things at once — it
+added the missing assertion and rewrote the painter — and credited the fix to
+the rewrite. The assertion was the fix.
+
+So the rule stands but is no longer load-bearing. A fresh `Paint` per draw is
+still correct on narrower grounds: a `CustomPainter` instance outlives a single
+`paint()` call, so a `Paint` held as an instance field aliases across repaints.
+What makes these tests capable of failing is the **ordered** `paints` sequence,
+and that is what the tasks now rest on. The mutation that matters — two segment
+colours swapped — fails; the mutation that D4 predicted would pass, does pass.
 
 ### D5 — Donut geometry is measured from the exported assets, and labelled
 

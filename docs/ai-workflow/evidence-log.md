@@ -408,7 +408,8 @@ rather than adding a HorizontalBarChart component."*
 | Date | Step | Task | Commit | Evidence |
 | --- | --- | --- | --- | --- |
 | 2026-09-10 | checkpoint | 1.1 ChartSeries value type | `2e564b5` | `docs/ai-workflow/verify-runs/2026-09-10T01-43-14Z_insight-components.md` |
-| 2026-09-10 | checkpoint | 2.1 + 2.2 ChartLegendItem and its nine gallery slots | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T01-49-42Z_insight-components.md` |
+| 2026-09-10 | checkpoint | 2.1 + 2.2 ChartLegendItem and its nine gallery slots | `1147f4e` | `docs/ai-workflow/verify-runs/2026-09-10T01-49-42Z_insight-components.md` |
+| 2026-09-10 | checkpoint | 3.1 DonutChart ring, centre and painted-arc assertions | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T01-59-46Z_insight-components.md` |
 
 ### Two tasks, one checkpoint, and why
 
@@ -419,4 +420,53 @@ exemption list, so a widget committed without its section fails the gate, and a
 checkpoint requires a passing gate. Splitting them would have meant exempting
 `ChartLegendItem` for one commit and un-exempting it in the next — a temporary
 hole in the check that catches exactly this.
+
+### D4's rationale was false, and this is how it was caught
+
+`design.md` D4 said a shared mutated `Paint` is what made
+`MonetaCircularProgress`'s colour requirement untestable, "because a recording
+canvas keeps the reference, so `paints..arc(color:)` sees the last colour on
+every entry". The donut's own mutation run is what exposed it: the mutation
+*predicted to pass* — reverting the painter to one shared, mutated `Paint` —
+**passed**, leaving all nine donut tests green.
+
+Two probes settled it. A throwaway two-arc painter mutating one `Paint`
+reports both colours correctly to an ordered `paints`, and reverting
+`MonetaCircularProgress`'s painter to a shared instance leaves all fourteen of
+its own tests passing. In this Flutter version the recording canvas does not
+alias the `Paint`.
+
+So the ring's requirement was unguarded for the plain reason that **no test
+asserted what reached the canvas at all**. `budget-components` added the missing
+assertion and rewrote the painter in one commit, and credited the fix to the
+rewrite. The assertion was the fix. Corrected in three places — D4, the Context
+section that repeated it, and the comment in
+`moneta_circular_progress_test.dart` that stated the same false cause — and the
+fresh-`Paint` rule kept on the narrower ground that a painter outlives one
+`paint()` call.
+
+This is the second time in this project that a fix has been credited to the
+wrong half of a two-part commit. The pattern to watch: when a commit changes
+both the code and its test, the mutation that proves which half mattered has to
+be run against the *old* code, not the new.
+
+### What the donut's own nodes said
+
+- `47:62`'s legend rows carry slots **7, 4, 2, 8, 6, 3, 5, Other** — Food &
+  drink is `Slot=7`, and `chart/1` is never used. The ring's exported fills
+  agree (`#AA7705`, `#027ED8`, `#769200`), so ring and legend are consistent;
+  what the file does *not* do is colour by rank. `DonutChart` therefore honours
+  each caller's slot and ranks only the order, so a category keeps one colour
+  across every screen that charts it.
+- Ring thickness reads 39.5182 off `47:50`'s path and is implemented as
+  **39.5**. The trailing `0.0182` is Figma's arc-to-path conversion. Rounding
+  also made it assertable: `Paint.strokeWidth` is a 32-bit float, so 39.5182
+  comes back as 39.5181999206543 and the `paints` matcher rejects it.
+- A segment gap exists and is not in any style: measured 0.898° at twelve
+  o'clock and 1.099° between the first two segments, implemented as **1°** and
+  suppressed below two visible segments, since a notch in an otherwise complete
+  circle reads as missing data.
+- The track behind the segments is an **addition**. `47:49` has eight ellipses
+  and no track, because its sample fills the circle; the spec's "empty ring with
+  no segments" needs something to be the ring.
 
