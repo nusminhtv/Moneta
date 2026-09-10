@@ -7,18 +7,93 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:moneta/app/demo/demo_mode_controller.dart';
 import 'package:moneta/data/app_providers.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
+import 'package:moneta/design_system/molecules/list_row.dart';
+import 'package:moneta/features/settings/presentation/profile_screen.dart';
 import 'package:moneta/features/settings/presentation/settings_screen.dart';
 
-/// Where Settings lives.
+/// Where the profile screens live.
 class SettingsRoutes {
   const SettingsRoutes._();
 
-  /// The settings list, `08.03`.
-  static const String list = '/profile';
+  /// `08.01` Profile — the tab's root.
+  static const String profile = '/profile';
+
+  /// `08.03` Settings — the list everything hangs off.
+  static const String list = '/profile/settings';
 }
+
+/// `08.01`, wired.
+class ProfileRouteScreen extends ConsumerWidget {
+  /// Creates the route screen.
+  const ProfileRouteScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final demoActive = ref.watch(demoModeProvider);
+
+    return ProfileScreen(
+      // Placeholders, and named as such: there is no accounts or identity
+      // feature, so `08.01`'s identity block has nothing real to show. The
+      // demo ledger at least makes the figures honest about themselves.
+      name: demoActive ? 'Minh Tran' : 'Moneta user',
+      email: demoActive ? 'minh.tran@example.com' : 'Not signed in',
+      stats: demoActive ? _demoStats : _emptyStats,
+      onOpenSettings: () => context.push(SettingsRoutes.list),
+      rows: [
+        ListRow(
+          title: 'Settings',
+          leadingIcon: MonetaIconName.sliders,
+          accessory: ListRowAccessory.chevron,
+          onTap: () => context.push(SettingsRoutes.list),
+        ),
+        // `100:269`: "Premium shows a TRY FREE badge; once subscribed the row's
+        // Trailing becomes Value with the renewal date." Unsubscribed is the
+        // only state this build has, so it is the badge.
+        const ListRow(
+          title: 'Premium',
+          subtitle: 'Unlimited goals, export, widgets',
+          leadingIcon: MonetaIconName.award,
+          accessory: ListRowAccessory.badge,
+          badgeLabel: 'TRY FREE',
+        ),
+        const ListRow(
+          title: 'Help & FAQ',
+          subtitle: 'Not built yet',
+          leadingIcon: MonetaIconName.helpCircle,
+          accessory: ListRowAccessory.none,
+        ),
+        // The only destructive row, and the only label off text/primary.
+        const ListRow(
+          title: 'Sign out',
+          leadingIcon: MonetaIconName.lock,
+          accessory: ListRowAccessory.none,
+          destructive: true,
+        ),
+      ],
+    );
+  }
+}
+
+/// `100:272`'s own figures: *"214 days, 1,842 transactions, 4 active goals."*
+///
+/// Reproduced as authored while demo mode is on. Goals do not exist as a
+/// feature, so that third figure is the annotation's number rather than a
+/// count of anything — recorded here rather than silently invented.
+const List<ProfileStat> _demoStats = [
+  ProfileStat(value: '214', label: 'Days tracked'),
+  ProfileStat(value: '1,842', label: 'Transactions'),
+  ProfileStat(value: '4', label: 'Active goals'),
+];
+
+const List<ProfileStat> _emptyStats = [
+  ProfileStat(value: '0', label: 'Days tracked'),
+  ProfileStat(value: '0', label: 'Transactions'),
+  ProfileStat(value: '0', label: 'Active goals'),
+];
 
 /// 08.03, wired.
 class SettingsRouteScreen extends ConsumerWidget {
@@ -30,6 +105,7 @@ class SettingsRouteScreen extends ConsumerWidget {
     final demoActive = ref.watch(demoModeProvider);
 
     return SettingsScreen(
+      onBack: () => context.pop(),
       groups: [
         const SettingsGroup(
           title: 'Account',

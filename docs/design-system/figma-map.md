@@ -779,7 +779,7 @@ rather than slipped in.
 
 | Screen | Node | State | What blocks it |
 | --- | --- | --- | --- |
-| 08.01 Profile — default | `100:2` | **deferred** | `Avatar` (`21:121`, 12 variants) is not built |
+| 08.01 Profile — default | `100:2` | **done** | — |
 | 08.02 Edit profile | `100:276` | deferred | needs `Avatar`; `Select` and `TextField` exist |
 | 08.03 Settings — list | `100:428` | **done** | — |
 | 08.04 Settings — security | `100:729` | deferred | no auth or biometrics behind it |
@@ -791,10 +791,24 @@ rather than slipped in.
 | 08.10 Premium — paywall | `102:1044` | deferred | no purchases |
 | 08.11 Help & FAQ | `102:1189` | deferred | `SearchField` is not built |
 
-**The Profile tab lands on `08.03`**, not `08.01`, and that is a deviation worth
-naming: the tab root in Figma is Profile. `08.01` needs `Avatar`, an authored
-set of twelve variants, and building it inside a settings change would be a
-design-system obligation smuggled in sideways. Reverts when `Avatar` lands.
+**The Profile tab lands on `08.01`**, as the design has it, since `Avatar`
+landed in `profile-components`. `08.03` is pushed from it — from the row and
+from the bar's sliders action.
+
+`08.01`'s stat tiles are **local frames, not `StatTile`**, and that is the
+annotation's instruction rather than a shortcut. `100:275`: *"StatTile is built
+around a delta with a direction arrow, and 'days tracked' has no delta. Reuse
+that fights the component's meaning is worse than a local frame."* The screen is
+asserted unable to reach `StatTile` at all — and the local class is named
+`_StatCard`, because a private class one underscore away from the component's
+name invites exactly the reuse the annotation warns against.
+
+`ListRow` gained a `destructive` flag for `08.01`'s sign-out row. `100:269`:
+*"Sign out is the only destructive row and is the only label not on
+text/primary."* `35:113` authors no destructive variant — the screen overrides
+the label's colour on the instance — so it is a flag that changes **only** the
+title, asserted by a test that captures background, border, icon, subtitle and
+size and requires them identical either way.
 
 **Rows whose destination is unbuilt are shown and disabled, not hidden.**
 `100:722` hides Face ID's row *on a device without biometrics* — an absent

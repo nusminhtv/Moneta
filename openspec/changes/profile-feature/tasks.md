@@ -30,3 +30,18 @@
   Verify: the entry names every deferred screen and its blocker.
 - [x] 3.2 Run the full gate.
   Verify: `bash tool/verify.sh --change profile-feature` passes.
+
+## 4. 08.01 Profile — The Tab's Root
+
+- [x] 4.1 `lib/features/settings/presentation/profile_screen.dart` from
+  `100:2`: identity (Avatar 56 + names + ghost button), three **local** stat
+  tiles, `SectionHeader`, the menu, and a large-title bar whose action is
+  **sliders** rather than a bell (`100:266`).
+  Verify: the avatar derives its initials from the name; the tiles are local and
+  the source cannot reach `StatTile` at all; the three tiles share the row
+  evenly; sign-out is the only label off `text/primary`; the action is sliders
+  and opens Settings; and the figure count is asserted at three because
+  `100:60` shows three. Five mutations fail.
+- [x] 4.2 The Profile tab now lands on `08.01`, with `08.03` pushed from it.
+  Verify: `bash tool/verify.sh --change profile-feature` passes.
+

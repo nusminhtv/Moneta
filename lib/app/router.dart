@@ -92,11 +92,11 @@ GoRouter buildRouter({String initialLocation = defaultInitialRoute}) {
             builder: (context, state) => const CategoryBreakdownRouteScreen(),
           ),
           GoRoute(
-            // The Profile tab lands on `08.03` Settings for now: `08.01`
-            // Profile needs `Avatar` (`21:121`, 12 variants), which is not
-            // built, and building it inside a settings change would be a
-            // design-system obligation smuggled in sideways.
             path: DestinationRoutes.paths[MonetaDestination.profile]!,
+            builder: (context, state) => const ProfileRouteScreen(),
+          ),
+          GoRoute(
+            path: SettingsRoutes.list,
             builder: (context, state) => const SettingsRouteScreen(),
           ),
         ],

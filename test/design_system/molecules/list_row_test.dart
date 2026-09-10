@@ -165,4 +165,70 @@ void main() {
       expect(toggleValues, [true]);
     });
   });
+
+  group('the destructive flag reddens the label and nothing else', () {
+    // `100:269`: "Sign out is the only destructive row and is the only label
+    // not on text/primary." `35:113` authors no destructive variant, so this
+    // must change exactly one thing.
+    Future<void> pumpRow(WidgetTester tester, {required bool destructive}) =>
+        pumpMonetaWidget(
+          tester,
+          SizedBox(
+            width: 353,
+            child: ListRow(
+              title: 'Sign out',
+              subtitle: 'You will need your PIN again',
+              leadingIcon: MonetaIconName.lock,
+              accessory: ListRowAccessory.chevron,
+              destructive: destructive,
+              onTap: () {},
+            ),
+          ),
+          surfaceSize: const Size(393, 300),
+        );
+
+    testWidgets('the title is the expense colour when set', (tester) async {
+      await pumpRow(tester, destructive: true);
+      expect(
+        tester.widget<Text>(find.text('Sign out')).style!.color,
+        colors.expense,
+      );
+    });
+
+    testWidgets('and text/primary when not', (tester) async {
+      await pumpRow(tester, destructive: false);
+      expect(
+        tester.widget<Text>(find.text('Sign out')).style!.color,
+        colors.textPrimary,
+      );
+    });
+
+    testWidgets('nothing else about the row changes', (tester) async {
+      // The property that keeps this a flag rather than a variant. Without it,
+      // "destructive" could quietly grow a red background or a red icon, and
+      // the file authors neither.
+      final captured = <String>[];
+      for (final destructive in [false, true]) {
+        await pumpRow(tester, destructive: destructive);
+        final decoration =
+            tester
+                    .widget<DecoratedBox>(find.byType(DecoratedBox).first)
+                    .decoration
+                as BoxDecoration;
+        final icon = tester.widget<MonetaIcon>(find.byType(MonetaIcon).first);
+        final subtitle = tester
+            .widget<Text>(find.text('You will need your PIN again'))
+            .style!;
+        captured.add(
+          '${decoration.color}|${icon.color}|${subtitle.color}|'
+          '${tester.getSize(find.byType(ListRow))}',
+        );
+      }
+      expect(
+        captured.first,
+        captured.last,
+        reason: 'destructive changed more than the title',
+      );
+    });
+  });
 }

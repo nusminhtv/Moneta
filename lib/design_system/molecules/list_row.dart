@@ -41,6 +41,7 @@ class ListRow extends StatelessWidget {
     this.toggled = false,
     this.onTap,
     this.onToggle,
+    this.destructive = false,
     super.key,
   });
 
@@ -70,6 +71,17 @@ class ListRow extends StatelessWidget {
 
   /// Called with the next value when the toggle is activated.
   final ValueChanged<bool>? onToggle;
+
+  /// Whether this row's action is destructive.
+  ///
+  /// Added for `08.01`, whose annotation `100:269` says: *"Sign out is the only
+  /// destructive row and is the only label not on text/primary."* `35:113`
+  /// authors no destructive variant — the screen overrides the label's colour
+  /// on the instance — so this is a flag rather than a sixth accessory, and it
+  /// changes **only** the title's colour. A row that also changed its
+  /// background or its icon would be a variant, and the file does not author
+  /// one.
+  final bool destructive;
 
   /// Key on the toggle control.
   static const Key toggleKey = Key('ListRow.toggle');
@@ -115,7 +127,9 @@ class ListRow extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         softWrap: false,
                         style: theme.text.titleMd.copyWith(
-                          color: colors.textPrimary,
+                          color: destructive
+                              ? colors.expense
+                              : colors.textPrimary,
                         ),
                       ),
                       if (subtitle != null) ...[
