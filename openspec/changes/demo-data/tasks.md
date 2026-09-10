@@ -20,7 +20,7 @@ guarantees first, then data, then surfaces.
   the switch lands in the demo file while the real file's row is unchanged in
   both count and value; and both databases dump identical schemas.
   `bash tool/verify.sh --change demo-data` passes.
-- [ ] 1.2 `PreferenceKey.demoMode`, and `preferencesStoreProvider` bound to
+- [x] 1.2 `PreferenceKey.demoMode`, and `preferencesStoreProvider` bound to
   `controlDatabaseProvider` — every preference is control-scoped (D2).
   Verify: `test/data/preferences/preferences_store_test.dart` asserts a
   preference written before a swap reads back unchanged after it; that

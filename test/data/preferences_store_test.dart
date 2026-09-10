@@ -171,5 +171,90 @@ void main() {
         expect(key.storedName, matches(snake), reason: key.name);
       }
     });
+
+    test('demoMode is declared, since the toggle needs somewhere to live', () {
+      expect(PreferenceKey.demoMode.storedName, 'demo_mode');
+    });
+  });
+
+  group('every preference is control-scoped', () {
+    // The point of these: a preference must not change value because the
+    // active ledger changed. The store is bound to the control database in
+    // `app_providers.dart`; these assert the consequence at the storage level,
+    // where it can be seen without a provider container.
+
+    Future<(AppDatabase, PreferencesStore)> openAt(String path) async {
+      final database = AppDatabase(path: path, factory: databaseFactoryFfi);
+      final db = (await database.open()).valueOrNull!;
+      return (database, PreferencesStore(db));
+    }
+
+    test('a value written before a swap reads back after it', () async {
+      final (control, store) = await openAt(dbPath);
+      addTearDown(control.close);
+
+      expect(
+        (await store.writeBool(PreferenceKey.demoMode, value: true)).isOk,
+        isTrue,
+      );
+
+      // The demo database is opened alongside — the swap — and the control
+      // store is asked again afterwards.
+      final (demo, _) = await openAt('${tempDir.path}/moneta_demo.db');
+      addTearDown(demo.close);
+
+      expect(
+        (await store.readBool(PreferenceKey.demoMode)).valueOrNull,
+        isTrue,
+        reason: 'the flag must survive the database it selects becoming active',
+      );
+    });
+
+    test('the demo database holds no declared preference', () async {
+      final (control, controlStore) = await openAt(dbPath);
+      final (demo, demoStore) = await openAt('${tempDir.path}/moneta_demo.db');
+      addTearDown(control.close);
+      addTearDown(demo.close);
+
+      for (final key in PreferenceKey.values) {
+        expect((await controlStore.writeBool(key, value: true)).isOk, isTrue);
+      }
+
+      // Same table, same schema, and empty of preferences: the migration set is
+      // shared, so the table exists in both, and nothing puts a preference in
+      // the one that moves.
+      for (final key in PreferenceKey.values) {
+        expect(
+          (await demoStore.readBool(key)).valueOrNull,
+          isNull,
+          reason: '${key.name} leaked into the demo ledger',
+        );
+      }
+    });
+
+    test(
+      'finishing the introduction is not undone by the demo ledger',
+      () async {
+        final (control, controlStore) = await openAt(dbPath);
+        addTearDown(control.close);
+        await controlStore.writeBool(
+          PreferenceKey.onboardingComplete,
+          value: true,
+        );
+
+        final (demo, _) = await openAt('${tempDir.path}/moneta_demo.db');
+        addTearDown(demo.close);
+
+        expect(
+          (await controlStore.readBool(
+            PreferenceKey.onboardingComplete,
+          )).valueOrNull,
+          isTrue,
+          reason:
+              'a ledger-scoped onboarding flag would re-show the intro every '
+              'time demo mode was enabled',
+        );
+      },
+    );
   });
 }

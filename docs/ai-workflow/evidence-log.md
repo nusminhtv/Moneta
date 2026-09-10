@@ -575,7 +575,8 @@ manual entry still working.
 | --- | --- | --- | --- | --- |
 | 2026-09-10 | propose | four artifacts, `openspec validate` clean | `76e106a` | — |
 | 2026-09-10 | audit | `spec-auditor`: NOT READY, 11 required fixes | — | — |
-| 2026-09-10 | checkpoint | 1.1 control/active database split | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T07-37-43Z_demo-data.md` |
+| 2026-09-10 | checkpoint | 1.1 control/active database split | `29debb0` | `docs/ai-workflow/verify-runs/2026-09-10T07-37-43Z_demo-data.md` |
+| 2026-09-10 | checkpoint | 1.2 `demoMode` key, every preference control-scoped | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T07-40-04Z_demo-data.md` |
 
 ### The spec-auditor earned its place in the workflow
 
