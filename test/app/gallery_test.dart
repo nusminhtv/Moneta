@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moneta/app/gallery/gallery_catalog.dart';
 import 'package:moneta/app/gallery/gallery_screen.dart';
 import 'package:moneta/core/spend_category.dart';
+import 'package:moneta/design_system/atoms/moneta_avatar.dart';
 import 'package:moneta/design_system/atoms/moneta_button.dart';
 import 'package:moneta/design_system/atoms/moneta_icon.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_button.dart';
@@ -28,6 +29,7 @@ import 'gallery_describe_auth.dart';
 import 'gallery_describe_budgets.dart';
 import 'gallery_describe_home.dart';
 import 'gallery_describe_insights.dart';
+import 'gallery_describe_profile.dart';
 
 /// The gallery's builders take a `BuildContext` and none of them reads it, so a
 /// throwaway element is enough to invoke them outside a pump. If a builder ever
@@ -670,6 +672,37 @@ void main() {
     });
   });
 
+  group('Avatar is registered in full', () {
+    test('all twelve variants of 21:121 are present', () {
+      final section = sectionFor('Avatar');
+      expect(section.figmaNodeId, '21:121');
+      // 3 types x 4 sizes. Asserted against the enums rather than the literal
+      // 12, so a fifth size fails here instead of quietly shipping an avatar
+      // nobody can review.
+      expect(
+        section.variants,
+        hasLength(
+          MonetaAvatarType.values.length * MonetaAvatarSize.values.length,
+        ),
+      );
+      expect(section.variants, hasLength(12));
+      expect(
+        section.variants.map((v) => v.label).toSet(),
+        hasLength(12),
+        reason: 'two variants share a label, so one of the twelve is missing',
+      );
+      expect(
+        section.variants.map((v) => v.label),
+        containsAll(<String>[
+          'Type=Image, Size=24',
+          'Type=Initials, Size=56',
+          'Type=Icon, Size=40',
+        ]),
+        reason: 'the labels are Figma variant names',
+      );
+    });
+  });
+
   group('BottomSheet is registered in full', () {
     test('three content sizes, so the height requirement is reviewable', () {
       final section = sectionFor('BottomSheet');
@@ -780,11 +813,12 @@ String _describe(Widget widget) =>
     describeHome(widget) ??
     describeBudgets(widget) ??
     describeInsights(widget) ??
+    describeProfile(widget) ??
     (throw UnsupportedError(
       'No describer knows ${widget.runtimeType}. Add a case to the file you own '
-      '(gallery_describe_auth.dart, _budgets.dart, _home.dart or '
-      '_insights.dart), so the variant-distinctness check keeps covering every '
-      'section.',
+      '(gallery_describe_auth.dart, _budgets.dart, _home.dart, _insights.dart '
+      'or _profile.dart), so the variant-distinctness check keeps covering '
+      'every section.',
     ));
 
 String? _describeCore(Widget widget) => switch (widget) {

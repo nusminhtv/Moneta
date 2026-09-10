@@ -123,6 +123,43 @@ void main() {
       expect(colors.expenseSubtle, const Color(0xFF2E0F13));
       expect(colors.warningSubtle, const Color(0xFF2E1E05));
       expect(colors.infoSubtle, const Color(0xFF06203A));
+      // Added by `profile-components`, from `21:106`'s bound `brand/subtle`.
+      // It was the one missing member of this family, and `Avatar` fills it on
+      // all twelve of its variants.
+      expect(colors.brandSubtle, const Color(0xFF1A1236));
+    });
+
+    test(
+      'every semantic base has a subtle counterpart, the brand included',
+      () {
+        // The gap this closes: four of five families had one. A test naming the
+        // four could not notice the fifth was missing, which is how it stayed
+        // missing until a component needed it.
+        for (final pair in <(String, Color, Color)>[
+          ('income', colors.income, colors.incomeSubtle),
+          ('expense', colors.expense, colors.expenseSubtle),
+          ('warning', colors.warning, colors.warningSubtle),
+          ('info', colors.info, colors.infoSubtle),
+          ('brand', colors.brand, colors.brandSubtle),
+        ]) {
+          expect(
+            pair.$3,
+            isNot(pair.$2),
+            reason: '${pair.$1} subtle equals its base',
+          );
+        }
+      },
+    );
+
+    test('brandSubtle differs from every surface it sits on', () {
+      // A tint identical to its background is not a tint.
+      for (final surface in [
+        colors.canvas,
+        colors.surface,
+        colors.surfaceRaised,
+      ]) {
+        expect(colors.brandSubtle, isNot(surface));
+      }
     });
 
     test('the four tones are mutually distinct', () {
@@ -142,6 +179,7 @@ void main() {
         (colors.expense, colors.expenseSubtle),
         (colors.warning, colors.warningSubtle),
         (colors.info, colors.infoSubtle),
+        (colors.brand, colors.brandSubtle),
       ]) {
         expect(
           pair.$2.computeLuminance(),
@@ -233,6 +271,7 @@ void main() {
         textOnBrand: white,
         brand: white,
         brandOnSurface: white,
+        brandSubtle: white,
         income: white,
         incomeSubtle: white,
         expense: white,

@@ -3,6 +3,7 @@ import 'package:moneta/app/gallery/gallery_catalog_auth.dart';
 import 'package:moneta/app/gallery/gallery_catalog_budgets.dart';
 import 'package:moneta/app/gallery/gallery_catalog_home.dart';
 import 'package:moneta/app/gallery/gallery_catalog_insights.dart';
+import 'package:moneta/app/gallery/gallery_catalog_profile.dart';
 import 'package:moneta/core/money.dart';
 import 'package:moneta/core/spend_category.dart';
 import 'package:moneta/design_system/atoms/moneta_button.dart';
@@ -80,6 +81,7 @@ final List<GallerySection> galleryCatalog = [
   ...homeSections,
   ...budgetSections,
   ...insightSections,
+  ...profileSections,
 ];
 
 /// Components that predate the auth/home split, or belong to neither.

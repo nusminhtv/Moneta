@@ -39,6 +39,7 @@ deliberately **not implemented**, rather than guessed.
 | --- | --- | --- |
 | `brand-base` | `#7A5AF8` | `39:243` FAB |
 | `brand-on-surface` | `#876BF9` | `39:243` active tab |
+| `brand-subtle` | `#1A1236` | `21:106` Avatar/Initials — bound `var(--brand-subtle)`. Added 2026-09-10: four of the five semantic families had a subtle counterpart and the brand did not, so the first component to need it would have had to write the literal. |
 | `violet-600` | `#6541EA` | `40:113` gradient stop 0 |
 | `violet-500` | `#7A5AF8` | `40:113` gradient stop 1 |
 | `mint-600` | `#12A87A` | `40:113` gradient stop 2 |

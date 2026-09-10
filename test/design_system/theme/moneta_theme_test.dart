@@ -86,6 +86,7 @@ void main() {
           textOnBrand: base.textOnBrand,
           brand: base.brand,
           brandOnSurface: base.brandOnSurface,
+          brandSubtle: base.brandSubtle,
           income: base.income,
           incomeSubtle: base.incomeSubtle,
           expense: base.expense,

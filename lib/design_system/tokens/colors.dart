@@ -105,6 +105,7 @@ final class MonetaColors {
     required this.textOnBrand,
     required this.brand,
     required this.brandOnSurface,
+    required this.brandSubtle,
     required this.income,
     required this.incomeSubtle,
     required this.expense,
@@ -136,6 +137,7 @@ final class MonetaColors {
       textOnBrand = const Color(0xFFFFFFFF),
       brand = violet500,
       brandOnSurface = const Color(0xFF876BF9),
+      brandSubtle = const Color(0xFF1A1236),
       income = const Color(0xFF22D19A),
       incomeSubtle = const Color(0xFF072A22),
       expense = const Color(0xFFF4515C),
@@ -270,6 +272,15 @@ final class MonetaColors {
   /// Brand colour when drawn on a dark surface, e.g. the active nav tab.
   final Color brandOnSurface;
 
+  /// The brand's low-emphasis background tint, from `brand/subtle`.
+  ///
+  /// Added by `profile-components`, and it closes a gap rather than serving one
+  /// component: `income`, `expense`, `warning` and `info` all had a subtle
+  /// counterpart and the brand did not. `Avatar` (`21:121`) fills it on all
+  /// twelve variants, so the first component to need it would otherwise have
+  /// had to write the literal.
+  final Color brandSubtle;
+
   /// Money coming in.
   final Color income;
 
@@ -318,6 +329,7 @@ final class MonetaColors {
     textOnBrand,
     brand,
     brandOnSurface,
+    brandSubtle,
     income,
     incomeSubtle,
     expense,
@@ -346,6 +358,7 @@ final class MonetaColors {
       textOnBrand: Color.lerp(textOnBrand, other.textOnBrand, t)!,
       brand: Color.lerp(brand, other.brand, t)!,
       brandOnSurface: Color.lerp(brandOnSurface, other.brandOnSurface, t)!,
+      brandSubtle: Color.lerp(brandSubtle, other.brandSubtle, t)!,
       income: Color.lerp(income, other.income, t)!,
       incomeSubtle: Color.lerp(incomeSubtle, other.incomeSubtle, t)!,
       expense: Color.lerp(expense, other.expense, t)!,

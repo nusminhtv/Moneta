@@ -833,3 +833,46 @@ Both are the same mistake in different clothes: asserting on the wrong object,
 or with the wrong strictness, gives a test that reads like a guarantee and holds
 nothing.
 
+### `Avatar` built, and a token that was missing — 2026-09-10
+
+| Component | Node | Variants | State |
+| --- | --- | --- | --- |
+| Avatar | `21:121` | 12 (3 types × 4 sizes) | **done** |
+
+**`brandSubtle` (`#1A1236`) was missing from the token set.** Every Avatar
+variant fills `var(--brand-subtle)`, and `MonetaColors` had `incomeSubtle`,
+`expenseSubtle`, `warningSubtle` and `infoSubtle` — four of five semantic
+families with a subtle counterpart, and the brand without one. Added as a token
+rather than written as a literal in the first component to need it, with a
+provenance row in `figma-tokens.md` and a new test asserting the family is
+complete: a test naming the four could never notice the fifth was absent, which
+is how it stayed absent.
+
+**Two per-size tables, both transcribed, neither a formula.**
+
+| Size | Initials style | Glyph |
+| --- | --- | --- |
+| 24 | `label/sm` | 14 |
+| 32 | `label/sm` | 18 |
+| 40 | `label/md` | 22 |
+| 56 | `title/md` | 28 |
+
+The initials style is not a scale: 24 and 32 share one style while 40 and 56
+differ from both, so anything derived from the diameter has to special-case at
+least two of four. The glyph sizes are worse, because they *nearly* fit — 14, 18
+and 22 are all `diameter / 2 + 2`, which gives **30** at 56 where the file says
+28. There is a test that states both properties out loud, so the temptation is
+recorded rather than left for someone to act on.
+
+**The glyph is `textSecondary`, not the brand colour.** `21:120`'s exported
+glyph carries `stroke="#9AA3B4"`. I assumed `brandOnSurface`, because that is
+what the initials use, and read the SVG instead of shipping the assumption.
+There is an explicit `isNot(brandOnSurface)` assertion for it.
+
+Initials are **derived from a name**, never passed as a string — a caller
+handing over `"MT"` could equally hand over three letters or a punctuation
+mark. First and last word, upper-cased, Vietnamese diacritics counting as
+letters; a name with no letters falls back to the glyph, because an empty circle
+is not a state. `21:106`'s description sets the order: *"Initials fall back when
+no photo exists."*
+

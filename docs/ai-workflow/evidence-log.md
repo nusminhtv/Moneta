@@ -1048,3 +1048,50 @@ Worth noting how this arrived: a person looked at the screen. Every chart test
 in this change asserts colours, order, sweeps, folds and boundaries, and not one
 of them asked whether the text fitted in the hole.
 
+## profile-components — Avatar, and a hole in the token set
+
+`Avatar` (`21:121`) at all twelve variants, which unblocks `08.01` and `08.02`.
+Gate: **1601 tests, all 8 checks green.** Seven mutations, all failing.
+
+### The token set was missing a member and no test could have said so
+
+Every Avatar variant fills `var(--brand-subtle, #1a1236)`. `MonetaColors` had
+`incomeSubtle`, `expenseSubtle`, `warningSubtle`, `infoSubtle` — and no
+`brandSubtle`. Four of five families complete, the fifth simply absent.
+
+The existing test asserted the four by name, so it could not notice a fifth was
+missing. The new one iterates the families and asserts each base has a subtle
+counterpart, which fails if another is ever added without one. That is the
+difference between a test that checks what exists and one that checks what
+should.
+
+Added as a token with a provenance row rather than a `design-token-ignore` in
+the first component to need it — the alternative was a second ignore when `Chip`
+or the paywall needs the same tint.
+
+### Two tables that a formula nearly fits
+
+Initials style by size: `label/sm`, `label/sm`, `label/md`, `title/md`. Glyph
+size by size: 14, 18, 22, 28.
+
+The glyph numbers are the trap. Three of the four are exactly
+`diameter / 2 + 2` — and the fourth is `diameter / 2`, so a formula fitted to
+the small sizes gives 30 at 56 where the file says 28. A test now asserts both
+halves: that the first three *do* fit the formula and that 56 *does not*, so the
+next reader sees why it is a table.
+
+### An assumption caught by reading the export
+
+I wrote the icon variant's glyph as `brandOnSurface`, because the initials use
+it and it looked like the brand's avatar. `21:120`'s exported SVG is
+`stroke="#9AA3B4"` — `textSecondary`. Fixed before it shipped, and there is now
+an explicit `isNot(brandOnSurface)` assertion so the assumption cannot come
+back.
+
+### One accessibility defect the test found
+
+The first version announced **"Minh Tran, MT"** — the container's label plus the
+initials' own semantics, merged. A screen reader would read the name and then
+spell two letters of it. The initials are decoration; the container carries the
+label, so the content is excluded from the tree.
+
