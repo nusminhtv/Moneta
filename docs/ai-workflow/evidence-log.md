@@ -410,7 +410,8 @@ rather than adding a HorizontalBarChart component."*
 | 2026-09-10 | checkpoint | 1.1 ChartSeries value type | `2e564b5` | `docs/ai-workflow/verify-runs/2026-09-10T01-43-14Z_insight-components.md` |
 | 2026-09-10 | checkpoint | 2.1 + 2.2 ChartLegendItem and its nine gallery slots | `1147f4e` | `docs/ai-workflow/verify-runs/2026-09-10T01-49-42Z_insight-components.md` |
 | 2026-09-10 | checkpoint | 3.1 DonutChart ring, centre and painted-arc assertions | `c425af2` | `docs/ai-workflow/verify-runs/2026-09-10T01-59-46Z_insight-components.md` |
-| 2026-09-10 | checkpoint | 3.2–3.5 cap, fold, unsuppressible legend, boundaries, gallery count | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T02-06-54Z_insight-components.md` |
+| 2026-09-10 | checkpoint | 3.2–3.5 cap, fold, unsuppressible legend, boundaries, gallery count | `6d849b3` | `docs/ai-workflow/verify-runs/2026-09-10T02-06-54Z_insight-components.md` |
+| 2026-09-10 | checkpoint | 6.1 MonetaRadio, four variants (colours derived, not transcribed) | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T02-11-41Z_insight-components.md` |
 
 ### Two tasks, one checkpoint, and why
 
@@ -500,4 +501,26 @@ So the scenario is split. The arithmetic is asserted at 2^61 without rendering,
 and a separate widget test asserts the largest magnitude the authored row does
 hold (~10^15 minor units, past any real ledger). The bound is recorded in
 `figma-map.md` rather than papered over with a test that avoids the question.
+
+### Figma access flipped again, mid-change, and what was done about it
+
+Access failed at task 4.1. `whoami` first this time, not seventh: the MCP
+connection is authenticated as **jeff@relayvault.ai, seat View, tier starter**
+— the account that cannot read this file — instead of the NIK Technology
+Full/pro account. Same root cause as the 2026-09-09 outage: two accounts behind
+one connection. Restoring it is the file owner's action, not a retry.
+
+Work was re-ordered rather than stopped, and the line was drawn where the
+transcription runs out:
+
+| Task | Node | Decision |
+| --- | --- | --- |
+| 6.x `Radio` | `25:238` | **Built.** Geometry (22×22, four variants) is transcribed in `proposal.md`; colour roles are *derived from `25:229`*, the Checkbox set beside it on the same page, and marked derived. |
+| 5.x `BottomSheet` | `59:211` | **Built.** Geometry fully transcribed in `proposal.md`: 393 wide, 20px handle area with a 40×4 grab handle, 60px header, 44×44 close, bottom safe inset. |
+| 4.x `LineChart` | `48:76` | **Held.** Only counts are recorded — three gridlines, two series, 9×9 markers, a 353×140 plot. Gridline placement, axis-label layout and the plot's own colours are not, and this change's own proposal names the alternative: *"the alternative is approximating a chart, which is how this repository's invented spacing scale happened."* |
+
+The distinction that decided it: a *derived* value is one this design system
+already answers elsewhere and a fidelity pass can confirm; an *invented* value
+is one nothing in the repository constrains. Radio's fill colour is the first.
+A gridline's y position is the second.
 

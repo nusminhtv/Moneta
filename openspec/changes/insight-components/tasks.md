@@ -80,7 +80,7 @@
 
 ## 6. Radio
 
-- [ ] 6.1 `lib/design_system/atoms/moneta_radio.dart` from `25:238` — all four
+- [x] 6.1 `lib/design_system/atoms/moneta_radio.dart` from `25:238` — all four
   variants at 22×22, disabled ignoring taps.
   Verify: `test/design_system/atoms/moneta_radio_test.dart` covers each variant's
   token-derived appearance and that a disabled radio fires no callback.

@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:moneta/design_system/atoms/moneta_radio.dart';
 import 'package:moneta/design_system/molecules/chart_legend_item.dart';
 import 'package:moneta/design_system/organisms/donut_chart.dart';
 
@@ -23,5 +24,10 @@ String? describeInsights(Widget widget) => switch (widget) {
     'DonutChart(${categories.length}->${segments.length},'
         'fold=${categories.length > DonutChart.maxColoredSegments ? 'Other' : 'None'},'
         '${segments.map((s) => s.slot.figmaName).join("|")})',
+  // Figma names the variants Selected / Disabled, while the Dart property is
+  // `enabled`. The description speaks Figma's vocabulary so the label is
+  // comparable to it.
+  MonetaRadio(:final selected, :final enabled) =>
+    'Radio(selected=$selected,disabled=${!enabled})',
   _ => null,
 };

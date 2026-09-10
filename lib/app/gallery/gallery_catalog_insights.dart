@@ -1,5 +1,6 @@
 import 'package:moneta/app/gallery/gallery_catalog.dart';
 import 'package:moneta/core/money.dart';
+import 'package:moneta/design_system/atoms/moneta_radio.dart';
 import 'package:moneta/design_system/molecules/chart_legend_item.dart';
 import 'package:moneta/design_system/molecules/chart_series.dart';
 import 'package:moneta/design_system/organisms/donut_chart.dart';
@@ -70,6 +71,27 @@ final List<GallerySection> insightSections = [
           periodLabel: 'August 2026',
         ),
       ),
+    ],
+  ),
+  // `25:238` is an Atoms-page component, not a Charts one. It lands in this
+  // spread because `insight-components` is the change that builds it — 07.05's
+  // sheet is where it is instanced — and one owner per spread is the whole
+  // point of the split.
+  GallerySection(
+    component: 'Radio',
+    figmaNodeId: '25:238',
+    variants: [
+      for (final selected in [false, true])
+        for (final enabled in [true, false])
+          GalleryVariant(
+            'Selected=$selected, Disabled=${!enabled}',
+            (_) => MonetaRadio(
+              selected: selected,
+              enabled: enabled,
+              semanticLabel: 'Weekly',
+              onSelected: () {},
+            ),
+          ),
     ],
   ),
 ];
