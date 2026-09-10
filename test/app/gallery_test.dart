@@ -649,6 +649,22 @@ void main() {
     });
   });
 
+  group('BottomSheet is registered in full', () {
+    test('three content sizes, so the height requirement is reviewable', () {
+      final section = sectionFor('BottomSheet');
+      expect(section.figmaNodeId, '59:211');
+      // `59:211` is a single authored variant, and one fixture would show a
+      // reviewer nothing about the one thing `81:644` requires — that the
+      // height follows the content. The labels claim option counts, which the
+      // describer checks against the widget.
+      expect(section.variants.map((v) => v.label), [
+        'Content=3 options',
+        'Content=8 options',
+        'Content=30 options',
+      ]);
+    });
+  });
+
   group('Radio is registered in full', () {
     test('all four variants of 25:238 are present', () {
       final section = sectionFor('Radio');

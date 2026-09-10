@@ -75,7 +75,7 @@
   sheet's height follows short content, that taller content scrolls while the
   header stays reachable, that the close control meets 44px, and that the inset
   responds to a device inset rather than being fixed.
-- [ ] 5.2 Gallery registration.
+- [x] 5.2 Gallery registration.
   Verify: `test/app/gallery_test.dart`.
 
 ## 6. Radio

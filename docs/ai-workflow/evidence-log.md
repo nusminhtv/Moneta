@@ -414,7 +414,8 @@ rather than adding a HorizontalBarChart component."*
 | 2026-09-10 | checkpoint | 6.1 MonetaRadio, four variants (colours derived, not transcribed) | `e4b370d` | `docs/ai-workflow/verify-runs/2026-09-10T02-11-41Z_insight-components.md` |
 | 2026-09-10 | checkpoint | 6.2 RadioRow and RadioGroup, the group rule where the group is | `8920a74` | `docs/ai-workflow/verify-runs/2026-09-10T02-16-29Z_insight-components.md` |
 | 2026-09-10 | checkpoint | 6.3 Radio gallery count tests | `59ee0e9` | `docs/ai-workflow/verify-runs/2026-09-10T02-18-23Z_insight-components.md` |
-| 2026-09-10 | checkpoint | 5.1 MonetaBottomSheet, sized by its content | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T02-22-08Z_insight-components.md` |
+| 2026-09-10 | checkpoint | 5.1 MonetaBottomSheet, sized by its content | `61760e6` | `docs/ai-workflow/verify-runs/2026-09-10T02-22-08Z_insight-components.md` |
+| 2026-09-10 | checkpoint | 5.2 BottomSheet gallery registration | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T02-23-34Z_insight-components.md` |
 
 ### Two tasks, one checkpoint, and why
 
