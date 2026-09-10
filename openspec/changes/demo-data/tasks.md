@@ -44,7 +44,7 @@ guarantees first, then data, then surfaces.
 
 ## 2. In-Flight State Does Not Cross Ledgers
 
-- [ ] 2.1 `transaction_list_controller.dart`: pending undo and any in-flight
+- [x] 2.1 `transaction_list_controller.dart`: pending undo and any in-flight
   write are discarded when the active ledger changes (D11).
   Verify: `test/features/transactions/presentation/undo_across_ledgers_test.dart`
   deletes a transaction in demo mode, turns demo mode off inside the five-second

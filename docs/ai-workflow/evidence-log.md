@@ -578,7 +578,8 @@ manual entry still working.
 | 2026-09-10 | checkpoint | 1.1 control/active database split | `29debb0` | `docs/ai-workflow/verify-runs/2026-09-10T07-37-43Z_demo-data.md` |
 | 2026-09-10 | checkpoint | 1.2 `demoMode` key, every preference control-scoped | `84293c3` | `docs/ai-workflow/verify-runs/2026-09-10T07-40-04Z_demo-data.md` |
 | 2026-09-10 | checkpoint | 1.3 the toggle-undoes-itself guard | `c98f740` | `docs/ai-workflow/verify-runs/2026-09-10T07-44-23Z_demo-data.md` |
-| 2026-09-10 | checkpoint | 1.4 real ledger untouched, end to end | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T07-47-12Z_demo-data.md` |
+| 2026-09-10 | checkpoint | 1.4 real ledger untouched, end to end | `ca3d574` | `docs/ai-workflow/verify-runs/2026-09-10T07-47-12Z_demo-data.md` |
+| 2026-09-10 | checkpoint | 2.1 in-flight state does not cross ledgers | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T07-52-09Z_demo-data.md` |
 
 ### The spec-auditor earned its place in the workflow
 
@@ -665,4 +666,35 @@ zone, so real database I/O never completes, and a hang looks like a slow machine
 rather than a bug. It cost one 120-second timeout instead of the seven minutes
 it cost during `design-system-foundation`, because the warning was already
 written down. Plain `test()`, and the file now says so at the top.
+
+### 2.1: the auditor's best finding, reproduced and then closed
+
+The hole was real and the test reproduced it before the fix went in: with
+`pendingUndo` carried across a ledger change, deleting a demo transaction,
+leaving demo mode inside the five-second window and pressing undo writes a demo
+record into the real ledger. Two of the three tests failed on the unfixed code.
+The file separation cannot catch this, because the record never went to a file —
+it was in memory the whole time.
+
+The fix is one parameter: `build()` loads with `keepPendingUndo: false`,
+`refresh()` keeps it. `build` reruns whenever `transactionRepositoryProvider`
+changes, and that rebuilds when the active ledger changes, so the drop happens
+exactly on a swap.
+
+**Two things this cost, both worth recording.**
+
+*A test-harness trap that looked like a product bug.* My row-count helper opened
+a second `AppDatabase` on the same path and closed it. sqflite defaults to
+`singleInstance`, so it handed back the connection the app was already using and
+the close took the app's connection down — three tests failed for a reason that
+had nothing to do with the code under test. Helpers now query the container's
+own active connection.
+
+*An unguarded default I introduced myself.* A mutation hardcoding
+`pendingUndo: null` — undo never surviving even a refresh — passed the two new
+cross-ledger tests **and all 172 tests in `test/features/transactions`**. No
+existing test ever refreshes while an undo is open, because `delete` refreshes
+*before* it opens the window. Changing the filter within five seconds of a
+deletion does, and there is now a test for it. Both halves of the parameter are
+guarded; both mutations fail.
 

@@ -79,9 +79,25 @@ class TransactionListController extends AsyncNotifier<TransactionListState> {
   TransactionQuery get query => _query;
 
   @override
-  Future<TransactionListState> build() => _load();
+  Future<TransactionListState> build() => _load(keepPendingUndo: false);
 
-  Future<TransactionListState> _load() async {
+  /// Loads the list.
+  ///
+  /// [keepPendingUndo] is false on a **build** and true on a **refresh**, and
+  /// the difference is a correctness one rather than a nicety.
+  ///
+  /// `build` reruns whenever a watched dependency changes, which includes
+  /// `transactionRepositoryProvider` — and that rebuilds when the active ledger
+  /// changes. A `PendingUndo` holds a deleted `Transaction` in memory for five
+  /// seconds and `undoDelete` restores it through the ordinary repository, so
+  /// carrying it across a ledger change means: delete a demo transaction, leave
+  /// demo mode inside the window, press undo, and a demo record is written into
+  /// the real ledger. The file separation cannot catch that, because the record
+  /// never went to a file — it was in memory the whole time.
+  ///
+  /// A refresh inside one ledger is the opposite case: the undo window must
+  /// survive the reload that a delete itself triggers.
+  Future<TransactionListState> _load({bool keepPendingUndo = true}) async {
     final repository = await ref.watch(transactionRepositoryProvider.future);
     final currency = ref.watch(walletCurrencyProvider);
 
@@ -100,7 +116,7 @@ class TransactionListController extends AsyncNotifier<TransactionListState> {
     return TransactionListState(
       days: groupByLocalDay((listed as Ok<List<Transaction>>).value, currency),
       summary: (summarised as Ok<PeriodSummary>).value,
-      pendingUndo: state.value?.pendingUndo,
+      pendingUndo: keepPendingUndo ? state.value?.pendingUndo : null,
     );
   }
 
