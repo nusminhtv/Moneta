@@ -412,7 +412,8 @@ rather than adding a HorizontalBarChart component."*
 | 2026-09-10 | checkpoint | 3.1 DonutChart ring, centre and painted-arc assertions | `c425af2` | `docs/ai-workflow/verify-runs/2026-09-10T01-59-46Z_insight-components.md` |
 | 2026-09-10 | checkpoint | 3.2–3.5 cap, fold, unsuppressible legend, boundaries, gallery count | `6d849b3` | `docs/ai-workflow/verify-runs/2026-09-10T02-06-54Z_insight-components.md` |
 | 2026-09-10 | checkpoint | 6.1 MonetaRadio, four variants (colours derived, not transcribed) | `e4b370d` | `docs/ai-workflow/verify-runs/2026-09-10T02-11-41Z_insight-components.md` |
-| 2026-09-10 | checkpoint | 6.2 RadioRow and RadioGroup, the group rule where the group is | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T02-16-29Z_insight-components.md` |
+| 2026-09-10 | checkpoint | 6.2 RadioRow and RadioGroup, the group rule where the group is | `8920a74` | `docs/ai-workflow/verify-runs/2026-09-10T02-16-29Z_insight-components.md` |
+| 2026-09-10 | checkpoint | 6.3 Radio gallery count tests | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T02-18-23Z_insight-components.md` |
 
 ### Two tasks, one checkpoint, and why
 
@@ -543,4 +544,3 @@ taps when it is already selected, and it sits inside the row's opaque
 over the *selected* control would be the one dead spot on the row. It does not —
 the row's detector wins — and there is now a test that would fail if that
 changed.
-

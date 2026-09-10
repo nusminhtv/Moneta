@@ -89,7 +89,7 @@
   selected.
   Verify: rendering a group from one value selects exactly one; tapping anywhere
   on a row reports it; a second row cannot be selected simultaneously.
-- [ ] 6.3 Gallery registration with a count test for all four variants.
+- [x] 6.3 Gallery registration with a count test for all four variants.
   Verify: `test/app/gallery_test.dart`.
 
 ## 7. Close-Out

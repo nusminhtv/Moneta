@@ -648,6 +648,46 @@ void main() {
       );
     });
   });
+
+  group('Radio is registered in full', () {
+    test('all four variants of 25:238 are present', () {
+      final section = sectionFor('Radio');
+      expect(section.figmaNodeId, '25:238');
+      // 2 x 2, and the labels are Figma's own axes. A count alone would pass
+      // for four copies of one variant.
+      expect(section.variants.map((v) => v.label), [
+        'Selected=false, Disabled=false',
+        'Selected=false, Disabled=true',
+        'Selected=true, Disabled=false',
+        'Selected=true, Disabled=true',
+      ]);
+    });
+
+    test('the composition that carries the group rule is rendered too', () {
+      // RadioRow and RadioGroup are not authored sets — they are D8's
+      // composition — but a component nobody can look at is a component whose
+      // derived layout nobody will correct.
+      expect(sectionFor('RadioRow').variants, hasLength(4));
+      expect(
+        sectionFor('RadioRow').variants.map((v) => v.label),
+        contains('Selected=false, Disabled=true'),
+      );
+
+      final group = sectionFor('RadioGroup');
+      expect(
+        group.variants,
+        hasLength(3),
+        reason:
+            'one variant per selectable value: "exactly one is selected" can '
+            'only be reviewed by seeing the selection move',
+      );
+      expect(
+        group.variants.map((v) => v.label).toSet(),
+        hasLength(3),
+        reason: 'two variants share a label, so the selection does not move',
+      );
+    });
+  });
 }
 
 /// The checkable claims a variant label makes, lowercased.
