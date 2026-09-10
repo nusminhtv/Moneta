@@ -102,7 +102,7 @@
   confirmed as `chart` slot 7 and `textTertiary`, so no token was added.
   Verify: the map names every component this change implemented, and the
   provenance table distinguishes measured from transcribed values.
-- [ ] 7.2 Update deviation 12: annotation `81:498` verifies it. Record that
+- [x] 7.2 Update deviation 12: annotation `81:498` verifies it. Record that
   *"delta colour follows MEANING, not sign"* confirms the existing `StatTile`
   decision and identifies the green "+12.4% spent" sample as the error, so the
   entry stops being an unverified candidate.
