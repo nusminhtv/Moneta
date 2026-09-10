@@ -45,3 +45,36 @@
 - [x] 4.2 The Profile tab now lands on `08.01`, with `08.03` pushed from it.
   Verify: `bash tool/verify.sh --change profile-feature` passes.
 
+## 5. 08.06 Settings — Notifications
+
+- [x] 5.1 `lib/features/settings/presentation/notification_settings_screen.dart`
+  from `101:618`: four groups, six rows — four Toggle and **two Value**,
+  because `101:862` says *"a time is not a boolean. This is the mapping mistake
+  from 08.03 seen from the other side."*
+  Verify: the four group headings are the authored ones; the two time rows are
+  Value with no `onToggle`; the defaults are mixed; the whole row is the tap
+  target.
+- [x] 5.2 The switches **actually silence notifications**, via
+  `lib/app/notification_preferences.dart` and a gate in
+  `notificationsProvider`.
+  Verify: each kind is gated by its own switch; silencing one leaves the others
+  audible; every `NotificationKind` is covered. Five mutations fail.
+- [x] 5.3 Two fixes to `ListRow` that `35:70`'s description required — a 56px
+  minimum and the whole row as the tap target.
+  Verify: title-only rows clear 56px; tapping a toggle row's title toggles it.
+
+## 6. Still Deferred, With Blockers
+
+- [ ] 6.1 `08.02` Edit profile (`100:276`) — Avatar now exists, but there is no
+  identity to edit: no accounts feature, no stored profile.
+- [ ] 6.2 `08.04` Security (`100:729`) — every row leads to auth or biometrics
+  that do not exist, so the screen would be disabled rows.
+- [ ] 6.3 `08.05` Change PIN (`101:488`) — needs `Numpad` (`36:92`), unbuilt.
+- [ ] 6.4 `08.07` Currency & language (`101:863`) — needs multi-currency;
+  `walletCurrencyProvider` is a single fixed `Currency.vnd`.
+- [ ] 6.5 `08.08` Manage categories (`101:978`) — needs `Chip` (`17:65`), and
+  categories are a fixed enum in `lib/core`.
+- [ ] 6.6 `08.09` Edit category (`102:794`) — same, plus custom colours.
+- [ ] 6.7 `08.10` Premium paywall (`102:1044`) — no purchases.
+- [ ] 6.8 `08.11` Help & FAQ (`102:1189`) — needs `SearchField`, unbuilt.
+

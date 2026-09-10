@@ -17,12 +17,14 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:moneta/app/budget_providers.dart';
+import 'package:moneta/app/notification_preferences.dart';
 import 'package:moneta/core/relative_time.dart';
 import 'package:moneta/data/app_providers.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/molecules/budget_status.dart';
 import 'package:moneta/features/budgets/domain/budget_progress.dart';
 import 'package:moneta/features/notifications/domain/home_notification.dart';
+import 'package:moneta/features/settings/presentation/notification_settings_screen.dart';
 import 'package:moneta/features/transactions/domain/transaction.dart';
 import 'package:moneta/features/transactions/presentation/transaction_list_controller.dart';
 
@@ -161,13 +163,36 @@ final notificationsProvider = Provider<AsyncValue<List<HomeNotification>>>((
   final budgets = progress.value;
   if (budgets == null) return const AsyncLoading();
 
+  final allowed = ref.watch(notificationPreferencesProvider);
+
   return list.whenData(
-    (state) => deriveNotifications(
-      budgets: budgets,
-      transactions: [
-        for (final day in state.days) ...day.transactions,
-      ],
-      now: now,
-    ),
+    (state) => [
+      for (final notification in deriveNotifications(
+        budgets: budgets,
+        transactions: [
+          for (final day in state.days) ...day.transactions,
+        ],
+        now: now,
+      ))
+        if (allows(allowed, notification.kind)) notification,
+    ],
   );
 });
+
+/// Whether [preferences] let [kind] through.
+///
+/// `08.06` exists so *"a user can silence one category without silencing
+/// everything"* (`101:850`), and this is the point where that becomes true.
+/// Without it the screen's switches would persist a boolean and change
+/// nothing, which is worse than not having the screen: `100:728` says a toggle
+/// promises an immediate change.
+///
+/// `budgetNearLimit` has no kind of its own yet — nothing derives an 80%
+/// warning — so its switch is stored and, for now, silences nothing. That is
+/// recorded rather than hidden behind a switch that looks live.
+bool allows(NotificationPreferences preferences, NotificationKind kind) =>
+    switch (kind) {
+      NotificationKind.budgetOverLimit => preferences.budgetExceeded,
+      NotificationKind.budgetPeriodEnding => preferences.periodEnding,
+      NotificationKind.incomeReceived => preferences.income,
+    };

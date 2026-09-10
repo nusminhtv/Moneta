@@ -9,9 +9,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moneta/app/demo/demo_mode_controller.dart';
+import 'package:moneta/app/notification_preferences.dart';
 import 'package:moneta/data/app_providers.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
+import 'package:moneta/features/settings/presentation/notification_settings_screen.dart';
 import 'package:moneta/features/settings/presentation/profile_screen.dart';
 import 'package:moneta/features/settings/presentation/settings_screen.dart';
 
@@ -24,6 +26,9 @@ class SettingsRoutes {
 
   /// `08.03` Settings — the list everything hangs off.
   static const String list = '/profile/settings';
+
+  /// `08.06` Notifications.
+  static const String notifications = '/profile/settings/notifications';
 }
 
 /// `08.01`, wired.
@@ -237,4 +242,29 @@ class SettingsRouteScreen extends ConsumerWidget {
       context,
     )?.showSnackBar(SnackBar(content: Text(message)));
   }
+}
+
+/// `08.06`, wired.
+class NotificationSettingsRouteScreen extends ConsumerWidget {
+  /// Creates the route screen.
+  const NotificationSettingsRouteScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) =>
+      NotificationSettingsScreen(
+        preferences: ref.watch(notificationPreferencesProvider),
+        onBack: () => context.pop(),
+        onChanged: (next) async {
+          final result = await ref
+              .read(notificationPreferencesProvider.notifier)
+              .update(next);
+          if (!context.mounted) return;
+          result.when(
+            ok: (_) {},
+            err: (failure) => ScaffoldMessenger.maybeOf(
+              context,
+            )?.showSnackBar(SnackBar(content: Text(failure.message))),
+          );
+        },
+      );
 }

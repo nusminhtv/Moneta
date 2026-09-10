@@ -42,16 +42,21 @@ class SettingsRow extends Equatable {
        onTap = null,
        available = true;
 
-  /// A row that shows its current state without being tapped.
+  /// A row that shows its current state.
+  ///
+  /// May also be tapped: `08.06`'s two Value rows carry a **time** the user can
+  /// change, and `100:728` says a Value row *shows state* — it does not say the
+  /// state cannot be edited. The trailing still reads as a value rather than a
+  /// chevron, because what the row is *about* is the current setting.
   const SettingsRow.value({
     required this.title,
     required String this.value,
     this.subtitle,
     this.icon,
+    this.onTap,
+    this.available = true,
   }) : toggled = null,
-       onToggle = null,
-       onTap = null,
-       available = true;
+       onToggle = null;
 
   /// The row's label.
   final String title;
@@ -123,12 +128,16 @@ class SettingsScreen extends StatelessWidget {
   /// Creates the screen.
   const SettingsScreen({
     required this.groups,
+    this.title = 'Settings',
     this.onBack,
     super.key,
   });
 
   /// The groups to render, in order.
   final List<SettingsGroup> groups;
+
+  /// The bar's title. `08.06` reuses this screen's shape with its own.
+  final String title;
 
   /// Leaves the screen.
   final VoidCallback? onBack;
@@ -145,7 +154,7 @@ class SettingsScreen extends StatelessWidget {
       child: Column(
         children: [
           MonetaAppBar(
-            title: 'Settings',
+            title: title,
             variant: MonetaAppBarVariant.titleBack,
             onBack: onBack,
           ),

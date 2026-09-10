@@ -1095,3 +1095,65 @@ initials' own semantics, merged. A screen reader would read the name and then
 spell two letters of it. The initials are decoration; the container carries the
 label, so the content is excluded from the tree.
 
+## profile-feature — 08.01 and 08.06, and two defects in ListRow
+
+Gate: **1636 tests, all 8 checks green.** Ten mutations across the two screens,
+all failing.
+
+### A component's own description named two defects
+
+`35:70`: *"56px minimum so the whole row is the tap target — never make just
+the trailing control tappable."*
+
+Both halves were violated. Title-only rows came out at **~46px**, under the
+authored minimum *and* under the 44px platform target — and every settings
+screen in this app is built from them. And a toggle row's row area carried a
+separate `onTap`, so the row had two actions and only the 52×32 switch toggled.
+
+An existing, passing test asserted that second behaviour — row tap calls
+`onTap`, switch tap calls `onToggle`. It encoded what the description forbids,
+so it was replaced rather than accommodated, with the reasoning in the test
+body. A toggle row now has one action.
+
+### The mapping mistake, from the other side
+
+`08.03`'s lesson was that the trailing variant *is* the information design.
+`101:862` is the same lesson inverted: *"Two rows here are Value, not Toggle,
+because they carry a time the user can change. A time is not a boolean."*
+
+So `SettingsRow.value` learned to accept an optional `onTap` — a Value row
+*shows state*, which does not mean the state cannot be edited — and the two time
+rows are asserted to have no `onToggle` at all.
+
+### A default that silently removed a shipped feature
+
+`08.06`'s frame has one switch off, and it is "Goal milestone reached" — a goals
+feature this app does not have. I mapped **income** onto that off state, and
+two existing `notifications_route_test.dart` tests failed: income notifications
+already ship, and an off-by-default switch had just silenced them.
+
+The honest off switch is the one with nothing behind it. "80% of a budget used"
+ships off, because nothing derives an 80% warning yet — which both tells the
+truth and gives the mixed defaults `101:856` asks for.
+
+### The screen is six rows of an authored seven, and says so
+
+The seventh is "Monthly report ready", and the app produces no monthly report. A
+switch that silences a notification which cannot be sent is a switch that does
+nothing. Two more rows are renamed to the kinds `NotificationKind` actually has.
+All four group headings are kept as authored so the gap stays visible.
+
+**A test that lied about itself, caught before commit.** It was named "four
+groups, seven rows, five toggles and two values" and asserted **six and four**.
+The name and the assertion disagreed, which is the same defect this log keeps
+recording in other forms. Renamed to what it checks, with the shortfall and its
+reason in the body.
+
+### And the switches are wired, not just stored
+
+`101:850` is the whole point of the screen: *"so a user can silence one category
+without silencing everything."* `notificationsProvider` filters by the
+preferences, and `allows()` switches exhaustively over `NotificationKind`, so
+adding a kind is a compile error rather than a notification that quietly ignores
+its switch.
+

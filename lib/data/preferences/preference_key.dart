@@ -18,7 +18,19 @@ enum PreferenceKey {
   onboardingComplete('onboarding_complete'),
 
   /// Whether the demo ledger is the active one.
-  demoMode('demo_mode');
+  demoMode('demo_mode'),
+
+  /// `08.06`: warn at 80% of a budget.
+  notifyBudgetNearLimit('notify_budget_near_limit'),
+
+  /// `08.06`: tell me when a budget is exceeded.
+  notifyBudgetExceeded('notify_budget_exceeded'),
+
+  /// `08.06`: tell me a budget period is ending.
+  notifyPeriodEnding('notify_period_ending'),
+
+  /// `08.06`: tell me when money comes in.
+  notifyIncome('notify_income');
 
   const PreferenceKey(this.storedName);
 

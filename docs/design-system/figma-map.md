@@ -784,7 +784,7 @@ rather than slipped in.
 | 08.03 Settings — list | `100:428` | **done** | — |
 | 08.04 Settings — security | `100:729` | deferred | no auth or biometrics behind it |
 | 08.05 Change PIN | `101:488` | deferred | `Numpad` (`36:92`) is not built |
-| 08.06 Settings — notifications | `101:618` | deferred | rows exist; no scheduling behind them |
+| 08.06 Settings — notifications | `101:618` | **done** (6 of 7 rows) | the seventh needs a monthly report the app does not produce |
 | 08.07 Currency & language | `101:863` | deferred | needs multi-currency, which the wallet does not have |
 | 08.08 Manage categories | `101:978` | deferred | `Chip` (`17:65`) is not built; categories are a fixed enum |
 | 08.09 Edit category | `102:794` | deferred | same, plus custom colours |
@@ -889,4 +889,53 @@ mark. First and last word, upper-cased, Vietnamese diacritics counting as
 letters; a name with no letters falls back to the glyph, because an empty circle
 is not a state. `21:106`'s description sets the order: *"Initials fall back when
 no photo exists."*
+
+### `08.06` is six rows, not the authored seven — and two are renamed
+
+`101:853` authors seven rows (5 Toggle, 2 Value). This builds **six** (4 Toggle,
+2 Value), and the gaps are features rather than shortcuts:
+
+| Frame row | Built as | Why |
+| --- | --- | --- |
+| 80% of a budget used | same, **off** by default | nothing derives an 80% warning yet, so the switch silences nothing |
+| Budget exceeded | same | `NotificationKind.budgetOverLimit` |
+| Bill due in 3 days | **Budget period ending** | no bills feature; `budgetPeriodEnding` is the kind that exists |
+| Goal milestone reached | **Money received** | no goals feature; `incomeReceived` is the kind that exists |
+| Weekly summary (Value) | same | — |
+| Monthly report ready | **not built** | the app produces no monthly report |
+| Do not disturb (Value) | same | — |
+
+The four group headings are kept exactly as authored — *"Bills & goals"*
+included — so the screen's shape still matches the design and the gap is
+visible rather than papered over.
+
+**The switches are wired to the feed, not just stored.** `101:850`: *"so a user
+can silence one category without silencing everything."* A switch that persists
+a boolean and changes nothing would contradict `100:728`, which says a toggle
+promises an immediate change, so `notificationsProvider` filters by them and
+`allows()` switches exhaustively over `NotificationKind` — a new kind is a
+compile error rather than a notification that ignores its switch.
+
+**One default is a deliberate departure, and one was a bug I caught.** The 80%
+warning ships **off**, against the frame's on, because it silences nothing yet —
+and it is what keeps the defaults mixed, which `101:856` asks for. My first
+version instead put *income* off by default, mapping it onto the frame's
+off-state row; two existing `notifications_route_test.dart` tests failed and
+caught that it silently removed a feature `home-overview` had already shipped.
+
+### Two defects in `ListRow`, found in its own description
+
+`35:70`: *"56px minimum so the whole row is the tap target — never make just the
+trailing control tappable."* Both halves were wrong:
+
+- rows **without a subtitle** came out at ~46px — under the authored 56 and
+  under the 44px platform target — and every settings screen in this app is
+  made of these;
+- a **toggle row's row area was not the control's tap target.** It carried a
+  separate `onTap`, so one row had two different actions and only the 52×32
+  switch toggled.
+
+Fixed, and the existing test that asserted the second behaviour was **replaced**
+rather than worked around: it encoded exactly what the component description
+forbids. A toggle row now has one action, and `onTap` is ignored on it.
 

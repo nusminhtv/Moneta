@@ -86,16 +86,38 @@ class ListRow extends StatelessWidget {
   /// Key on the toggle control.
   static const Key toggleKey = Key('ListRow.toggle');
 
+  /// Shortest a row may be, from `35:70`'s description: *"56px minimum so the
+  /// whole row is the tap target — never make just the trailing control
+  /// tappable."*
+  ///
+  /// Rows with a subtitle already clear it; rows without one came out at ~46,
+  /// which is under the authored minimum **and** under nothing at all — 44 is
+  /// the platform touch target and 56 is what this component asks for.
+  static const double minimumHeight = 56;
+
+  /// What activating the row does.
+  ///
+  /// A toggle row toggles: `35:70` says *"never make just the trailing control
+  /// tappable"*, and before this the switch was the only tappable part of the
+  /// row it sat in. Everything else keeps its own handler.
+  VoidCallback? get _activate {
+    if (accessory == ListRowAccessory.toggle) {
+      final toggle = onToggle;
+      return toggle == null ? null : () => toggle(!toggled);
+    }
+    return onTap;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = context.moneta;
     final colors = theme.colors;
 
     return Semantics(
-      button: onTap != null,
+      button: _activate != null,
       toggled: accessory == ListRowAccessory.toggle ? toggled : null,
       child: GestureDetector(
-        onTap: onTap,
+        onTap: _activate,
         behavior: HitTestBehavior.opaque,
         child: DecoratedBox(
           decoration: BoxDecoration(
@@ -107,54 +129,59 @@ class ListRow extends StatelessWidget {
               horizontal: MonetaSpacing.spaceBase,
               vertical: MonetaSpacing.spaceMd,
             ),
-            child: Row(
-              children: [
-                if (leadingIcon != null) ...[
-                  MonetaIcon(
-                    leadingIcon!,
-                    color: colors.textSecondary,
-                  ),
-                  const SizedBox(width: MonetaSpacing.spaceMd),
-                ],
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        softWrap: false,
-                        style: theme.text.titleMd.copyWith(
-                          color: destructive
-                              ? colors.expense
-                              : colors.textPrimary,
-                        ),
-                      ),
-                      if (subtitle != null) ...[
-                        const SizedBox(height: MonetaSpacing.space2xs),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: minimumHeight - MonetaSpacing.spaceMd * 2,
+              ),
+              child: Row(
+                children: [
+                  if (leadingIcon != null) ...[
+                    MonetaIcon(
+                      leadingIcon!,
+                      color: colors.textSecondary,
+                    ),
+                    const SizedBox(width: MonetaSpacing.spaceMd),
+                  ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                         Text(
-                          subtitle!,
+                          title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           softWrap: false,
-                          style: theme.text.captionMd.copyWith(
-                            color: colors.textTertiary,
+                          style: theme.text.titleMd.copyWith(
+                            color: destructive
+                                ? colors.expense
+                                : colors.textPrimary,
                           ),
                         ),
+                        if (subtitle != null) ...[
+                          const SizedBox(height: MonetaSpacing.space2xs),
+                          Text(
+                            subtitle!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: false,
+                            style: theme.text.captionMd.copyWith(
+                              color: colors.textTertiary,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: MonetaSpacing.spaceMd),
-                Flexible(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: _Accessory(row: this),
+                  const SizedBox(width: MonetaSpacing.spaceMd),
+                  Flexible(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: _Accessory(row: this),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

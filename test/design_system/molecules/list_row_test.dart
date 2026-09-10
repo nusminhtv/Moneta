@@ -148,7 +148,19 @@ void main() {
       }
     });
 
-    testWidgets('reports row taps separately from toggle taps', (tester) async {
+    testWidgets('a toggle row has one action, and it is the toggle', (
+      tester,
+    ) async {
+      // **This test previously asserted the opposite** — that tapping the row
+      // called `onTap` while tapping the switch called `onToggle`, so one row
+      // carried two different actions. `35:70`'s own description rules that
+      // out: *"56px minimum so the whole row is the tap target — never make
+      // just the trailing control tappable."* The row area exists to activate
+      // the control, not to do something else, and `100:728` says a toggle
+      // promises an immediate change — one promise per row.
+      //
+      // So `onTap` is ignored on a toggle row, and both the row and the switch
+      // toggle.
       var rowTaps = 0;
       final toggleValues = <bool>[];
       await pumpRow(
@@ -159,10 +171,16 @@ void main() {
       );
 
       await tester.tap(find.text('Notifications'));
+      await tester.pump();
       await tester.tap(find.byKey(ListRow.toggleKey));
+      await tester.pump();
 
-      expect(rowTaps, 1);
-      expect(toggleValues, [true]);
+      expect(
+        rowTaps,
+        0,
+        reason: 'a toggle row must not hide a second action behind the row',
+      );
+      expect(toggleValues, [true, true]);
     });
   });
 
@@ -228,6 +246,147 @@ void main() {
         captured.first,
         captured.last,
         reason: 'destructive changed more than the title',
+      );
+    });
+  });
+
+  group('35:70 — the whole row is the tap target', () {
+    // The component's own description: "56px minimum so the whole row is the
+    // tap target — never make just the trailing control tappable."
+
+    testWidgets('a row without a subtitle still clears 56px', (tester) async {
+      // The defect: title-only rows came out at ~46, under the authored
+      // minimum and under the 44px platform target too. Every settings screen
+      // in this app is made of these.
+      await pumpMonetaWidget(
+        tester,
+        const SizedBox(
+          width: 353,
+          child: ListRow(
+            title: 'Budget exceeded',
+            accessory: ListRowAccessory.chevron,
+          ),
+        ),
+        surfaceSize: const Size(393, 300),
+      );
+      expect(
+        tester.getSize(find.byType(ListRow)).height,
+        greaterThanOrEqualTo(ListRow.minimumHeight),
+      );
+    });
+
+    testWidgets('and a row with one is no shorter', (tester) async {
+      await pumpMonetaWidget(
+        tester,
+        const SizedBox(
+          width: 353,
+          child: ListRow(
+            title: '80% of a budget used',
+            subtitle: 'One warning per budget per month',
+            accessory: ListRowAccessory.toggle,
+          ),
+        ),
+        surfaceSize: const Size(393, 300),
+      );
+      expect(
+        tester.getSize(find.byType(ListRow)).height,
+        greaterThanOrEqualTo(ListRow.minimumHeight),
+      );
+    });
+
+    testWidgets('tapping the row toggles it, not only the switch', (
+      tester,
+    ) async {
+      final changes = <bool>[];
+      await pumpMonetaWidget(
+        tester,
+        SizedBox(
+          width: 353,
+          child: ListRow(
+            title: 'Budget exceeded',
+            accessory: ListRowAccessory.toggle,
+            onToggle: changes.add,
+          ),
+        ),
+        surfaceSize: const Size(393, 300),
+      );
+
+      // The title, which is as far from the switch as the row gets.
+      await tester.tap(find.text('Budget exceeded'));
+      await tester.pump();
+      expect(
+        changes,
+        [true],
+        reason: '35:70 forbids making only the trailing control tappable',
+      );
+    });
+
+    testWidgets('and it toggles to the opposite of its current state', (
+      tester,
+    ) async {
+      final changes = <bool>[];
+      await pumpMonetaWidget(
+        tester,
+        SizedBox(
+          width: 353,
+          child: ListRow(
+            title: 'Budget exceeded',
+            accessory: ListRowAccessory.toggle,
+            toggled: true,
+            onToggle: changes.add,
+          ),
+        ),
+        surfaceSize: const Size(393, 300),
+      );
+      await tester.tap(find.text('Budget exceeded'));
+      await tester.pump();
+      expect(changes, [false], reason: 'an on row must offer to turn off');
+    });
+
+    testWidgets('a toggle row with no handler is inert, not broken', (
+      tester,
+    ) async {
+      await pumpMonetaWidget(
+        tester,
+        const SizedBox(
+          width: 353,
+          child: ListRow(
+            title: 'Budget exceeded',
+            accessory: ListRowAccessory.toggle,
+          ),
+        ),
+        surfaceSize: const Size(393, 300),
+      );
+      await tester.tap(find.text('Budget exceeded'));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a chevron row still calls onTap, not onToggle', (
+      tester,
+    ) async {
+      var tapped = 0;
+      final toggled = <bool>[];
+      await pumpMonetaWidget(
+        tester,
+        SizedBox(
+          width: 353,
+          child: ListRow(
+            title: 'Settings',
+            accessory: ListRowAccessory.chevron,
+            onTap: () => tapped++,
+            onToggle: toggled.add,
+          ),
+        ),
+        surfaceSize: const Size(393, 300),
+      );
+      await tester.tap(find.text('Settings'));
+      await tester.pump();
+      expect(tapped, 1);
+      expect(
+        toggled,
+        isEmpty,
+        reason: 'the accessory decides which handler fires',
       );
     });
   });

@@ -99,6 +99,11 @@ GoRouter buildRouter({String initialLocation = defaultInitialRoute}) {
             path: SettingsRoutes.list,
             builder: (context, state) => const SettingsRouteScreen(),
           ),
+          GoRoute(
+            path: SettingsRoutes.notifications,
+            builder: (context, state) =>
+                const NotificationSettingsRouteScreen(),
+          ),
         ],
       ),
       // First run lives outside the shell: it has no navigation bar, and
