@@ -84,7 +84,7 @@
   variants at 22×22, disabled ignoring taps.
   Verify: `test/design_system/atoms/moneta_radio_test.dart` covers each variant's
   token-derived appearance and that a disabled radio fires no callback.
-- [ ] 6.2 The row composition that carries the group rule and the whole-row tap
+- [x] 6.2 The row composition that carries the group rule and the whole-row tap
   target (D8), driven by one selected value so two rows cannot both read
   selected.
   Verify: rendering a group from one value selects exactly one; tapping anywhere

@@ -411,7 +411,8 @@ rather than adding a HorizontalBarChart component."*
 | 2026-09-10 | checkpoint | 2.1 + 2.2 ChartLegendItem and its nine gallery slots | `1147f4e` | `docs/ai-workflow/verify-runs/2026-09-10T01-49-42Z_insight-components.md` |
 | 2026-09-10 | checkpoint | 3.1 DonutChart ring, centre and painted-arc assertions | `c425af2` | `docs/ai-workflow/verify-runs/2026-09-10T01-59-46Z_insight-components.md` |
 | 2026-09-10 | checkpoint | 3.2–3.5 cap, fold, unsuppressible legend, boundaries, gallery count | `6d849b3` | `docs/ai-workflow/verify-runs/2026-09-10T02-06-54Z_insight-components.md` |
-| 2026-09-10 | checkpoint | 6.1 MonetaRadio, four variants (colours derived, not transcribed) | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T02-11-41Z_insight-components.md` |
+| 2026-09-10 | checkpoint | 6.1 MonetaRadio, four variants (colours derived, not transcribed) | `e4b370d` | `docs/ai-workflow/verify-runs/2026-09-10T02-11-41Z_insight-components.md` |
+| 2026-09-10 | checkpoint | 6.2 RadioRow and RadioGroup, the group rule where the group is | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T02-16-29Z_insight-components.md` |
 
 ### Two tasks, one checkpoint, and why
 
@@ -523,4 +524,23 @@ The distinction that decided it: a *derived* value is one this design system
 already answers elsewhere and a fidelity pass can confirm; an *invented* value
 is one nothing in the repository constrains. Radio's fill colour is the first.
 A gridline's y position is the second.
+
+### What the group rule does and does not guarantee
+
+`MonetaRadioGroup` computes each row's `selected` as `option.value == selected`,
+so no two **distinct** values can both read selected. It cannot make two options
+carrying the *same* value differ, and the test says so out loud rather than
+asserting a guarantee the type does not give: two `_Period.weekly` options do
+both light up, and that is the caller's error.
+
+The spec scenario reads "two radios in one group cannot both report selected".
+Taken literally that is false for duplicated values, so the test records the
+real boundary instead of quietly testing something weaker.
+
+One defect was found by asking a question the spec does not: the atom refuses
+taps when it is already selected, and it sits inside the row's opaque
+`GestureDetector`. If the atom absorbed the hit without acting, the 44px square
+over the *selected* control would be the one dead spot on the row. It does not —
+the row's detector wins — and there is now a test that would fail if that
+changed.
 

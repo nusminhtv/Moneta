@@ -3,6 +3,7 @@ import 'package:moneta/core/money.dart';
 import 'package:moneta/design_system/atoms/moneta_radio.dart';
 import 'package:moneta/design_system/molecules/chart_legend_item.dart';
 import 'package:moneta/design_system/molecules/chart_series.dart';
+import 'package:moneta/design_system/molecules/moneta_radio_row.dart';
 import 'package:moneta/design_system/organisms/donut_chart.dart';
 
 /// Gallery sections for 📱 07 Insights & Reports and 🧩 Components / Charts.
@@ -94,7 +95,70 @@ final List<GallerySection> insightSections = [
           ),
     ],
   ),
+  // Not an authored component set: D8's composition, which is where the group
+  // rule lives. Registered under the atom's node because that is the node it
+  // composes; the row's own layout is derived, and 7.5's fidelity pass is what
+  // will confirm or correct it.
+  GallerySection(
+    component: 'RadioRow',
+    figmaNodeId: '25:238',
+    variants: [
+      GalleryVariant(
+        'Selected=true, Supporting=true',
+        (_) => const MonetaRadioRow(
+          title: 'Monthly',
+          supporting: 'On the 1st',
+          selected: true,
+        ),
+      ),
+      GalleryVariant(
+        'Selected=false, Supporting=true',
+        (_) => const MonetaRadioRow(
+          title: 'Weekly',
+          supporting: 'Every Monday',
+          selected: false,
+        ),
+      ),
+      GalleryVariant(
+        'Selected=false, Supporting=false',
+        (_) => const MonetaRadioRow(title: 'Yearly', selected: false),
+      ),
+      GalleryVariant(
+        'Selected=false, Disabled=true',
+        (_) => const MonetaRadioRow(
+          title: 'Custom range',
+          supporting: 'Not available yet',
+          selected: false,
+          enabled: false,
+        ),
+      ),
+    ],
+  ),
+  GallerySection(
+    component: 'RadioGroup',
+    figmaNodeId: '25:238',
+    variants: [
+      // One variant per selectable value, because "exactly one is selected" is
+      // the thing a reviewer is here to check, and it can only be checked by
+      // seeing the selection move.
+      for (final selected in _periods)
+        GalleryVariant(
+          'Selected=$selected',
+          (_) => MonetaRadioGroup<String>(
+            options: [
+              for (final period in _periods)
+                MonetaRadioOption(value: period, title: period),
+            ],
+            selected: selected,
+            onChanged: (_) {},
+          ),
+        ),
+    ],
+  ),
 ];
+
+/// The three budget periods, which is what `07.05`'s sheet chooses between.
+const List<String> _periods = ['Weekly', 'Monthly', 'Yearly'];
 
 /// `47:62`'s eight categories with the slots it actually assigns them.
 const List<ChartSeries> _donutAuthored = [

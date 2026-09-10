@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:moneta/design_system/atoms/moneta_radio.dart';
 import 'package:moneta/design_system/molecules/chart_legend_item.dart';
+import 'package:moneta/design_system/molecules/moneta_radio_row.dart';
 import 'package:moneta/design_system/organisms/donut_chart.dart';
 
 /// Describes gallery variants for 📱 07 Insights & Reports.
@@ -29,5 +30,13 @@ String? describeInsights(Widget widget) => switch (widget) {
   // comparable to it.
   MonetaRadio(:final selected, :final enabled) =>
     'Radio(selected=$selected,disabled=${!enabled})',
+  MonetaRadioRow(:final selected, :final enabled, :final supporting) =>
+    'RadioRow(selected=$selected,disabled=${!enabled},'
+        'supporting=${supporting != null})',
+  // Names the selected value AND which row it lands on, so a group whose
+  // labels moved but whose selection did not is caught.
+  MonetaRadioGroup<String>(:final options, :final selected) =>
+    'RadioGroup(selected=$selected,'
+        '${options.map((o) => '${o.title}:${o.value == selected}').join("|")})',
   _ => null,
 };

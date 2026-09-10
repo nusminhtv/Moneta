@@ -371,7 +371,16 @@ void main() {
       // because it references `ChartSlot`, which is a design-system concept;
       // `lib/core` may import nothing but `core`, so it cannot live there. The
       // slots it names ARE in the gallery, as ChartLegendItem's nine variants.
-      const exempt = <String>{'AmountSlot', 'ChartSeries'};
+      //
+      // MonetaRadioOption is the same: a value, a title and a supporting line,
+      // with no render of its own. What renders it — RadioRow and RadioGroup —
+      // is in the gallery, and RadioGroup's variants are built from options,
+      // so an option that stopped working would fail there.
+      const exempt = <String>{
+        'AmountSlot',
+        'ChartSeries',
+        'MonetaRadioOption',
+      };
       final deadExemptions = exempt.difference(declared.keys.toSet());
       expect(
         deadExemptions,
