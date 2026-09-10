@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:moneta/design_system/molecules/budget_status.dart';
+import 'package:moneta/design_system/molecules/chart_series.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/design_system/tokens/colors.dart';
 
@@ -26,14 +27,40 @@ enum MonetaProgressBarSize {
 /// Also serves as the horizontal bar mark in a ranked category chart, which is
 /// why it takes a bare fraction rather than a budget.
 class MonetaProgressBar extends StatelessWidget {
-  /// Creates a progress bar.
+  /// Creates a progress bar whose colour is derived from [fraction].
   const MonetaProgressBar({
     required this.fraction,
     this.size = MonetaProgressBarSize.md,
     this.nearLimitThreshold = BudgetStatus.defaultNearLimitThreshold,
     this.semanticLabel,
     super.key,
-  });
+  }) : slot = null;
+
+  /// Creates a bar mark for a **single-series** chart, in one fixed slot.
+  ///
+  /// Added for `07.03`, where annotation `77:587` says both halves of a rule
+  /// that the derived-colour constructor cannot satisfy at once:
+  ///
+  /// > *"ProgressBar is reused as the bar mark rather than adding a
+  /// > HorizontalBarChart component; one series means one hue, so every bar is
+  /// > the same colour and rank is carried by length and order."*
+  ///
+  /// Reusing the bar is the instruction; one hue is the constraint. But the
+  /// default constructor derives its colour from the fraction, so the *longest*
+  /// bar — which is full by construction on that screen — would come out in the
+  /// near-limit warning colour while shorter bars came out green. `80:407`
+  /// settles it: every bar on `77:440` is filled `chart/1`.
+  ///
+  /// A [ChartSlot] rather than a `Color`, for the reason `ChartLegendItem`
+  /// takes one: the eight-slot palette was validated as a set, and a caller
+  /// choosing a colour can leave it.
+  const MonetaProgressBar.series({
+    required this.fraction,
+    this.slot = ChartSlot.slot1,
+    this.size = MonetaProgressBarSize.md,
+    this.semanticLabel,
+    super.key,
+  }) : nearLimitThreshold = BudgetStatus.defaultNearLimitThreshold;
 
   /// Spend as a fraction of the limit.
   ///
@@ -50,6 +77,10 @@ class MonetaProgressBar extends StatelessWidget {
 
   /// Accessibility label. Pass null for a bar that duplicates adjacent text.
   final String? semanticLabel;
+
+  /// A fixed chart slot, for a single-series bar mark, or null to derive the
+  /// colour from [fraction]. See [MonetaProgressBar.series].
+  final ChartSlot? slot;
 
   /// Key on the filled portion, so tests can measure it.
   static const Key fillKey = Key('MonetaProgressBar.fill');
@@ -70,11 +101,13 @@ class MonetaProgressBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.moneta;
-    final fillColor = fillColorFor(
-      fraction,
-      theme.colors,
-      nearLimitThreshold: nearLimitThreshold,
-    );
+    final fillColor =
+        slot?.colorIn(theme.colors) ??
+        fillColorFor(
+          fraction,
+          theme.colors,
+          nearLimitThreshold: nearLimitThreshold,
+        );
 
     final clamped = fraction.isNaN ? 0.0 : fraction.clamp(0.0, 1.0);
 

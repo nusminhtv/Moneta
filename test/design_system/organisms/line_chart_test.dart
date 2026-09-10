@@ -117,10 +117,10 @@ void main() {
           ..line(color: colors.borderSubtle)
           ..line(color: colors.borderSubtle)
           ..path(color: colors.chart.base(1))
-          ..circle(color: colors.surface)
+          ..circle(color: colors.canvas)
           ..circle(color: colors.chart.base(1))
           ..path(color: colors.chart.base(3))
-          ..circle(color: colors.surface)
+          ..circle(color: colors.canvas)
           ..circle(color: colors.chart.base(3)),
       );
     });
@@ -149,17 +149,20 @@ void main() {
       tester,
     ) async {
       await pumpChart(tester);
-      const mark = MonetaLineChart.markerSize / 2;
-      const ring = mark + MonetaLineChart.markerRingWidth / 2;
+      // Outer 9px ring, 7px coloured disc inside it — the values `48:84`'s
+      // exported SVG carries, after a fidelity pass corrected a 9px disc with
+      // an 11px backing.
+      const ring = MonetaLineChart.markerSize / 2;
+      const mark = MonetaLineChart.markerDiscSize / 2;
       // Radii asserted, not just the count: a ring drawn at radius zero is no
       // ring at all, and counting four circles passes for it. The ring is what
       // keeps two marks separable where they overlap.
       expect(
         find.byKey(MonetaLineChart.plotKey),
         paints
-          ..circle(color: colors.surface, radius: ring)
+          ..circle(color: colors.canvas, radius: ring)
           ..circle(color: colors.chart.base(1), radius: mark)
-          ..circle(color: colors.surface, radius: ring)
+          ..circle(color: colors.canvas, radius: ring)
           ..circle(color: colors.chart.base(3), radius: mark),
       );
       expect(ring, greaterThan(mark));

@@ -841,3 +841,86 @@ expression onto one line between writes, so the first attempt reported
 helper is what made that visible — the trap `figma-map.md` records, caught by
 the guard put there for it.
 
+## insights-feature — four of six screens, 2026-09-10
+
+Opened and applied under an explicit instruction to move fast and skip
+blockers. `07.01`, `07.02`, `07.03` and `07.05` are built; `07.04` and `07.06`
+are deferred and named in the proposal's Non-goals rather than left as silence.
+
+Gate: **1552 tests, all 8 checks green.**
+
+### The coverage gate caught what the test count hid
+
+The first gate run passed 1542 tests and **failed coverage**:
+`insights_entry.dart` at 20% and `insights_summary.dart` at 83.6%, against the
+85% the critical band requires. The value types' equality and `MonthlyFlow.net`
+had no direct tests — the screens exercised them incidentally, which is not the
+same thing. Ten tests later both are over. Worth recording because "1542 tests
+pass" is exactly the sort of number that reads as done.
+
+### A rule whose two halves contradicted each other
+
+Annotation `77:587` says *"ProgressBar is reused as the bar mark rather than
+adding a HorizontalBarChart component; one series means one hue, so every bar is
+the same colour and rank is carried by length and order."*
+
+`MonetaProgressBar` derives its colour from the fraction. 07.03's longest bar is
+full by construction, so reusing the component literally would paint it in the
+**near-limit warning** colour while shorter bars came out green — the sentence's
+first half defeats its second. `80:407` breaks the tie: every fill on `77:440`
+is `chart/1`.
+
+Resolved by adding `MonetaProgressBar.series`, which takes a `ChartSlot` rather
+than a `Color` for the reason `ChartLegendItem` does. That is a
+`lib/design_system` change the proposal said this change would not make, so it
+is recorded as added scope in `tasks.md` group 7 rather than slipped in.
+
+### Two numbers that differ, and the screen shows both
+
+07.03's bar length is share of the **largest** category; its percentage label is
+share of the **total**. `77:587` carries rank by length, so the top bar must be
+full — a share-of-total fraction would leave it a third full and waste
+two-thirds of the width. Food at 6.76M of 16.28M reads "42%" beside a full bar,
+and there is a test asserting the label is 42% and *not* 100%.
+
+### Two test defects found by the tests themselves
+
+*An assertion that could not fail.* The "period changes the data, not the
+layout" test collected a `List<String>` per period and asserted
+`seen.toSet()` had one entry. `List` compares by identity, so four identical
+lists gave four set entries and the assertion failed on correct code — the
+inverse of the usual problem, and it would have passed on *broken* code had the
+comparison been the other way round. Joined to a string, plus an explicit
+assertion of the expected shape.
+
+*A real overflow.* The cash-flow month row overflowed by 79px: at a realistic
+salary, "32,000,000 ₫ in · 16,280,000 ₫ out" is wider than the phone.
+`77:383`'s own proportions fixed it — month 136 of 321, figures 177, so flex 3:4
+with both sides ellipsised.
+
+### The fidelity pass on the charts
+
+Run once Figma was readable. `ChartLegendItem` faithful, `DonutChart` faithful
+with notes, `MonetaLineChart` **divergent** — and correctly so: I had read "9px
+end markers with a 2px surface ring" as a 9px disc *plus* a ring, giving an 11px
+mark with a 1px ring. `48:84`'s exported SVG says 9px is the **outer** diameter,
+the disc is **7px**, and the ring is **`canvas`** (`#06070A`), not `surface`.
+Both fixed, both asserted by radius in the ordered `paints` sequence.
+
+It also improved two provenance notes: the donut's ring thickness is exactly
+39.52 (inner radius 0.62 × 104), and `47:48`'s **description was readable all
+along** and states the ~2px segment gap that this change recorded as "no style
+carries it". Remaining cosmetic divergences — label overhang, a 4-vs-8 gap,
+label centring, marker inset — are recorded in `figma-map.md` and not fixed,
+under the same instruction to keep moving.
+
+### The finding worth more than the screens
+
+`SpendCategory.chartSlot` is Food 7, Transport 4, Shopping 2, Bills 8,
+Entertainment 6, Health 3, Gifts 5 — **exactly** the slots `47:62`'s legend
+rows carry. Deviation 42 recorded that order as arbitrary. It is not: each
+category owns its slot, and `chart/1` is missing from the donut's sample because
+it belongs to `salary`, which is income. `33:311`'s description says as much —
+*"Colour and glyph are baked in together — pick a category, never a colour."*
+Deviation 42 corrected.
+

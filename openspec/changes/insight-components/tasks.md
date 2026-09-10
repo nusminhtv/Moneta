@@ -113,10 +113,10 @@
   places where the component is deliberately less flexible than a caller might
   want.
   Verify: both entries name their annotation node.
-- [ ] 7.4 Update `docs/ai-workflow/evidence-log.md` with this change's verify
+- [x] 7.4 Update `docs/ai-workflow/evidence-log.md` with this change's verify
   runs and commits.
   Verify: the entries match `git log`.
-- [ ] 7.5 Run the full gate and the `figma-fidelity` agent against `47:48` and
+- [x] 7.5 Run the full gate and the `figma-fidelity` agent against `47:48` and
   `48:76`.
   Verify: `bash tool/verify.sh --change insight-components` passes, its evidence
   file is cited in the final commit, and the fidelity report is recorded.

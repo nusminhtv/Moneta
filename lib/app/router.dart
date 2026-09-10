@@ -7,6 +7,7 @@ import 'package:moneta/app/budgets_route_screen.dart';
 import 'package:moneta/app/create_budget_route_screens.dart';
 import 'package:moneta/app/gallery/gallery_screen.dart';
 import 'package:moneta/app/home_route_screen.dart';
+import 'package:moneta/app/insights_route_screens.dart';
 import 'package:moneta/app/notifications_route_screen.dart';
 import 'package:moneta/app/shell.dart';
 import 'package:moneta/design_system/organisms/bottom_nav.dart';
@@ -79,8 +80,15 @@ GoRouter buildRouter({String initialLocation = defaultInitialRoute}) {
           ),
           GoRoute(
             path: DestinationRoutes.paths[MonetaDestination.insights]!,
-            builder: (context, state) =>
-                const PlaceholderScreen(title: 'Insights'),
+            builder: (context, state) => const InsightsOverviewRouteScreen(),
+          ),
+          GoRoute(
+            path: InsightsRoutes.cashFlow,
+            builder: (context, state) => const CashFlowRouteScreen(),
+          ),
+          GoRoute(
+            path: InsightsRoutes.categories,
+            builder: (context, state) => const CategoryBreakdownRouteScreen(),
           ),
           GoRoute(
             path: DestinationRoutes.paths[MonetaDestination.profile]!,

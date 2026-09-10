@@ -593,8 +593,8 @@ Candidate for the file's twelve deliberate mistakes; the answer key at
 
 ## 🧩 Components / Charts and friends — built by `insight-components`, 2026-09-10
 
-Four of the five components this change owns are built. `LineChart` is not: see
-**Held on `48:76`** below.
+All five components this change owns are built. `LineChart` was the last, once
+Figma access returned — see **`48:76` unblocked and built** below.
 
 | Component | Node | Variants | State |
 | --- | --- | --- | --- |
@@ -629,15 +629,15 @@ and a future reader should not have to guess which.
 | `MonetaRadioRow`'s layout | `moneta_radio_row.dart` | **derived.** `07.05` could not be read; the row follows `ListRow`'s arrangement for the same shape. |
 | `MonetaBottomSheet`'s colour roles and corner radius | `bottom_sheet.dart` | **derived.** The geometry (20px handle area, 40×4 handle, 60px header, 44×44 close, 20px inset) is transcribed from `proposal.md`, recorded while access was live. No header divider was invented: nothing recorded says there is one. |
 
-Everything marked derived is queued for task 7.5's `figma-fidelity` pass, which
-cannot run until `48:76` is readable.
+Everything marked derived was checked by task 7.5's `figma-fidelity` pass once
+`48:76` became readable. What it found is below.
 
 ### Deviations recorded by `insight-components`
 
 | # | What | Resolution |
 | --- | --- | --- |
 | 41 | `47:47` is a public component set with nine variants, so it must appear in the gallery — which makes it a component a caller can compose beside a chart. | `DonutChart` accepts **no** legend parameter of any kind, so a public `ChartLegendItem` does not make the donut's legend optional. Annotation `77:284`: *"the DonutChart legend is part of the component and not optional: two of the eight chart slots fall below 3:1 against the dark surface, so the visible labels ARE the required contrast relief."* A `showLegend` flag would turn an accessibility guarantee into a caller's convenience; a sibling `ChartLegend` widget would let a screen show rows that disagree with the arcs, which is harder to notice than no legend. Guarded by a test that reads the constructor's parameter list out of the source, because a widget test cannot prove a parameter's absence. |
-| 42 | `47:62` assigns its eight categories slots **7, 4, 2, 8, 6, 3, 5, Other** — Food & drink is `Slot=7`, and `chart/1` is never used. The file does not colour by rank. | `DonutChart` honours each caller's slot and ranks only the *order*, so a category keeps one colour across every screen that charts it. Overriding by rank would have been a deviation from the design as well as a worse behaviour. The ring's exported fills (`#AA7705`, `#027ED8`, `#769200`) agree with the legend's slots, so the two halves of `47:48` are consistent; it is only the *choice* of slots that is arbitrary. |
+| 42 | `47:62` assigns its eight categories slots **7, 4, 2, 8, 6, 3, 5, Other** — Food & drink is `Slot=7`, and `chart/1` is never used. The file does not colour by rank. **Corrected 2026-09-10: this order is not arbitrary.** It is exactly `SpendCategory.chartSlot`, and `chart/1` is absent because it belongs to `salary`, which is income. | `DonutChart` honours each caller's slot and ranks only the *order*, so a category keeps one colour across every screen that charts it. Overriding by rank would have been a deviation from the design as well as a worse behaviour. The ring's exported fills (`#AA7705`, `#027ED8`, `#769200`) agree with the legend's slots, so the two halves of `47:48` are consistent; it is only the *choice* of slots that is arbitrary. |
 | 43 | `ChartLegendItem` pins its percentage and amount (`shrink-0` on `47:5` and `47:6`) and flexes only its label. | Reproduced as authored, and it has a real upper bound: once the label reaches zero width the row is over-subscribed and `RenderFlex` reports an overflow — at 2^61 minor units, by 47px. **This is not fixable, only choosable.** No 353px row can show an unbounded amount, and making the amount flexible is worse: `RenderFlex` gives each flexible child `freeSpace / totalFlex` and does not hand a loose child's leftover back to its sibling, so the row would sit un-flush and the label would shrink in the normal case. The design already answers which part is lost — the label. Tested at both ends: the arithmetic at 2^61 without rendering, the layout at ~10^15 minor units, which is past any real ledger. |
 | 44 | `59:211` authors a 34px bottom inset. | Taken from `MediaQuery.paddingOf(context).bottom` instead. The authored 34 describes one handset, the same reason `MonetaAppBar` refuses to paint a fake status bar. Asserted at 34, 21 and 0, because a single fixture at 34 would coincide exactly with a hardcoded value. |
 
@@ -705,3 +705,72 @@ covered only by a `drawCircle` **count**, which a zero-radius ring satisfies, so
 the radii are asserted in the ordered sequence and the ring is asserted larger
 than the mark.
 
+### What the fidelity pass corrected, 2026-09-10
+
+Run against `47:48`, `48:76` and `47:47` once the file was readable. Verdicts:
+`ChartLegendItem` **faithful** (all nine variants, every value matching),
+`DonutChart` **faithful with notes**, `MonetaLineChart` **divergent** — and the
+divergences were real.
+
+| # | What was wrong | Corrected to |
+| --- | --- | --- |
+| 1 | The end marker was a 9px coloured disc with an 11px backing disc, giving a 1px ring. I had read "9px end markers with a 2px surface ring" as disc-plus-ring. | `48:84`'s exported SVG is `<circle r=3.5 fill=#009E62 stroke=#06070A stroke-width=2/>` in a 9×9 box: a **7px** disc with the ring straddling its edge, **9px** in total. |
+| 2 | The ring was `surface` (`#0A0C11`). | `#06070A` is **`canvas`**. |
+
+Two provenance notes it improved, neither a visual defect:
+
+- The donut's ring thickness is **exactly 39.52** (inner radius 0.62 × 104 =
+  64.48), not "≈64.5". The shipped 39.5 is 0.02px out, which is why nothing
+  looked wrong.
+- `47:48`'s **component description is readable** and states *"Segments carry a
+  ~2px surface gap"*. The doc said "no style carries it", which was true of the
+  styles and false of the description — the measured 1° (≈1.0–1.6px across the
+  band) is consistent with it, but the statement was available all along.
+- `get_variable_defs` on `47:48` returns `chart-7` and `text-tertiary` as bound
+  variables, so those two colours are now **transcribed**, not measured off an
+  export.
+
+Still open, recorded rather than fixed under time pressure: the y-axis labels
+overhang the component's left edge in Figma (`x=-12/-19/-20`) and are in-flow
+here, so the plot is ~20px narrower than the authored 353; the label-to-plot gap
+is 8 where Figma has 4; the labels are 8px off centre against the plot's
+top/bottom; and Figma's markers are inset 4.5px from the plot's right edge while
+ours sit on it. Also `MonetaLineChart._axisLabel` hardcodes a millions divisor
+while the unit is caller-supplied `subtitle` text — the one place the widget
+lets the axis scale and the stated unit disagree, and wrong for a two-decimal
+currency.
+
+### 📱 07 Insights & Reports — four of six built, 2026-09-10
+
+| Screen | Node | Annotation | State |
+| --- | --- | --- | --- |
+| 07.01 Insights — overview | `77:2` | `77:284` | done |
+| 07.02 Cash flow — trend | `77:294` | `77:430` | done |
+| 07.03 Category breakdown — bars | `77:440` | `77:587` | done |
+| 07.04 Month comparison | `81:399` | `81:498` | **deferred** |
+| 07.05 Insights — period picker | `81:508` | `81:644` | done |
+| 07.06 Export report | `81:654` | `81:810` | **deferred** |
+
+The two deferrals are named rather than left as silence: 07.04 is a two-column
+comparison with per-row deltas, 07.06 needs file export, a destination field and
+a share sheet. Neither is on the path to "see where the money went", and both
+were skipped under an explicit instruction to skip blockers and come back.
+
+**One finding worth more than the screens.** `SpendCategory.chartSlot` reads
+Food 7, Transport 4, Shopping 2, Bills 8, Entertainment 6, Health 3, Gifts 5 —
+which is **exactly** the sequence `47:62`'s legend rows use. Deviation 42
+recorded that order as "arbitrary"; it is not. Each category carries its own
+bound slot, and `chart/1` never appears in the donut's sample because it belongs
+to `salary`, which is income. So a category keeps one colour across every list,
+chart and detail screen without any screen choosing — which is exactly what
+`33:311`'s description says: *"Colour and glyph are baked in together — pick a
+category, never a colour."* Deviation 42 is corrected accordingly.
+
+**A rule the annotation and the frame disagreed about.** `77:587` says
+*"ProgressBar is reused as the bar mark"* and, in the same sentence, *"one
+series means one hue"*. `MonetaProgressBar` derives its colour from the
+fraction, so the full bar would be the near-limit warning colour — the two
+halves of one sentence cannot both hold. `80:407` breaks the tie: every fill on
+the frame is `chart/1`. Resolved with a `MonetaProgressBar.series` constructor
+taking a `ChartSlot`; recorded as added scope in the change's `tasks.md` group 7
+rather than slipped in.

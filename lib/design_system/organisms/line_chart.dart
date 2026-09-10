@@ -74,12 +74,24 @@ class MonetaLineChart extends StatelessWidget {
   /// Stroke width of a series, from the component description: 2.
   static const double strokeWidth = 2;
 
-  /// End-marker diameter, from `48:84`: 9.
+  /// End-marker **outer** diameter, from `48:84`: 9.
+  ///
+  /// Outer, including the ring — which is the correction a `figma-fidelity`
+  /// pass made. The component description says "9px end markers with a 2px
+  /// surface ring", and I read that as a 9px disc *plus* a ring, giving an 11px
+  /// mark. `48:84`'s exported SVG settles it:
+  /// `<circle cx=4.5 cy=4.5 r=3.5 fill=#009E62 stroke=#06070A stroke-width=2/>`
+  /// in a 9×9 box — a **7px** coloured disc with the 2px ring straddling its
+  /// edge, 9px in total.
   static const double markerSize = 9;
 
   /// Ring drawn around a marker so two overlapping marks stay separable, from
-  /// the component description: 2.
+  /// the component description: 2. Straddles the disc's edge rather than
+  /// sitting outside it.
   static const double markerRingWidth = 2;
+
+  /// The coloured disc's diameter: the 9px mark less the 2px ring around it.
+  static const double markerDiscSize = markerSize - markerRingWidth;
 
   /// Gridlines drawn across the plot, from `48:80`–`48:82`: three, at 35, 70
   /// and 105 of the 140 — quarter, half and three-quarters.
@@ -354,19 +366,22 @@ class _LinePlotPainter extends CustomPainter {
     // The end marker, with the surface ring the description asks for so two
     // marks that land on each other stay separable.
     final end = at(points.length - 1);
+    // Ring first, then the disc on top of it: the ring is `canvas`, not
+    // `surface` — `48:84`'s stroke is `#06070A`, which is the canvas token.
+    // Both were wrong until the fidelity pass read the exported SVG.
     canvas
       ..drawCircle(
         end,
-        MonetaLineChart.markerSize / 2 + MonetaLineChart.markerRingWidth / 2,
+        MonetaLineChart.markerSize / 2,
         _paint(
-          colors.surface,
+          colors.canvas,
           width: MonetaLineChart.markerRingWidth,
           style: PaintingStyle.fill,
         ),
       )
       ..drawCircle(
         end,
-        MonetaLineChart.markerSize / 2,
+        MonetaLineChart.markerDiscSize / 2,
         _paint(color, width: 1, style: PaintingStyle.fill),
       );
   }
