@@ -1015,3 +1015,36 @@ different — it leaves the splash unable to leave. `hydrate` is now the one
 method here that catches, returning `Err` and leaving demo mode off, which is
 the safe direction. A mutation narrowing the catch to `on Never` fails.
 
+### A defect a user saw and no test did
+
+The donut's centre total touched the ring. The cause is in the design file:
+`47:58` places a **140-wide** centre block inside a hole that is **129** across
+at its widest and about **113** across the top and bottom edges of a 62-tall
+block. The authored box overhangs the arcs by construction, and Figma's sample
+hides it because "26,000,000 ₫" is short. A real VND total is not.
+
+Fixed by deriving `centreWidth` from the ring's geometry rather than
+transcribing 140, and by scaling the total with `BoxFit.scaleDown` instead of
+ellipsising it — this component already holds that a clipped amount is a lost
+amount, and that goes double for the total.
+
+**The guard took three attempts, and the first two are the interesting part.**
+
+1. `lessThanOrEqualTo(innerRadius)` — passed for a box whose corners sit
+   *exactly on* the circle. Removing the 8px margin leaves it precisely
+   tangent, and tangency is still touching. The mutation survived.
+2. Measuring the **total's own box** instead of the centre block — also
+   survived. The total is scaled to fit, so its box hugs the scaled text and is
+   always comfortably inside; the block keeps its full width and height
+   whatever the figure says. I was measuring the one thing that could not fail.
+
+Both are the same error wearing different clothes: an assertion on the wrong
+object, or at the wrong strictness, reads like a guarantee and holds nothing.
+The third version measures the block's furthest **corner** and requires real
+clearance, and all three mutations fail against it — the authored 140 restored,
+the margin removed, the block's height ignored.
+
+Worth noting how this arrived: a person looked at the screen. Every chart test
+in this change asserts colours, order, sweeps, folds and boundaries, and not one
+of them asked whether the text fitted in the hole.
+

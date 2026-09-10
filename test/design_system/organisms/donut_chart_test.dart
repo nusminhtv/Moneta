@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moneta/core/money.dart';
@@ -32,6 +33,18 @@ void main() {
     series('Gifts', 1560000, ChartSlot.slot5),
     series('Other', 1040000, ChartSlot.other),
   ];
+
+  /// How much daylight the centre block must keep from the arcs.
+  ///
+  /// Two logical pixels. Tangency is not clearance: a box whose corners sit
+  /// exactly on the circle is touching it, which is the defect this guards.
+  const minimumClearance = 2.0;
+
+  /// The box that scales the centre total.
+  final centreFittedBox = find.ancestor(
+    of: find.byKey(DonutChart.centreValueKey),
+    matching: find.byType(FittedBox),
+  );
 
   Future<void> pumpDonut(
     WidgetTester tester,
@@ -181,6 +194,142 @@ void main() {
         tester.widget<Text>(find.text('August 2026')).style!.color,
         colors.textTertiary,
       );
+    });
+
+    /// How far the furthest corner of [part] sits from the ring's centre.
+    ///
+    /// The real question for anything drawn in the hole: a rectangle is inside
+    /// a circle only if all four of its corners are, and the corners are what
+    /// reach the arcs first.
+    double furthestCornerFromCentre(WidgetTester tester, Finder part) {
+      final ring = tester.getRect(find.byKey(DonutChart.ringKey));
+      final rect = tester.getRect(part);
+      final centre = ring.center;
+      var worst = 0.0;
+      for (final corner in [
+        rect.topLeft,
+        rect.topRight,
+        rect.bottomLeft,
+        rect.bottomRight,
+      ]) {
+        final dx = corner.dx - centre.dx;
+        final dy = corner.dy - centre.dy;
+        worst = math.max(worst, math.sqrt(dx * dx + dy * dy));
+      }
+      return worst;
+    }
+
+    testWidgets('the centre block clears the arcs, corners included', (
+      tester,
+    ) async {
+      // The bug this replaces: `47:58`'s authored 140-wide box overhangs a
+      // 129-wide hole, and at the block's top and bottom edges the hole is
+      // only ~113 across — so a real VND total touched the ring. Figma's own
+      // sample is short enough to hide it.
+      await pumpDonut(tester, authored);
+
+      // Strictly inside, with clearance — not merely `<=`. Dropping
+      // `centreMargin` leaves the box's corners **exactly tangent** to the
+      // circle, which is still touching, and a `<=` assertion passed for it.
+      // A mutation removing the margin survived until this became `lessThan`.
+      expect(
+        // The **block**, not the total's own box: the total is scaled to fit
+        // and its box hugs the scaled text, so it is always comfortably
+        // inside. The block keeps its full width and height whatever the
+        // figure says, so the block is what can reach the arcs — and
+        // measuring the wrong one is why a mutation removing the margin
+        // survived twice.
+        furthestCornerFromCentre(tester, find.byKey(DonutChart.centreBlockKey)),
+        lessThan(DonutChart.innerRadius - minimumClearance),
+        reason: 'the centre block reaches into the arcs',
+      );
+      expect(
+        DonutChart.centreWidth,
+        lessThan(2 * DonutChart.innerRadius),
+        reason: 'the centre box is wider than the hole it sits in',
+      );
+    });
+
+    testWidgets('a very long total shrinks instead of touching or clipping', (
+      tester,
+    ) async {
+      // 999,999,999,999 ₫ is far past any real wallet and is the case that
+      // made the figure touch the ring.
+      await pumpDonut(tester, [
+        series('Everything', 999999999999, ChartSlot.slot1),
+      ]);
+      expect(tester.takeException(), isNull);
+
+      // The FittedBox, not the paragraph inside it: `FittedBox` lays its child
+      // out unbounded and then *scales* it, so the child's own size is its
+      // natural size and says nothing about what is painted. The box is what
+      // occupies space, and it is font-independent.
+      expect(
+        furthestCornerFromCentre(
+          tester,
+          find.byKey(DonutChart.centreBlockKey),
+        ),
+        lessThan(DonutChart.innerRadius - minimumClearance),
+      );
+
+      // Scaled, not truncated: the whole figure is still there.
+      expect(
+        tester
+            .renderObject<RenderParagraph>(
+              find.byKey(DonutChart.centreValueKey),
+            )
+            .didExceedMaxLines,
+        isFalse,
+        reason: 'an ellipsis here would turn a total into a different number',
+      );
+      expect(
+        tester.widget<Text>(find.byKey(DonutChart.centreValueKey)).data,
+        const Money(999999999999, vnd).format(),
+      );
+    });
+
+    testWidgets('the centre box is the same size whatever the total', (
+      tester,
+    ) async {
+      // Font-independent on purpose. `flutter test` renders with a
+      // metrics-only font in which every glyph is exactly `fontSize` wide, so
+      // any assertion about how wide a *string* is measures that font rather
+      // than the design — "45.000 ₫" comes out 160px here and would be ~64 in
+      // Plus Jakarta Sans. What can be asserted is that the box holding it
+      // never changes size, which is what keeps it clear of the arcs.
+      final sizes = <Size>[];
+      for (final minor in [45000, 6760000, 999999999999]) {
+        await pumpDonut(tester, [series('X', minor, ChartSlot.slot1)]);
+        sizes.add(tester.getSize(centreFittedBox));
+      }
+
+      // The **width** is the invariant, not the whole size. `scaleDown`
+      // preserves the aspect ratio, so a longer total scales down and the box
+      // hugs its reduced height — which is the shrinking this fix is for. What
+      // must never change is the horizontal room it may occupy, because that
+      // is what keeps it off the arcs.
+      expect(
+        sizes.map((s) => s.width).toSet(),
+        hasLength(1),
+        reason: 'the box changed width: $sizes',
+      );
+      expect(
+        sizes.first.width,
+        lessThanOrEqualTo(DonutChart.centreWidth),
+      );
+      for (final size in sizes) {
+        expect(size.height, lessThanOrEqualTo(DonutChart.centreHeight));
+      }
+      // And it really does get smaller as the figure gets longer, which is the
+      // behaviour being relied on rather than a side effect being tolerated.
+      expect(
+        sizes.last.height,
+        lessThan(sizes.first.height),
+        reason: 'a longer total must scale down',
+      );
+
+      final box = tester.widget<FittedBox>(centreFittedBox);
+      expect(box.fit, BoxFit.scaleDown);
     });
 
     testWidgets('the total stays inside the ring', (tester) async {

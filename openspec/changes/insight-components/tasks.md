@@ -120,3 +120,16 @@
   `48:76`.
   Verify: `bash tool/verify.sh --change insight-components` passes, its evidence
   file is cited in the final commit, and the fidelity report is recorded.
+
+## 8. Reported Defect
+
+- [x] 8.1 The donut's centre total touched the ring. `47:58`'s authored centre
+  frame is **140** wide, the hole is **129** across at its widest, and only
+  **113** across the top and bottom edges of a 62-tall block — so the box
+  overhangs the arcs by construction. Figma's own sample hides it because
+  "26,000,000 ₫" is short; a real VND total is not.
+  Verify: `centreWidth` is derived from the ring's geometry rather than
+  transcribed, and the total is `BoxFit.scaleDown` rather than ellipsised, so a
+  long figure shrinks instead of being cut. Three mutations fail — the authored
+  140 restored, the margin removed, and the block's height ignored.
+

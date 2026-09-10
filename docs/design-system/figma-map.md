@@ -812,3 +812,24 @@ the accessory from which one was used. The mistake is not expressible, and the
 test asserts the invariant over every row rather than row by row, because a
 per-row assertion would pass a list where a *new* row was added wrongly.
 
+### Deviation 47 — the donut's centre box is derived, not transcribed
+
+| # | What | Resolution |
+| --- | --- | --- |
+| 47 | `47:58` places the centre block at **140 wide** inside a ring whose hole is `2 × 64.5 = 129` across — and the block is 62 tall, so at its top and bottom edges the hole is only `2 × √(64.5² − 31²) ≈ 113`. The authored box overhangs the arcs by construction. | **Not transcribed.** `DonutChart.centreWidth` is computed from the inner radius and the block's height, less an 8px margin — about 105 — and the total is `BoxFit.scaleDown` rather than ellipsised, so a long figure shrinks instead of being cut. Figma gets away with 140 because its sample total, "26,000,000 ₫", is short enough not to reach the edges; a real VND total reached them and the figure touched the ring. Reported by the user, not by a test. |
+
+Guarded by a geometric assertion — the furthest **corner** of the centre block
+must sit strictly inside the inner radius with clearance — and three mutations
+fail against it. Two earlier versions of that assertion did **not** fail:
+
+- `lessThanOrEqualTo(innerRadius)` passed for a box exactly *tangent* to the
+  circle, which is still touching. Tangency is not clearance.
+- measuring the *total's own box* instead of the block passed too, because the
+  total is scaled to fit and its box hugs the scaled text — it is always
+  comfortably inside. The block keeps its full width and height whatever the
+  figure says, so the block is the thing that can reach the arcs.
+
+Both are the same mistake in different clothes: asserting on the wrong object,
+or with the wrong strictness, gives a test that reads like a guarantee and holds
+nothing.
+

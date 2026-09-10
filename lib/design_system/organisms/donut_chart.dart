@@ -78,9 +78,33 @@ class DonutChart extends StatelessWidget {
   /// one neutral [ChartSlot.other] segment.
   static const int maxColoredSegments = MonetaChartPalette.slotCount;
 
-  /// Centre block width, from `47:58`: 140. The total truncates inside the
-  /// ring rather than spilling over the arcs.
-  static const double centreWidth = 140;
+  /// Inner radius of the ring: the outer radius less the thickness.
+  static const double innerRadius = ringDiameter / 2 - ringThickness;
+
+  /// Height of the centre block, from `47:58`: 62.
+  static const double centreHeight = 62;
+
+  /// Breathing room between the centre block and the arcs.
+  static const double centreMargin = MonetaSpacing.spaceSm;
+
+  /// Widest the centre block can be and still clear the arcs.
+  ///
+  /// **Derived, and a deliberate departure from `47:58`'s authored 140.** The
+  /// hole is `2 × 64.5 = 129` across at its widest, so a 140-wide box already
+  /// overhangs it — and the block is 62 tall, so at its top and bottom edges
+  /// the hole is only `2 × √(64.5² − 31²) ≈ 113` across. Figma gets away with
+  /// 140 because its sample total, "26,000,000 ₫", is short enough not to
+  /// reach the edges. A real VND total is longer and did reach them: the
+  /// figure touched the ring.
+  ///
+  /// So the width is computed from the circle rather than transcribed, which
+  /// keeps it correct if the thickness or the block's height ever change.
+  static final double centreWidth =
+      2 *
+          math.sqrt(
+            innerRadius * innerRadius - (centreHeight / 2) * (centreHeight / 2),
+          ) -
+      centreMargin;
 
   /// Gap between the centre's three lines, from `47:58`: 2.
   static const double centreLineGap = MonetaSpacing.space2xs;
@@ -100,6 +124,13 @@ class DonutChart extends StatelessWidget {
 
   /// Key on the centre's total, which a one-category legend row repeats.
   static const Key centreValueKey = Key('DonutChart.centreValue');
+
+  /// Key on the whole centre block.
+  ///
+  /// This, not the total's own box, is what can reach the arcs: the total is
+  /// scaled to fit and its box hugs the scaled text, while the block keeps its
+  /// full [centreWidth] × [centreHeight] whatever the figure says.
+  static const Key centreBlockKey = Key('DonutChart.centreBlock');
 
   /// The arithmetic total of every supplied category, shown in the centre.
   ///
@@ -181,8 +212,11 @@ class DonutChart extends StatelessWidget {
                 ),
               ),
               SizedBox(
+                key: centreBlockKey,
                 width: centreWidth,
+                height: centreHeight,
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
@@ -195,14 +229,22 @@ class DonutChart extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: centreLineGap),
-                    Text(
-                      total.format(),
-                      key: centreValueKey,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: theme.text.amountMd.copyWith(
-                        color: theme.colors.textPrimary,
+                    // Scaled down rather than truncated. The rest of this
+                    // component holds that a clipped amount is a lost amount,
+                    // and that applies most of all to the total: an ellipsis
+                    // here would turn 24.507.822 ₫ into "24.507…". A long
+                    // total gets smaller; it never gets cut off and never
+                    // reaches the arcs.
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        total.format(),
+                        key: centreValueKey,
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                        style: theme.text.amountMd.copyWith(
+                          color: theme.colors.textPrimary,
+                        ),
                       ),
                     ),
                     const SizedBox(height: centreLineGap),
