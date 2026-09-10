@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:moneta/design_system/atoms/moneta_radio.dart';
 import 'package:moneta/design_system/molecules/chart_legend_item.dart';
 import 'package:moneta/design_system/molecules/moneta_radio_row.dart';
+import 'package:moneta/design_system/organisms/bottom_sheet.dart';
 import 'package:moneta/design_system/organisms/donut_chart.dart';
 
 /// Describes gallery variants for 📱 07 Insights & Reports.
@@ -38,5 +39,11 @@ String? describeInsights(Widget widget) => switch (widget) {
   MonetaRadioGroup<String>(:final options, :final selected) =>
     'RadioGroup(selected=$selected,'
         '${options.map((o) => '${o.title}:${o.value == selected}').join("|")})',
+  // Names the option count, not "short" or "tall": the variants differ by how
+  // much content they hold, and a count is the part of that a describer can
+  // check outside a pump. The label claims the same number.
+  MonetaBottomSheet(:final title, :final child) =>
+    'BottomSheet($title,'
+        '${child is MonetaRadioGroup<String> ? '${child.options.length} options' : 'opaque content'})',
   _ => null,
 };

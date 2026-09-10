@@ -68,7 +68,7 @@
 
 ## 5. BottomSheet
 
-- [ ] 5.1 `lib/design_system/organisms/bottom_sheet.dart` from `59:211` — grab
+- [x] 5.1 `lib/design_system/organisms/bottom_sheet.dart` from `59:211` — grab
   handle, header with title and a 44px close, caller-supplied content, and the
   bottom inset taken from `MediaQuery` rather than the authored 34 (D7).
   Verify: `test/design_system/organisms/bottom_sheet_test.dart` asserts the

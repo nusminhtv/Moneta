@@ -4,6 +4,7 @@ import 'package:moneta/design_system/atoms/moneta_radio.dart';
 import 'package:moneta/design_system/molecules/chart_legend_item.dart';
 import 'package:moneta/design_system/molecules/chart_series.dart';
 import 'package:moneta/design_system/molecules/moneta_radio_row.dart';
+import 'package:moneta/design_system/organisms/bottom_sheet.dart';
 import 'package:moneta/design_system/organisms/donut_chart.dart';
 
 /// Gallery sections for 📱 07 Insights & Reports and 🧩 Components / Charts.
@@ -155,6 +156,72 @@ final List<GallerySection> insightSections = [
         ),
     ],
   ),
+  GallerySection(
+    component: 'BottomSheet',
+    figmaNodeId: '59:211',
+    variants: [
+      // `59:211` is one variant, and one fixture would show a reviewer nothing
+      // about the requirement — that the height follows the content. Three
+      // heights, so the thing being reviewed is visible.
+      GalleryVariant(
+        'Content=3 options',
+        (_) => MonetaBottomSheet(
+          title: 'Choose a period',
+          onClose: () {},
+          child: MonetaRadioGroup<String>(
+            options: [
+              for (final period in _periods)
+                MonetaRadioOption(value: period, title: period),
+            ],
+            selected: _periods[1],
+            onChanged: (_) {},
+          ),
+        ),
+      ),
+      GalleryVariant(
+        'Content=8 options',
+        (_) => MonetaBottomSheet(
+          title: 'Choose a category',
+          onClose: () {},
+          child: MonetaRadioGroup<String>(
+            options: [
+              for (final category in _sheetCategories)
+                MonetaRadioOption(value: category, title: category),
+            ],
+            selected: _sheetCategories.first,
+            onChanged: (_) {},
+          ),
+        ),
+      ),
+      GalleryVariant(
+        'Content=30 options',
+        (_) => MonetaBottomSheet(
+          title: 'Everything at once',
+          onClose: () {},
+          child: MonetaRadioGroup<String>(
+            options: [
+              for (var i = 0; i < 30; i++)
+                MonetaRadioOption(value: 'Option $i', title: 'Option $i'),
+            ],
+            selected: 'Option 0',
+            onChanged: (_) {},
+          ),
+        ),
+      ),
+    ],
+  ),
+];
+
+/// The eight categories `07.05`'s sheet chooses between, plus Other.
+const List<String> _sheetCategories = [
+  'Food & drink',
+  'Transport',
+  'Shopping',
+  'Bills & utilities',
+  'Entertainment',
+  'Health',
+  'Gifts',
+  'Other',
 ];
 
 /// The three budget periods, which is what `07.05`'s sheet chooses between.
