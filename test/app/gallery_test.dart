@@ -363,7 +363,13 @@ void main() {
       // ConstrainedBox with no node, which is the spec's own "renders nothing of
       // its own". MonetaIcon is aliased, not exempted — the catalog's `Icons`
       // section renders the whole set.
-      const exempt = <String>{'AmountSlot'};
+      //
+      // ChartSeries is a value type — a label, a `Money` and a chart slot — and
+      // renders nothing at all. It sits beside the charts that consume it
+      // because it references `ChartSlot`, which is a design-system concept;
+      // `lib/core` may import nothing but `core`, so it cannot live there. The
+      // slots it names ARE in the gallery, as ChartLegendItem's nine variants.
+      const exempt = <String>{'AmountSlot', 'ChartSeries'};
       final deadExemptions = exempt.difference(declared.keys.toSet());
       expect(
         deadExemptions,

@@ -394,3 +394,18 @@ The reverse also happened once, which is why the rule is not "annotations always
 win": `57:612` says the over-budget screen has the "same layout as 02.01", but
 `57:414` authors no quick-actions row. There the frame won, because "same layout
 as" describes where a cap of five specifies.
+
+## insight-components — in progress, opened 2026-09-10
+
+Five components derived from page 07's six annotation frames: `ChartLegendItem`
+`47:47`, `DonutChart` `47:48`, `LineChart` `48:76`, `BottomSheet` `59:211` and
+`Radio` `25:238`. `BarChart` `48:34` and `Sparkline` `48:94` sit on the same
+Charts page and are deliberately out of scope — the first belongs to Budgets
+`04.07`, the second is instanced nowhere on page 07 — and annotation `77:587`
+forbids a horizontal bar chart outright: *"ProgressBar is reused as the bar mark
+rather than adding a HorizontalBarChart component."*
+
+| Date | Step | Task | Commit | Evidence |
+| --- | --- | --- | --- | --- |
+| 2026-09-10 | checkpoint | 1.1 ChartSeries value type | (this commit) | `docs/ai-workflow/verify-runs/2026-09-10T01-43-14Z_insight-components.md` |
+

@@ -1,6 +1,6 @@
 ## 1. Shared Value Type
 
-- [ ] 1.1 `lib/design_system/molecules/chart_series.dart`: the `ChartSeries`
+- [x] 1.1 `lib/design_system/molecules/chart_series.dart`: the `ChartSeries`
   value type from design D2 — a label, a `Money` amount and a chart slot,
   immutable and equatable. Include the currency-mismatch check the specs require
   so both charts inherit it rather than each re-implementing it.
