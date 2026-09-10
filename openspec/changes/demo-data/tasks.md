@@ -35,7 +35,7 @@ guarantees first, then data, then surfaces.
   `activeDatabaseProvider`. Plus a source-level check, guarded by a counterfeit,
   that no code constructs a `PreferencesStore` over `activeDatabaseProvider` —
   the technique `donut_chart_test.dart` uses for the donut's absent parameter.
-- [ ] 1.4 **The flagship guarantee, tested end to end and early.**
+- [x] 1.4 **The flagship guarantee, tested end to end and early.**
   `test/app/demo/real_ledger_untouched_test.dart`: seed a real ledger, turn demo
   mode on, seed and then mutate the demo ledger, turn demo mode off, and assert
   the real ledger is unchanged row for row.
