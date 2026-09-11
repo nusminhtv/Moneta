@@ -108,7 +108,7 @@ be two-sided.
 
 ## 5. 08.08 Manage categories
 
-- [ ] 5.1 `CategoryUsage` in `domain`, the month window from an injected
+- [x] 5.1 `CategoryUsage` in `domain`, the month window from an injected
   `Clock`, and the pure function from entries to a sorted list. Verified by
   `test/features/settings/category_usage_test.dart` with **literal** expected
   counts and totals; sorted by total descending with ties in enum order; a
@@ -118,7 +118,7 @@ be two-sided.
   category throwing `ArgumentError`.
   **Mutation:** compute the month boundary in UTC → the `18:00Z` case must fail.
   **Mutation:** drop zero-usage categories → the absence case must fail.
-- [ ] 5.2 `08.08` (`101:978`) — two `Type=Filter` chips over
+- [x] 5.2 `08.08` (`101:978`) — two `Type=Filter` chips over
   `TransactionDirection`, one row per category with `CategoryIcon`, count and
   total. **No tap callback, no drag handle.** Verified by
   `test/features/settings/manage_categories_screen_test.dart`: the chips are
@@ -129,7 +129,7 @@ be two-sided.
   **Mutation:** give each row an `onTap` → the semantics assertion must fail
   (a source scan for `onTap` would also pass a `GestureDetector`, which is why
   it is the semantics tree).
-- [ ] 5.3 Wire real usage in `lib/app/` from the transaction repository and
+- [x] 5.3 Wire real usage in `lib/app/` from the transaction repository and
   route it from `08.03`. Verified by `test/app/settings_route_test.dart` against
   a seeded ledger: the counts on screen equal the transactions inserted, and a
   transaction outside the month is excluded.

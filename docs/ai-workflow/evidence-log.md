@@ -1690,3 +1690,49 @@ asserts it reports *the selected plan*, not merely that it fires.
 
 **M16 — the Premium row with no destination.** Two routing tests fail. That row
 had no `onTap` at all before this change.
+
+### 08.08: the filter the core type told me not to use
+
+`SpendCategory.isIncome` looks like the obvious basis for the Expenses/Income
+chips, and `lib/core/spend_category.dart` says not to: *"the direction of a
+transaction is a property of the transaction, not of its category. **This getter
+is a display hint only.**"* `incomeCategories` is `{salary}` alone, so the
+Income chip would have listed one row and hidden every income-direction `gift`.
+
+The filter reads `TransactionDirection`. **M19** — filtering by
+`SpendCategory.isIncome` — fails the gift case.
+
+**M17 — compute the month boundary in UTC.** Three tests fail, including a
+transaction at `2026-08-31T18:00Z`, which is `2026-09-01T01:00` in
+`Asia/Ho_Chi_Minh` and therefore September's. Under `TZ=UTC` the correct and the
+incorrect implementation agree; the gate pins `+07` so the test can tell them
+apart, which is the reason that pin exists.
+
+**M18 — drop the zero-usage categories.** Two fail. A category with no
+transactions is listed at zero rather than omitted: "you have never used this"
+is an answer, and a missing row is not.
+
+**M22 — ignore the window and count everything.** The route test fails, because
+it seeds one transaction in the previous month.
+
+### A semantics assertion that took three attempts
+
+The rows must not be tappable — `08.09` is the screen that would make them so —
+and the check is on the semantics tree, because a source scan for `onTap` cannot
+see a `GestureDetector`, an `InkWell`, or a callback passed through a variable.
+
+Attempt one walked down from the list's key and **caught the filter chips**: the
+semantics tree does not nest the way the widget tree does, so the node that key
+resolves to sits above the whole screen.
+
+Attempt two scoped by label — assert no node *labelled with a category name* is
+a button. **A `GestureDetector` wrapped around the row's icon walked straight
+past it**, because the label node and the tappable node are different nodes.
+The mutation survived, which is how I found out.
+
+Attempt three asserts the **whole screen's interactive set**: every node with a
+button flag or a tap action, by label, must be exactly
+`{Back, Expenses, Income}`. A fourth interactive thing anywhere — in a row, on
+an icon, behind a variable — fails it. **M20** fails now.
+
+**M21 — both chips read selected.** The one-selected invariant fails.

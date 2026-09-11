@@ -5,13 +5,16 @@ import 'package:moneta/app/profile_providers.dart';
 import 'package:moneta/app/router.dart';
 import 'package:moneta/app/settings_route_screens.dart';
 import 'package:moneta/core/money.dart';
+import 'package:moneta/core/spend_category.dart';
 import 'package:moneta/design_system/atoms/moneta_avatar.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/features/settings/domain/profile.dart';
 import 'package:moneta/features/settings/presentation/edit_profile_screen.dart';
 import 'package:moneta/features/settings/presentation/help_screen.dart';
+import 'package:moneta/features/settings/presentation/manage_categories_screen.dart';
 import 'package:moneta/features/settings/presentation/premium_screen.dart';
+import 'package:moneta/features/transactions/domain/transaction.dart';
 import 'package:moneta/features/transactions/presentation/transaction_providers.dart';
 
 import '../support/fake_transaction_repository.dart';
@@ -149,6 +152,53 @@ void main() {
 
       expect(find.text('USD'), findsOneWidget);
       expect(find.text('VND'), findsNothing);
+    });
+  });
+
+  group('08.08 counts the real ledger', () {
+    testWidgets('the counts on screen are the transactions inserted', (
+      tester,
+    ) async {
+      // Three in one category this month, and one **outside the month** that
+      // must not be counted.
+      final now = DateTime.now();
+      final thisMonth = DateTime(now.year, now.month, 2, 12);
+      final lastMonth = DateTime(now.year, now.month - 1, 15, 12);
+
+      Transaction make(String id, DateTime at, int minor) => Transaction.create(
+        id: id,
+        amount: Money(minor, Currency.vnd),
+        category: SpendCategory.food,
+        direction: TransactionDirection.expense,
+        occurredAt: at,
+        createdAt: at,
+      ).valueOrNull!;
+
+      for (var i = 0; i < 3; i++) {
+        await repository.add(make('food-$i', thisMonth, 10000));
+      }
+      await repository.add(make('old', lastMonth, 999999));
+
+      await pumpAt(tester, SettingsRoutes.categories);
+
+      expect(find.byType(ManageCategoriesScreen), findsOneWidget);
+      expect(
+        find.text('3 transactions'),
+        findsOneWidget,
+        reason: 'the fourth is last month and must not be counted',
+      );
+      expect(
+        find.text(const Money(30000, Currency.vnd).format()),
+        findsWidgets,
+      );
+    });
+
+    testWidgets('reachable from 08.03', (tester) async {
+      await pumpAt(tester, SettingsRoutes.list);
+
+      await tester.tap(find.text('Categories'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ManageCategoriesScreen), findsOneWidget);
     });
   });
 

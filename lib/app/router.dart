@@ -116,6 +116,10 @@ GoRouter buildRouter({String initialLocation = defaultInitialRoute}) {
             path: SettingsRoutes.premium,
             builder: (context, state) => const PremiumRouteScreen(),
           ),
+          GoRoute(
+            path: SettingsRoutes.categories,
+            builder: (context, state) => const ManageCategoriesRouteScreen(),
+          ),
         ],
       ),
       // First run lives outside the shell: it has no navigation bar, and

@@ -8,6 +8,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:moneta/app/category_usage_providers.dart';
 import 'package:moneta/app/demo/demo_mode_controller.dart';
 import 'package:moneta/app/notification_preferences.dart';
 import 'package:moneta/app/profile_providers.dart';
@@ -20,6 +21,7 @@ import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/features/settings/domain/profile.dart';
 import 'package:moneta/features/settings/presentation/edit_profile_screen.dart';
 import 'package:moneta/features/settings/presentation/help_screen.dart';
+import 'package:moneta/features/settings/presentation/manage_categories_screen.dart';
 import 'package:moneta/features/settings/presentation/notification_settings_screen.dart';
 import 'package:moneta/features/settings/presentation/premium_screen.dart';
 import 'package:moneta/features/settings/presentation/profile_screen.dart';
@@ -46,6 +48,9 @@ class SettingsRoutes {
 
   /// `08.10` Premium.
   static const String premium = '/profile/premium';
+
+  /// `08.08` Manage categories.
+  static const String categories = '/profile/settings/categories';
 }
 
 /// `08.01`, wired.
@@ -140,6 +145,12 @@ class SettingsRouteScreen extends ConsumerWidget {
               title: 'Edit profile',
               icon: MonetaIconName.user,
               onTap: () => context.push(SettingsRoutes.editProfile),
+            ),
+            SettingsRow.push(
+              title: 'Categories',
+              subtitle: 'How much each one is used',
+              icon: MonetaIconName.list,
+              onTap: () => context.push(SettingsRoutes.categories),
             ),
             SettingsRow.value(
               title: 'Main currency',
@@ -388,6 +399,55 @@ class PremiumRouteScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// `08.08`, wired.
+///
+/// The counts come from the ledger through `categoryUsageProvider`; the screen
+/// itself is pure, which is what lets `features/settings` show transaction data
+/// without importing `features/transactions`.
+class ManageCategoriesRouteScreen extends ConsumerWidget {
+  /// Creates the route screen.
+  const ManageCategoriesRouteScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final usage = ref.watch(categoryUsageProvider);
+
+    return usage.when(
+      data: (rows) => ManageCategoriesScreen(
+        usage: rows,
+        direction: ref.watch(categoryFilterProvider),
+        onDirectionChanged: (direction) =>
+            ref.read(categoryFilterProvider.notifier).direction = direction,
+        onBack: context.pop,
+      ),
+      loading: () => const _CategoriesPlaceholder(message: 'Counting…'),
+      // "We could not look" is not "there is nothing here".
+      error: (error, _) =>
+          const _CategoriesPlaceholder(message: 'Could not read the ledger'),
+    );
+  }
+}
+
+class _CategoriesPlaceholder extends StatelessWidget {
+  const _CategoriesPlaceholder({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.moneta;
+    return ColoredBox(
+      color: theme.colors.canvas,
+      child: Center(
+        child: Text(
+          message,
+          style: theme.text.bodyMd.copyWith(color: theme.colors.textSecondary),
+        ),
+      ),
     );
   }
 }
