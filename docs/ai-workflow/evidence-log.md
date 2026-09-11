@@ -1471,3 +1471,41 @@ closing requirement still said `36` for the chip's pill where the requirement
 The map's wrong "Seven are implemented" line and its ~17 built-but-unmarked
 rows were recorded **only** in this change's `tasks.md`, which archiving moves
 out of sight. They are in `figma-map.md` now, which is the file people read.
+
+### The same defect, a third and fourth time — and both were mine
+
+`change-verifier`'s re-run confirmed the two blocking fixes with the original
+mutations plus a harder one, and then found the pattern **twice more** in the
+work that fixed it.
+
+**The five API source checks could not fail.** Each sliced the constructor's
+parameter block and asserted it contained no `'Color'`. Every parameter in this
+repository is written `this.x` — **the type lives in the field declaration,
+outside the slice.** The verifier added `this.tint` plus `final Color? tint;`
+to `MonetaSearchField` and the entire gate stayed green: analyze, design-tokens,
+1726 tests. A raw `Color?` on the public API of a design-system widget, passing
+everything.
+
+Worse than a weak test, because `spec.md` *claimed* this was the verification —
+and archiving folds that claim into the permanent spec set. The check now reads
+**field declarations** (`test/support/api_surface.dart`), strips comments first
+(the mistake two earlier source checks in this repo already made), and every one
+of the five carries a **counterfeit**: the helper must return a finding for a
+synthetic class holding `final Color? tint;`, and must report a missing class
+rather than silently passing. Without that, the new check is indistinguishable
+from the old one.
+
+**And the text-scale assertion was one-sided.** `lessThanOrEqualTo` caught a
+label wanting more room than it has — the original defect — and passed a label
+**frozen at 1×** inside a pill that grew. The verifier pinned
+`textScaler: TextScaler.noScaling` on the `Text`: pill grows, glyphs do not,
+nothing overflows, 1726 tests pass. The line box must now *equal* the scaled
+token, within half a pixel — because the engine rounds a line box to whole
+pixels (23.0 where the arithmetic says 23.4), the same rounding that produced
+the donut's 2.5px overflow. Half a pixel is far tighter than the 5.4px a frozen
+label is out by, so the mutation fails.
+
+Four instances of one defect in one change: an expectation taken from the
+implementation's own constant, a colour never asserted, a check that could not
+see the thing it forbade, and a bound with one side missing. Three of the four
+were written **after** reading a report about the first.

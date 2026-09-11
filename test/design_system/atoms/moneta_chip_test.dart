@@ -10,6 +10,7 @@ import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/design_system/tokens/colors.dart';
 import 'package:moneta/design_system/tokens/spacing.dart';
 
+import '../../support/api_surface.dart';
 import '../../support/pump.dart';
 
 void main() {
@@ -463,15 +464,27 @@ void main() {
           reason: 'the pill did not grow with ${scale}x text',
         );
 
+        // The label's own line box, **two-sided**.
+        //
+        // `lessThanOrEqualTo` alone was half a guard: it caught a label
+        // wanting more room than it has — the original defect — and passed a
+        // label frozen at 1x inside a pill that grew, which
+        // `change-verifier` demonstrated by pinning `textScaler:
+        // TextScaler.noScaling` on the `Text`. The pill grew, the glyphs did
+        // not, nothing overflowed, and 1726 tests passed. So the line box must
+        // *equal* the scaled token, not merely fit.
         final paragraph = tester.renderObject<RenderParagraph>(
           find.text('Bills'),
         );
         expect(
           paragraph.getMaxIntrinsicHeight(double.infinity),
-          lessThanOrEqualTo(
-            pill.height - MonetaChip.verticalPadding * 2 + 0.01,
-          ),
-          reason: 'the label wants more height than the pill gives it',
+          // Half a pixel, because the engine rounds a line box to whole
+          // pixels: at 1.3x the arithmetic says 23.4 and the paragraph
+          // reports 23.0. The same rounding this project met in the donut's
+          // centre. The tolerance is far tighter than the 5.4px a label
+          // frozen at 1x would be out by, so the mutation still fails.
+          closeTo(expected - MonetaChip.verticalPadding * 2, 0.5),
+          reason: 'the label did not scale with ${scale}x text',
         );
 
         // And the occupied box still contains the pill it exists to hold.
@@ -482,20 +495,35 @@ void main() {
       }
     });
 
-    test('no colour, style or geometry can be supplied', () {
+    test('no raw design value can be supplied', () {
+      // Reads the widget's **field declarations**, not its constructor's
+      // parameter list. Every parameter here is `this.x`, so the type lives
+      // outside that list — `change-verifier` put a `Color? tint` through the
+      // public API of all five of this change's components and the whole gate
+      // stayed green. See `test/support/api_surface.dart`.
       final source = File(
         'lib/design_system/atoms/moneta_chip.dart',
       ).readAsStringSync();
-      final constructor = source.substring(
-        source.indexOf('MonetaChip({'),
-        source.indexOf('  /// What the chip says.'),
+      expect(rawDesignValueFields(source, 'MonetaChip'), isEmpty);
+    });
+
+    test('and that check can itself fail', () {
+      // The counterfeit. Without it, the assertion above is indistinguishable
+      // from one that always passes — which is exactly what it replaced.
+      expect(
+        rawDesignValueFields(
+          'class MonetaChip extends StatelessWidget {\n'
+              '  /// A doc comment mentioning final Color, which is not a field.\n'
+              '  final Color? tint;\n'
+              '}\n',
+          'MonetaChip',
+        ),
+        ['final Color? tint;'],
       );
-      expect(constructor, isNot(contains('Color')));
-      expect(constructor, isNot(contains('TextStyle')));
-      expect(constructor, isNot(contains('EdgeInsets')));
-      // Guard the guard: the slice must really be the constructor.
-      expect(constructor, contains('required this.label'));
-      expect(constructor, contains('required this.type'));
+      expect(
+        rawDesignValueFields('class Other {}', 'MonetaChip'),
+        ['<class MonetaChip not found in source>'],
+      );
     });
   });
 }

@@ -10,6 +10,7 @@ import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/design_system/tokens/colors.dart';
 import 'package:moneta/design_system/tokens/spacing.dart';
 
+import '../../support/api_surface.dart';
 import '../../support/pump.dart';
 
 void main() {
@@ -349,26 +350,26 @@ void main() {
       );
     });
 
-    test('no colour, style or geometry can be supplied', () {
-      // The design-token checker cannot see an API — it matches five
-      // constructs in the body of a file — so the requirement that callers
-      // pass no raw design values is a source check or nothing. Two of the
-      // five components in this change had one; `change-verifier` pointed out
-      // the other three did not.
+    test('no raw design value can be supplied', () {
+      // Field declarations, not the constructor's parameter list: every
+      // parameter is `this.x`, so the type is not in that list. See
+      // `test/support/api_surface.dart` for what this replaced and why.
       final source = File(
         'lib/design_system/molecules/moneta_search_field.dart',
       ).readAsStringSync();
-      final start = source.indexOf('const MonetaSearchField({');
-      final block = source.substring(
-        source.indexOf('{', start),
-        source.indexOf('});', start),
+      expect(rawDesignValueFields(source, 'MonetaSearchField'), isEmpty);
+    });
+
+    test('and that check can itself fail', () {
+      expect(
+        rawDesignValueFields(
+          'class MonetaSearchField extends StatefulWidget {\n'
+              '  final EdgeInsets padding;\n'
+              '}\n',
+          'MonetaSearchField',
+        ),
+        ['final EdgeInsets padding;'],
       );
-      expect(block, isNot(contains('Color')));
-      expect(block, isNot(contains('TextStyle')));
-      expect(block, isNot(contains('EdgeInsets')));
-      expect(block, isNot(contains('Radius')));
-      // Guard the guard.
-      expect(block, contains('required this.placeholder'));
     });
 
     testWidgets('a field with no callback is silent, not broken', (

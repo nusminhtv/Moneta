@@ -8,6 +8,7 @@ import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/design_system/tokens/colors.dart';
 import 'package:moneta/design_system/tokens/spacing.dart';
 
+import '../../support/api_surface.dart';
 import '../../support/pump.dart';
 
 void main() {
@@ -218,22 +219,35 @@ void main() {
       );
     });
 
-    test('no colour can be supplied', () {
-      // A source check, because the point is what the API *cannot* express:
-      // `expenseSubtle` paired with `income` must not be reachable.
+    test('no raw design value can be supplied', () {
+      // Reads the widget's **field declarations**, not its constructor's
+      // parameter list. Every parameter here is `this.x`, so the type lives
+      // outside that list — `change-verifier` put a `Color? tint` through the
+      // public API of all five of this change's components and the whole gate
+      // stayed green. See `test/support/api_surface.dart`.
       final source = File(
         'lib/design_system/atoms/moneta_badge.dart',
       ).readAsStringSync();
-      final constructor = source.substring(
-        source.indexOf('MonetaBadge({'),
-        source.indexOf('  /// What the badge says.'),
+      expect(rawDesignValueFields(source, 'MonetaBadge'), isEmpty);
+    });
+
+    test('and that check can itself fail', () {
+      // The counterfeit. Without it, the assertion above is indistinguishable
+      // from one that always passes — which is exactly what it replaced.
+      expect(
+        rawDesignValueFields(
+          'class MonetaBadge extends StatelessWidget {\n'
+              '  /// A doc comment mentioning final Color, which is not a field.\n'
+              '  final Color? tint;\n'
+              '}\n',
+          'MonetaBadge',
+        ),
+        ['final Color? tint;'],
       );
-      expect(constructor, isNot(contains('Color')));
-      expect(constructor, isNot(contains('TextStyle')));
-      // Guard the guard: the slice must be the constructor, or the two
-      // assertions above hold over an empty string.
-      expect(constructor, contains('required this.label'));
-      expect(constructor, contains('required this.tone'));
+      expect(
+        rawDesignValueFields('class Other {}', 'MonetaBadge'),
+        ['<class MonetaBadge not found in source>'],
+      );
     });
   });
 

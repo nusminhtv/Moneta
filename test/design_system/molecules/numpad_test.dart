@@ -8,6 +8,7 @@ import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/design_system/tokens/colors.dart';
 import 'package:moneta/design_system/tokens/spacing.dart';
 
+import '../../support/api_surface.dart';
 import '../../support/pump.dart';
 
 void main() {
@@ -89,30 +90,35 @@ void main() {
     });
 
     test('neither the key nor the pad takes a raw design value', () {
-      // A source check because the design-token checker cannot see an API.
-      // `change-verifier` found that only two of this change's five
-      // components had one.
+      // Both classes, by field declaration. `_classBody` stops at the next
+      // top-level `class`, so `NumpadKey`'s fields are not attributed to
+      // `Numpad` — which the counterfeit below proves by asking for a class
+      // that is not there.
       final source = File(
         'lib/design_system/molecules/numpad.dart',
       ).readAsStringSync();
-      for (final entry in {
-        'const NumpadKey({': 'required this.type',
-        'const Numpad({': 'required this.trailing',
-      }.entries) {
-        final start = source.indexOf(entry.key);
-        expect(start, greaterThan(-1), reason: 'no ${entry.key} found');
-        final block = source.substring(
-          source.indexOf('{', start),
-          source.indexOf('}) :', start) == -1
-              ? source.indexOf('});', start)
-              : source.indexOf('}) :', start),
-        );
-        expect(block, isNot(contains('Color')), reason: entry.key);
-        expect(block, isNot(contains('TextStyle')), reason: entry.key);
-        expect(block, isNot(contains('EdgeInsets')), reason: entry.key);
-        // Guard the guard: the slice must be that constructor's parameters.
-        expect(block, contains(entry.value), reason: entry.key);
-      }
+      expect(rawDesignValueFields(source, 'NumpadKey'), isEmpty);
+      expect(rawDesignValueFields(source, 'Numpad'), isEmpty);
+    });
+
+    test('and that check can itself fail', () {
+      expect(
+        rawDesignValueFields(
+          'class NumpadKey extends StatelessWidget {\n'
+              '  final TextStyle? style;\n'
+              '}\n'
+              'class Numpad extends StatelessWidget {\n'
+              '  final int columns;\n'
+              '}\n',
+          'NumpadKey',
+        ),
+        ['final TextStyle? style;'],
+        reason: 'the slice must stop before Numpad, and see the style field',
+      );
+      expect(
+        rawDesignValueFields('class Numpad {}', 'NumpadKey'),
+        ['<class NumpadKey not found in source>'],
+      );
     });
 
     test('two types, and no third', () {
