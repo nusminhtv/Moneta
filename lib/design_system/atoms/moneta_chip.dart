@@ -55,6 +55,20 @@ class MonetaChip extends StatelessWidget {
   }) : assert(
          label.trim().isNotEmpty,
          'A chip is its label; an empty one is an invisible tap target.',
+       ),
+       // `Type=Input` means "a value the user can remove", and `17:65` draws
+       // its close control unconditionally. A close control that cannot close
+       // is the defect deviation 31 already named — *an accessory must not
+       // promise what the row cannot deliver* — so an input chip must be
+       // given the action its glyph advertises, and a label for it, since
+       // `icon/x` carries no authored name.
+       assert(
+         type != MonetaChipType.input ||
+             (onClose != null &&
+                 (closeSemanticLabel?.trim().isNotEmpty ?? false)),
+         'An input chip always draws a close control, so it needs an onClose '
+         'and a closeSemanticLabel. Use Filter or Choice for a chip that '
+         'cannot be removed.',
        );
 
   /// What the chip says.
@@ -94,7 +108,11 @@ class MonetaChip extends StatelessWidget {
   static const double gap = 6;
 
   /// The leading glyph's box, from `17:34`: 16.
-  static const double leadingGlyphSize = MonetaSpacing.spaceBase;
+  ///
+  /// A literal, not `MonetaSpacing.spaceBase`, even though both are 16: a glyph
+  /// is not spacing, and a change to the spacing scale must not resize an icon.
+  /// `MonetaLayout.iconSize` is the icon token and it is 24, so 16 has none.
+  static const double leadingGlyphSize = 16;
 
   /// The close glyph, from `17:56`: 14.
   static const double closeGlyphSize = 14;
@@ -149,9 +167,16 @@ class MonetaChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: fill,
         borderRadius: theme.radii.borderPill,
-        // The width is `MonetaLayout.borderWidthHairline`, which is also
-        // `Border.all`'s own default — passing it explicitly is flagged as a
-        // redundant argument, so the token is asserted in the test instead.
+        // The width is left to `Border.all`'s default, which equals
+        // `MonetaLayout.borderWidthHairline` today. Passing the token
+        // explicitly is what a reader would prefer, and the analyzer rejects
+        // it as a redundant argument — silencing that would need a
+        // `// ignore:` and prior agreement, which this does not have.
+        //
+        // The gap it leaves is **guarded**: the test asserts the rendered
+        // width equals the token, so if the token moved to 1.5 the default
+        // would no longer match and the test would fail. The widget does not
+        // read the token; the gate notices if that stops being equivalent.
         border: Border.all(color: border),
       ),
       child: Padding(
@@ -198,13 +223,22 @@ class MonetaChip extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           // The only non-positioned child, so it gives the stack its width.
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              minWidth: type.hasClose ? inputMinimumWidth : 0,
-            ),
-            child: SizedBox(
-              height: pillHeightIn(theme.text),
-              child: pill,
+          //
+          // **Excluded from semantics.** The pill's `Text` builds its own node,
+          // and the hit layer below builds a button node with the same string,
+          // so a reader met "Expenses" as static text and then "Expenses,
+          // button". Measured with a semantics walk, not guessed. The pill is
+          // decoration; the layer that responds is the one that means
+          // something.
+          ExcludeSemantics(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: type.hasClose ? inputMinimumWidth : 0,
+              ),
+              child: SizedBox(
+                height: pillHeightIn(theme.text),
+                child: pill,
+              ),
             ),
           ),
           // The hit layer, over the full 44 rather than the painted 34: a box

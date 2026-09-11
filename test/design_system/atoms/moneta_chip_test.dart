@@ -33,7 +33,10 @@ void main() {
       selected: selected,
       leadingIcon: leadingIcon,
       onSelected: onSelected,
-      onClose: onClose,
+      // An input chip must be removable — see the constructor's assert — so
+      // the helper supplies both unless a test is checking the assert itself.
+      onClose: type == MonetaChipType.input ? (onClose ?? () {}) : onClose,
+      closeSemanticLabel: type == MonetaChipType.input ? 'Remove $label' : null,
     );
     return pumpMonetaWidget(
       tester,
@@ -260,6 +263,72 @@ void main() {
     });
   });
 
+  group('what a screen reader hears', () {
+    testWidgets('the label is announced once, as a button', (tester) async {
+      // It was announced **twice** before this: the pill's own `Text` node
+      // carried "Expenses" as static text and the hit layer carried
+      // "Expenses, button". Neither this component nor `MonetaBadge` had a
+      // single semantics assertion until now — striking, given that owning a
+      // 44px box for accessibility is this component's headline decision.
+      //
+      // The handle is disposed at the end of the body, not through
+      // `addTearDown`: the framework verifies handles *before* tear-downs run,
+      // so a tear-down disposal fails the test it is meant to clean up.
+      final handle = tester.ensureSemantics();
+
+      await pumpChip(
+        tester,
+        type: MonetaChipType.input,
+        onSelected: () {},
+        onClose: () {},
+      );
+
+      // One node per label. Two would mean the reader meets the same string
+      // twice — once as text, once as a button.
+      expect(find.bySemanticsLabel('Expenses'), findsOneWidget);
+      expect(find.bySemanticsLabel('Remove Expenses'), findsOneWidget);
+
+      handle.dispose();
+    });
+
+    testWidgets('a selected chip reports itself selected', (tester) async {
+      final handle = tester.ensureSemantics();
+
+      await pumpChip(
+        tester,
+        type: MonetaChipType.filter,
+        selected: true,
+        onSelected: () {},
+      );
+      // Snapshotted as a string **immediately**, because `SemanticsNode` is a
+      // live object: holding the node across a second pump and reading it
+      // afterwards compares the new state with itself, which is how the first
+      // version of this test passed for a chip with no selected state at all.
+      final selected = tester
+          .getSemantics(find.byKey(MonetaChip.selectHitKey))
+          .getSemanticsData()
+          .toString();
+      expect(selected, contains('label: "Expenses"'));
+      expect(selected, contains('isSelected'));
+
+      await pumpChip(
+        tester,
+        type: MonetaChipType.filter,
+        onSelected: () {},
+      );
+      final unselected = tester
+          .getSemantics(find.byKey(MonetaChip.selectHitKey))
+          .getSemanticsData()
+          .toString();
+
+      // Selection reaches the reader, not only the paint: a colour-only
+      // selected state would leave these two identical.
+      expect(selected, isNot(unselected));
+
+      handle.dispose();
+    });
+  });
+
   group('boundaries', () {
     test('an empty or blank label asserts', () {
       expect(
@@ -272,11 +341,51 @@ void main() {
       );
     });
 
-    testWidgets('a chip with no callbacks is inert and silent', (tester) async {
-      await pumpChip(tester, type: MonetaChipType.input);
+    testWidgets('a filter chip with no callback is inert and silent', (
+      tester,
+    ) async {
+      await pumpChip(tester, type: MonetaChipType.filter);
       await tester.tap(find.byKey(MonetaChip.selectHitKey));
-      await tester.tap(find.byKey(MonetaChip.closeHitKey));
       expect(tester.takeException(), isNull);
+    });
+
+    test('an input chip without its close action asserts', () {
+      // `17:65` draws the close control unconditionally for `Type=Input`, so a
+      // chip that cannot close would paint an affordance it cannot honour —
+      // deviation 31's rule, one layer down. Filter and Choice are the types
+      // for a chip that is not removable.
+      expect(
+        () => MonetaChip(
+          label: 'Coffee',
+          type: MonetaChipType.input,
+          closeSemanticLabel: 'Remove Coffee',
+        ),
+        throwsAssertionError,
+      );
+      expect(
+        () => MonetaChip(
+          label: 'Coffee',
+          type: MonetaChipType.input,
+          onClose: () {},
+        ),
+        throwsAssertionError,
+        reason: 'icon/x carries no authored label, so one must be supplied',
+      );
+      // And the legal construction does not.
+      expect(
+        () => MonetaChip(
+          label: 'Coffee',
+          type: MonetaChipType.input,
+          onClose: () {},
+          closeSemanticLabel: 'Remove Coffee',
+        ),
+        returnsNormally,
+      );
+      // While a filter chip needs neither.
+      expect(
+        () => MonetaChip(label: 'Coffee', type: MonetaChipType.filter),
+        returnsNormally,
+      );
     });
 
     testWidgets('a long label truncates and the close control survives', (

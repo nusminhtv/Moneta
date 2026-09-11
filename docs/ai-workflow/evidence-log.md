@@ -1340,3 +1340,74 @@ anticipate.
 pressed state to reveal it, so nothing paints inside the rounded box. Kept as a
 constant and asserted, so the authored number is recorded rather than quietly
 lost.
+
+### The fidelity pass could not run, and found five defects anyway
+
+Both `figma-fidelity` agents returned **UNVERIFIED**. The Figma connection had
+flipped from `NIK Technology` (Full, pro) to `jeff@relayvault.ai` (View,
+starter) partway through the session, and a View seat cannot call the
+design-context tools at all. Neither agent would issue a verdict, because either
+one would have meant grading the implementation against its own comments — which
+is exactly what a fidelity pass exists to avoid. That is the right refusal.
+
+They read the code instead, and five findings survived checking:
+
+**1. The chip announced its label twice.** The pill's `Text` built its own
+semantics node and the hit layer built a button node with the same string, so a
+reader met "Expenses" as static text and then "Expenses, button".
+`excludeSemantics: true` on the hit layer drops only *its* descendants, not a
+sibling. Verified with a semantics walk before changing anything — `"Expenses"
+button=false // "Expenses" button=true` — then fixed by excluding the pill,
+which is decoration. **Neither `MonetaChip` nor `MonetaBadge` had a single
+semantics assertion**, which is striking given that owning a 44px box for
+accessibility is the chip's headline decision. It has two now.
+
+**2. An input chip could paint a close control that did nothing.** `hasClose`
+comes from the *type*, so the glyph and its 44px square were drawn whether or
+not `onClose` was supplied — and a test pinned that as intended. It contradicts
+deviation 31's rule, *an accessory must not promise what the row cannot
+deliver*. `17:65` draws the control unconditionally, so the honest fix is the
+other side: an input chip now **asserts** that it was given both an `onClose`
+and a `closeSemanticLabel`. Filter and Choice are the types for a chip that
+cannot be removed.
+
+**3. `closeSemanticLabel` was nullable with no assert**, which announces an
+unlabeled button — and the doc comment itself says `icon/x` carries no authored
+label and *"x is not one"*. Folded into the same assert.
+
+**4. `leadingGlyphSize` took an icon dimension from the spacing scale.**
+`MonetaSpacing.spaceBase` is 16 and so is the glyph, but a spacing change must
+not resize an icon. Now a literal, with the reason: `MonetaLayout.iconSize` is
+24, so 16 has no icon token.
+
+**5. `NumpadKey.radiusOf` was dead in the render tree** and asserted by a test.
+`36:77` carries `radius/md` on a key with no fill, and the set has no pressed
+state, so nothing clips or paints. A constant nothing uses, asserted by a test,
+is the "asserts the implementation back to itself" anti-pattern CLAUDE.md rules
+out. Removed; the authored number is recorded in `figma-map.md`, which is where
+a value with no rendered consequence belongs.
+
+**One finding was declined, with the reason written down.** The chip's border
+width is left to `Border.all`'s default rather than read from
+`MonetaLayout.borderWidthHairline`, because passing the token explicitly is
+rejected by `avoid_redundant_argument_values` and silencing that needs an
+`// ignore:` and prior agreement. The gap is guarded rather than ignored: the
+test asserts the *rendered* width equals the token, so if the token moved to 1.5
+the default would stop matching and the test would fail.
+
+**Two more mutations, on the new guards.** Dropping the pill's
+`ExcludeSemantics` fails the double-announcement test; allowing an input chip
+without its close action fails the assert test.
+
+### A test that compared a node with itself
+
+The first version of "a selected chip reports itself selected" held a
+`SemanticsNode` across a second pump and read it afterwards. `SemanticsNode` is
+a **live object**: both reads returned the *current* state, so the assertion
+compared the unselected node with itself and would have passed for a chip with
+no selected state at all. The data is now snapshotted to a string immediately
+after each pump.
+
+Same family as the `PendingUndo` and `didExceedMaxLines` mistakes this log
+already records: reading a mutable thing later and believing it says what it
+said earlier.

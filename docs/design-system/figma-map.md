@@ -494,6 +494,79 @@ them.
   top-right. The rows pin LTR, because a keypad's digits are positional — every
   system keypad keeps `1` top-left in right-to-left locales.
 
+**`36:92` has no horizontal padding.** Asked by the fidelity pass and answered
+from the node data read earlier the same day: the frame's own classes are
+`py-[12px]` with **no** `px-*`, its rows are `w-full`, and its keys are
+`flex-[1_0_0]`. The `08.05` instance (`101:530`) sits at `x=0` with
+`width=393` — full bleed, no gutter. So the pad carries a vertical inset only
+and the rows span whatever width they are given, which is what the
+implementation does and what its width tests pin at 353, 393 and 200.
+
+**`36:77`'s `radius/md` is recorded here and implemented nowhere.** The key has
+no fill and the set has no pressed state, so a rounded box would clip and paint
+nothing. A constant in the widget would be dead in the render tree and a test
+asserting it would assert the implementation back to itself, which CLAUDE.md
+rules out — so the number lives here, which is where a value with no rendered
+consequence belongs.
+
+#### Provenance for the values these five components use
+
+Read from the nodes on 2026-09-11 while the connection was on the Full seat.
+Recorded in full because the seat flipped **mid-session** (see below) and the
+same day's fidelity pass could no longer re-read any of it — the argument for
+writing a reading down when it is taken rather than when it is questioned.
+
+Every colour below was checked against `lib/design_system/tokens/colors.dart`
+by value, not by name: all fifteen match exactly.
+
+| Node | Property | Read | Token |
+| --- | --- | --- | --- |
+| `17:32` Badge | fill / label, Success | `#072a22` / `#22d19a` | `incomeSubtle` / `income` |
+| | Warning | `#2e1e05` / `#ffa92b` | `warningSubtle` / `warning` |
+| | Danger | `#2e0f13` / `#f4515c` | `expenseSubtle` / `expense` |
+| | Info | `#06203a` / `#2e9bff` | `infoSubtle` / `info` |
+| | Neutral | `#0f1218` / `#9aa3b4` | `surfaceRaised` / `textSecondary` |
+| | type | `label/sm`, Inter Medium 12/16 | `labelSm` |
+| | padding / gap / dot, Sm | 8/3, 4, 5 | `spaceSm`, `spaceXs`, literal |
+| | padding / gap / dot, Md | 10/5, 5, 6 | literals — off the scale |
+| | radius | `radius/pill` | `radii.borderPill` |
+| | border, shadow | none | none |
+| `17:65` Chip | fill / border / label, unselected | `#0f1218` / `rgba(255,255,255,0.1)` / `#9aa3b4` | `surfaceRaised` / `borderDefault` / `textSecondary` |
+| | selected | `#1a1236` / `#7a5af8` / `#876bf9` | `brandSubtle` / `brand` / `brandOnSurface` |
+| | type | `label/md`, Inter Medium 14/18 | `labelMd` |
+| | padding / gap | 14 / 8, 6 | literals + `spaceSm` |
+| | leading / close glyph | 16 / 14 | literals — no icon token is 16 |
+| | radius | `radius/pill` | `radii.borderPill` |
+| `35:38` SearchField | fill / border | `#0f1218` / `rgba(255,255,255,0.1)` | `surfaceRaised` / `borderDefault` |
+| | text, empty / filled | `#7c8595` / `#f6f8fb` | `textTertiary` / `textPrimary` |
+| | type | `body/lg`, Inter Regular 16/24 | `bodyLg` |
+| | padding / gap | 16 / 13, 10 | `spaceBase` + literals |
+| | search / clear glyph | 20 / 18 | literals |
+| | radius, shadow | `radius/pill`, none | `radii.borderPill`, none |
+| `36:91` NumpadKey | digit type | `heading/h2`, Plus Jakarta SemiBold 22/28, tracking −0.5% | `headingH2` |
+| | digit colour | `#f6f8fb` | `textPrimary` |
+| | action glyph | `icon/chevron-left`, 22 | `chevronLeft`, literal |
+| | height / width | 56 / ~109 standalone | literal / `Expanded` |
+| | fill, border, shadow | none | none |
+| `36:92` Numpad | fill | `#06070a` | `canvas` |
+| | gap / vertical padding | 8 / 12 | `spaceSm` / `spaceMd` |
+| | horizontal padding | **none** | none |
+
+#### The Figma seat flipped mid-session — fourth occurrence
+
+The readings above were taken on `NIK Technology` (Full, pro). Hours later, in
+the same session, `whoami` returned `jeff@relayvault.ai` (**View, starter**) and
+every call failed with *"Looks like you don't have edit access to this file"* —
+so both fidelity agents returned **UNVERIFIED** rather than a verdict, which is
+the right answer and better than grading an implementation against its own
+comments.
+
+Recorded before as a two-accounts-behind-one-connection failure on 2026-09-09
+and 2026-09-10. The new fact is that it **changes underneath a running
+session**: access at the start is no evidence of access later. The practical
+consequence is the provenance table above — record a reading when it is taken,
+because the chance to re-read it may be gone by the time anyone questions it.
+
 `ListRow._RowBadge` is **not** replaced by `MonetaBadge`. It fills `infoSubtle`,
 draws an `info` **border** and uses `captionMd`; the authored `Badge` has no
 border and uses `labelSm`. Unifying them changes a shipped widget with its own
@@ -857,13 +930,13 @@ rather than slipped in.
 | 08.02 Edit profile | `100:276` | deferred | needs `Avatar`; `Select` and `TextField` exist |
 | 08.03 Settings — list | `100:428` | **done** | — |
 | 08.04 Settings — security | `100:729` | deferred | no auth or biometrics behind it |
-| 08.05 Change PIN | `101:488` | deferred | `Numpad` (`36:92`) is not built |
+| 08.05 Change PIN | `101:488` | deferred | `Numpad` and `OtpField` are **built**; needs a PIN store |
 | 08.06 Settings — notifications | `101:618` | **done** (6 of 7 rows) | the seventh needs a monthly report the app does not produce |
 | 08.07 Currency & language | `101:863` | deferred | needs multi-currency, which the wallet does not have |
-| 08.08 Manage categories | `101:978` | deferred | `Chip` (`17:65`) is not built; categories are a fixed enum |
+| 08.08 Manage categories | `101:978` | deferred | `Chip` is **built**; categories are a fixed enum, so rename/reorder/archive have nowhere to persist. The usage half needs nothing new. |
 | 08.09 Edit category | `102:794` | deferred | same, plus custom colours |
 | 08.10 Premium — paywall | `102:1044` | deferred | no purchases |
-| 08.11 Help & FAQ | `102:1189` | deferred | `SearchField` is not built |
+| 08.11 Help & FAQ | `102:1189` | deferred | **nothing blocks it** — `SearchField` is built and the answers are static |
 
 **The Profile tab lands on `08.01`**, as the design has it, since `Avatar`
 landed in `profile-components`. `08.03` is pushed from it — from the row and

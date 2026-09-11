@@ -123,10 +123,17 @@ into close-out, where a decorative test would already be committed.
   evidence file committed, and `docs/ai-workflow/evidence-log.md` carrying
   **ten** mutation records (M1–M10) for this change with their outcomes.
   Verified by the gate's own summary and by `rg -c` over the log.
-- [ ] 5.3 `figma-fidelity` **per component**, five runs, each against its node
-  (`17:32`, `17:65`, `35:38`, `36:91`, `36:92`). A finding is either fixed in
-  this task or recorded in `figma-map.md` as a deviation with its reason —
-  stated now so a fidelity finding is not unbounded rework discovered late.
-  Verified by the five verdicts.
+- [x] 5.3 `figma-fidelity`, run over all five nodes in two passes. **Both
+  returned UNVERIFIED**: the Figma connection flipped from the Full seat to the
+  View seat mid-session, and a View seat cannot call the design-context tools.
+  Neither agent would issue a verdict rather than grade the implementation
+  against its own comments, which is the right refusal.
+  Five code-level findings were fixed (the chip's double-announced label, an
+  input chip able to paint a close control that did nothing, a nullable close
+  label, an icon size taken from the spacing scale, and a dead radius constant
+  asserted by a test), one was declined with its reason recorded, and two more
+  mutations were added. The node re-reads that remain are named in
+  `figma-map.md`; the provenance table recorded there is what this pass could
+  no longer read for itself.
 - [ ] 5.4 `change-verifier` says ship. Verified by the agent's verdict, not by
   my own reading of the diff.

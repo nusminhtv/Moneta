@@ -73,13 +73,13 @@ class NumpadKey extends StatelessWidget {
   /// The action key's glyph size, from `36:87`: 22.
   static const double glyphSize = 22;
 
-  /// Corner radius, from `36:77`: `radius/md`.
-  ///
-  /// Authored and **invisible**: the key has no fill and the set has no pressed
-  /// state, so nothing paints inside the rounded box. Kept because it is what
-  /// the file says, and recorded in `figma-map.md` as authored-but-unpainted
-  /// rather than dropped.
-  static double radiusOf(MonetaTheme theme) => theme.radii.md;
+  // `36:77` also carries `radius/md`, and this component does not use it. The
+  // key has no fill and the set has no pressed state, so there is nothing for
+  // a rounded box to clip or paint — a constant here would be dead in the
+  // render tree, and a test asserting it would assert the implementation back
+  // to itself, which CLAUDE.md rules out. The authored value is recorded in
+  // `docs/design-system/figma-map.md` instead, which is where a number with no
+  // rendered consequence belongs.
 
   @override
   Widget build(BuildContext context) {

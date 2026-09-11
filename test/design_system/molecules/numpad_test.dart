@@ -86,13 +86,6 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    test('the authored radius is recorded even though nothing paints it', () {
-      // `36:77` carries `radius/md` on a key with no fill, and the set has no
-      // pressed state to reveal it. Kept as what the file says; asserted so
-      // the number is not quietly lost.
-      expect(NumpadKey.radiusOf(theme), theme.radii.md);
-    });
-
     test('two types, and no third', () {
       expect(NumpadKeyType.values, hasLength(2));
       expect(NumpadKeyType.values.map((t) => t.figmaName), [
