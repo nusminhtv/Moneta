@@ -1927,3 +1927,52 @@ path filter on `-A` is still `-A` for everything under that path.
 It was the tip commit, so it came back out of history rather than being left in
 and un-tracked afterwards. Caught by `change-verifier`, which had been asked to
 check it — not by me.
+
+## home-greeting — Hi there, to somebody the app knows the name of
+
+Home's bar greeted everyone with a `const String`. `profile-screens` gave the
+app a name the user chose and Home was the one screen still greeting a stranger.
+
+### The rule is a decision, and it has a cost
+
+**No rule is right for both name orders**, and the two names in this project
+disagree:
+
+| Name | First word | Last word |
+| --- | --- | --- |
+| `Minh Tran` — the demo data | **Minh** | Tran, the surname |
+| `Trần Văn Minh` — Vietnamese order | Trần, the surname | **Minh** |
+
+A string cannot say which order it is in. The user chose the **first word**,
+which is right for the name this app's own demo data uses and wrong for a
+Vietnamese name written surname-first. That cost is asserted in the test — 
+`Trần Văn Minh` → `Trần`, `isNot('Minh')` — so it is a fact the suite holds
+rather than a claim in a doc comment.
+
+Detecting the order per name was rejected: it cannot be done reliably, and a
+heuristic that is usually right makes the greeting unpredictable, which is worse
+than being consistently one thing.
+
+**M1 — take the last word.** Seven table rows fail.
+**M2 — fall back on the profile being absent instead of on the first name being
+empty.** The letterless-name case fails: a name of emoji would render `Hi ` with
+nothing after it.
+
+### A test that could not fail because the widget tree was reused
+
+**M3 — give the error arm its own greeting** — passed. The three-state test
+pumps Home three times in one test body, and *"the three states disagree"* is
+exactly what it exists to catch.
+
+The mutation was real: a probe rendering the error state directly showed
+`Hi MUTATED`, so the arm was reached and the assertion simply never saw it.
+Pumping a **structurally identical** tree reuses the element tree and the
+existing `ProviderScope`, so the second and third `pumpWidget` calls kept the
+first case's override. Every state after the first was the first state again.
+
+An empty pump between cases makes each one a fresh scope, and M3 fails now.
+
+That is the ninth test this session that could not fail, and the first whose
+cause was the harness rather than the assertion — worth recording separately,
+because "assert across the states" was the right idea and it still proved
+nothing.

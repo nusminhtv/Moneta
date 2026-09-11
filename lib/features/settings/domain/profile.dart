@@ -28,6 +28,35 @@ class Profile extends Equatable {
   /// The currency new entries default to, shown on `08.03`.
   final Currency currency;
 
+  /// What to call this person in a greeting: the **first** word of [name].
+  ///
+  /// Empty when the name yields no letters, so a caller can fall back rather
+  /// than greeting nobody.
+  ///
+  /// **The first word, not the last, and that is a decision with a cost.** A
+  /// string cannot say whether it is written given-name-first (`Minh Tran`) or
+  /// surname-first (`Trần Văn Minh`), and no rule is right for both:
+  ///
+  /// | Name | First word | Last word |
+  /// | --- | --- | --- |
+  /// | `Minh Tran` | **Minh** | Tran — the surname |
+  /// | `Trần Văn Minh` | Trần — the surname | **Minh** |
+  ///
+  /// The first word was chosen because it is right for the name this app's own
+  /// demo data uses. Detecting the order per name was rejected: it cannot be
+  /// done reliably, and a heuristic that is usually right makes the greeting
+  /// unpredictable, which is worse than being consistently one thing.
+  ///
+  /// Non-letters are stripped with the same class `MonetaAvatar.initialsOf`
+  /// uses, so `Đặng` survives and `Minh,` becomes `Minh`.
+  String get firstName {
+    for (final word in name.split(RegExp(r'\s+'))) {
+      final letters = word.replaceAll(RegExp('[^A-Za-zÀ-ỹ]'), '');
+      if (letters.isNotEmpty) return letters;
+    }
+    return '';
+  }
+
   /// This profile with one field changed.
   Profile copyWith({String? name, String? email, Currency? currency}) =>
       Profile(

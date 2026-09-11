@@ -36,6 +36,43 @@ void main() {
   AppFailure failureOf(Result<Object?> r) =>
       r.when(ok: (v) => fail('expected a failure, got $v'), err: (f) => f);
 
+  group('the first name is the first word', () {
+    // A table, because the rule's whole content is which word it picks and
+    // what it strips. The two rows that disagree with each other are the
+    // point: no rule is right for both name orders, and this one's cost is
+    // `Trần Văn Minh` being greeted by surname.
+    const expected = {
+      'Minh Tran': 'Minh',
+      'Trần Văn Minh': 'Trần',
+      'Đặng Thu Thảo': 'Đặng',
+      'Minh': 'Minh',
+      '  Minh   Tran  ': 'Minh',
+      'Minh, Tran': 'Minh',
+      "O'Brien Nguyen": 'OBrien',
+      '👨‍👩‍👧': '',
+      '123': '',
+      '   ': '',
+      '': '',
+    };
+
+    for (final entry in expected.entries) {
+      test('"${entry.key}" -> "${entry.value}"', () {
+        expect(Profile(name: entry.key).firstName, entry.value);
+      });
+    }
+
+    test('a name in the other order is greeted by surname, as recorded', () {
+      // Asserted rather than left as a comment, so the cost of the rule is a
+      // fact the test suite holds rather than a claim in a doc.
+      expect(const Profile(name: 'Trần Văn Minh').firstName, 'Trần');
+      expect(
+        const Profile(name: 'Trần Văn Minh').firstName,
+        isNot('Minh'),
+        reason: 'the last word is the given name here, and this rule skips it',
+      );
+    });
+  });
+
   group('validation', () {
     test('a name is required', () {
       expect(

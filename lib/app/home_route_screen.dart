@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:moneta/app/budgets_route_screen.dart';
 import 'package:moneta/app/home_providers.dart';
 import 'package:moneta/app/notifications_route_screen.dart';
+import 'package:moneta/app/profile_providers.dart';
 import 'package:moneta/app/router.dart';
 import 'package:moneta/app/shell.dart';
 import 'package:moneta/data/app_providers.dart';
@@ -12,17 +13,29 @@ import 'package:moneta/design_system/organisms/bottom_nav.dart';
 import 'package:moneta/features/home/domain/home_snapshot.dart';
 import 'package:moneta/features/home/presentation/home_loading_screen.dart';
 import 'package:moneta/features/home/presentation/home_screen.dart';
+import 'package:moneta/features/settings/domain/profile.dart';
 
 /// Hosts [HomeScreen] and supplies it with data.
 ///
 /// The screen itself takes a [HomeSnapshot] and nothing else, so it can be
 /// tested without a database. Everything that knows where the data comes from
 /// lives here, in `lib/app`.
-/// The app bar title on every Home state.
+/// What Home says when it has no name to use.
 ///
-/// One constant, because annotation `52:630` requires the bar to be identical
-/// while loading and once loaded. Two literals would be free to drift apart.
-const String _greeting = 'Hi there';
+/// First run, or a name that yields no letters — `Hi ` with nothing after it
+/// is worse than greeting a stranger.
+const String _anonymousGreeting = 'Hi there';
+
+/// Home's app bar title for [profile].
+///
+/// A function rather than a constant now, and still **called once** per build:
+/// annotation `52:630` requires the bar to be identical while loading and once
+/// loaded, which is what the constant it replaces was protecting. Three
+/// `ref.watch` calls would be free to drift apart.
+String greetingFor(Profile? profile) {
+  final firstName = profile?.firstName ?? '';
+  return firstName.isEmpty ? _anonymousGreeting : 'Hi $firstName';
+}
 
 class HomeRouteScreen extends ConsumerStatefulWidget {
   /// Creates the route wrapper.
@@ -73,22 +86,26 @@ class _HomeRouteScreenState extends ConsumerState<HomeRouteScreen> {
   @override
   Widget build(BuildContext context) {
     final snapshot = ref.watch(homeSnapshotProvider);
+    // Once, and shared by all three arms below. While the profile resolves this
+    // is the anonymous greeting and then becomes the name — one frame on a
+    // local read, the same way `08.01` shows `Add your name` first.
+    final greeting = greetingFor(ref.watch(profileProvider).value);
 
     return snapshot.when(
       loading: () => HomeLoadingScreen(
-        greeting: _greeting,
+        greeting: greeting,
         onOpenNotifications: () => context.go(NotificationRoutes.path),
       ),
       // A read failure resolves to an empty wallet inside the provider, so this
       // arm is only reached by a genuine crash. Showing the empty screen is
       // still better than a red error box on the app's first surface.
       error: (_, _) => HomeLoadingScreen(
-        greeting: _greeting,
+        greeting: greeting,
         onOpenNotifications: () => context.go(NotificationRoutes.path),
       ),
       data: (data) => HomeScreen(
         snapshot: data,
-        greeting: _greeting,
+        greeting: greeting,
         now: ref.watch(clockProvider).nowUtc(),
         // Accounts is still not built. A row that goes nowhere is worse than a
         // row that plainly does not respond, so it stays null until it exists.
