@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:moneta/design_system/atoms/moneta_avatar.dart';
 import 'package:moneta/design_system/atoms/moneta_badge.dart';
+import 'package:moneta/design_system/atoms/moneta_chip.dart';
 
 /// Describes gallery variants for 📱 08 Profile & Settings.
 ///
@@ -8,6 +9,8 @@ import 'package:moneta/design_system/atoms/moneta_badge.dart';
 /// chain the describers together.
 String? describeProfile(Widget widget) => switch (widget) {
   // --- PROFILE: add cases below ---
+  MonetaChip(:final type, :final selected, :final leadingIcon, :final label) =>
+    'Chip(${type.name},$selected,${leadingIcon?.name},$label)',
   MonetaBadge(:final tone, :final size, :final dot, :final label) =>
     'Badge(${tone.name},${size.name},$dot,$label)',
   // Names the **resolved** type, not the requested one: an image variant with

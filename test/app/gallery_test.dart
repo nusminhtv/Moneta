@@ -8,6 +8,7 @@ import 'package:moneta/core/spend_category.dart';
 import 'package:moneta/design_system/atoms/moneta_avatar.dart';
 import 'package:moneta/design_system/atoms/moneta_badge.dart';
 import 'package:moneta/design_system/atoms/moneta_button.dart';
+import 'package:moneta/design_system/atoms/moneta_chip.dart';
 import 'package:moneta/design_system/atoms/moneta_icon.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_button.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
@@ -142,6 +143,12 @@ void main() {
         ),
       );
       expect(button.variants, hasLength(45));
+    });
+
+    test('Chip covers the full 3 x 2 matrix', () {
+      final chip = galleryCatalog.firstWhere((s) => s.component == 'Chip');
+      expect(chip.variants, hasLength(MonetaChipType.values.length * 2));
+      expect(chip.variants, hasLength(6));
     });
 
     test('Badge covers the full 5 x 2 matrix', () {

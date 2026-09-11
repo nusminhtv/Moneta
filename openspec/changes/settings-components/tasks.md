@@ -26,7 +26,7 @@ into close-out, where a decorative test would already be committed.
 
 ## 2. Chip
 
-- [ ] 2.1 `MonetaChip` at all six authored variants (`17:65`), registered with
+- [x] 2.1 `MonetaChip` at all six authored variants (`17:65`), registered with
   its describer case and literal count. Three types × selected; the brand
   triple asserted as a set; `Type=Input` always carrying its close control;
   optional 16px leading glyph; `labelMd`; empty label asserting;

@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:moneta/app/gallery/gallery_catalog.dart';
 import 'package:moneta/design_system/atoms/moneta_avatar.dart';
 import 'package:moneta/design_system/atoms/moneta_badge.dart';
+import 'package:moneta/design_system/atoms/moneta_chip.dart';
 
 /// Gallery sections for 📱 08 Profile & Settings.
 ///
@@ -11,6 +12,28 @@ import 'package:moneta/design_system/atoms/moneta_badge.dart';
 /// are: two agents editing one list collide on every line.
 final List<GallerySection> profileSections = [
   // --- PROFILE: add sections below ---
+  GallerySection(
+    component: 'Chip',
+    figmaNodeId: '17:65',
+    // All six. `leadingIcon` is a boolean property rather than a variant axis,
+    // so it does not appear here — `17:65` authors no node for "Filter,
+    // unselected, with a glyph".
+    variants: [
+      for (final type in MonetaChipType.values)
+        for (final selected in [false, true])
+          GalleryVariant(
+            'Type=${type.figmaName}, Selected=$selected',
+            (_) => MonetaChip(
+              label: type.figmaName,
+              type: type,
+              selected: selected,
+              onSelected: () {},
+              onClose: () {},
+              closeSemanticLabel: 'Remove ${type.figmaName}',
+            ),
+          ),
+    ],
+  ),
   GallerySection(
     component: 'Badge',
     figmaNodeId: '17:32',

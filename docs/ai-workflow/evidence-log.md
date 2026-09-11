@@ -1196,3 +1196,49 @@ asserted non-empty. `''` would satisfy "has a label" while defeating its whole
 purpose. The dot stays a `bool` defaulting to on, matching the Figma property's
 default — it is a boolean *component property*, not a variant axis, and the file
 authors no node for a dotless Success/Sm.
+
+### Chip: the description hands the touch target to somebody else
+
+`17:65`'s own description: *"36px tall — must sit inside a >=44px scroll row to
+meet the touch target."* That is an accessibility rule delegated to every
+caller, and a rule enforced by a sentence in a Figma description is a rule with
+no enforcement at all — the same shape as `ListRow`'s 56px minimum, which three
+shipped screens had already broken.
+
+So the chip owns it: it **occupies 44** and **paints 34**, exactly as
+`MonetaCheckbox` and `MonetaRadio` already do with `hitSize` against `boxSize`.
+Both numbers are measured in the test, and they must differ — the point is that
+the box is bigger than the thing drawn in it.
+
+The hit layer covers the full 44, not the painted 34. A box that is 44 tall
+whose middle 34 is the only part that responds would satisfy a height assertion
+and miss the rule in the hand.
+
+**One invention, stated.** An input chip's close control takes a 44px square at
+the trailing end, which on a one-character label would leave the select area
+below 44. So an input chip has a minimum width of two touch targets. It is not
+authored, and it changes no authored instance: `08.08`'s two chips are
+`Type=Filter`, which has no close control and no minimum. A test asserts that
+too, so the minimum cannot quietly start applying to filter chips.
+
+**M3 — give the selected chip the unselected border.** Four tests fail. The
+three selected colours are asserted *as a set*, so a single swapped border
+cannot hide behind a correct fill and label; a fourth test guards the pair
+itself, requiring the two states to share no colour at all.
+
+**M4 — drop the hit box so the chip is 34 tall.** Two fail: the height pair and
+the tap-area partition.
+
+### The stroke convention, settled by measurement
+
+Two descriptions in this change state a height their own frame contradicts —
+`Chip` says 36 against a 34 frame, `SearchField` says 48 against a 50 frame. The
+first attempt at explaining that used one rule for the chip and the opposite for
+the search field, which is exactly the failure a reading is supposed to prevent.
+
+Measured instead: `DecoratedBox` wrapping `Padding` paints the border **inside**
+the box and adds nothing to it (34.0 for `8 + 18 + 8`), where `Container` with
+`padding:` inflates the child by the border on every side (36.0). Figma draws
+these strokes inside the frame, so one rule reproduces both frames exactly —
+and both descriptions are wrong by two, in opposite directions, which is why no
+single fudge could have satisfied them.
