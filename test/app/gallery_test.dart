@@ -6,6 +6,7 @@ import 'package:moneta/app/gallery/gallery_catalog.dart';
 import 'package:moneta/app/gallery/gallery_screen.dart';
 import 'package:moneta/core/spend_category.dart';
 import 'package:moneta/design_system/atoms/moneta_avatar.dart';
+import 'package:moneta/design_system/atoms/moneta_badge.dart';
 import 'package:moneta/design_system/atoms/moneta_button.dart';
 import 'package:moneta/design_system/atoms/moneta_icon.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_button.dart';
@@ -141,6 +142,21 @@ void main() {
         ),
       );
       expect(button.variants, hasLength(45));
+    });
+
+    test('Badge covers the full 5 x 2 matrix', () {
+      // Both ways, deliberately. `hasLength(Enum.values.length)` cannot fail
+      // when someone adds an enum member — which is how `NumpadKey` came to be
+      // recorded as four variants for a set that has two. The literal is the
+      // assertion that catches a member added without a variant.
+      final badge = galleryCatalog.firstWhere((s) => s.component == 'Badge');
+      expect(
+        badge.variants,
+        hasLength(
+          MonetaBadgeTone.values.length * MonetaBadgeSize.values.length,
+        ),
+      );
+      expect(badge.variants, hasLength(10));
     });
 
     test('PaginationDots covers every active position', () {

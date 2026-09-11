@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/widgets.dart';
 import 'package:moneta/app/gallery/gallery_catalog.dart';
 import 'package:moneta/design_system/atoms/moneta_avatar.dart';
+import 'package:moneta/design_system/atoms/moneta_badge.dart';
 
 /// Gallery sections for 📱 08 Profile & Settings.
 ///
@@ -10,6 +11,26 @@ import 'package:moneta/design_system/atoms/moneta_avatar.dart';
 /// are: two agents editing one list collide on every line.
 final List<GallerySection> profileSections = [
   // --- PROFILE: add sections below ---
+  GallerySection(
+    component: 'Badge',
+    figmaNodeId: '17:32',
+    // All ten, built from the enums so a sixth tone cannot be added without
+    // appearing here. The dot is a boolean *property*, not a variant axis —
+    // `17:32` authors no node for a dotless Success/Sm — so it is exercised by
+    // the component's tests rather than by entries here.
+    variants: [
+      for (final tone in MonetaBadgeTone.values)
+        for (final size in MonetaBadgeSize.values)
+          GalleryVariant(
+            'Tone=${tone.figmaName}, ${size.figmaName}',
+            (_) => MonetaBadge(
+              label: tone.figmaName,
+              tone: tone,
+              size: size,
+            ),
+          ),
+    ],
+  ),
   GallerySection(
     component: 'Avatar',
     figmaNodeId: '21:121',

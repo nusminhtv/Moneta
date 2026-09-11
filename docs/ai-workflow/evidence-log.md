@@ -1157,3 +1157,42 @@ preferences, and `allows()` switches exhaustively over `NotificationKind`, so
 adding a kind is a compile error rather than a notification that quietly ignores
 its switch.
 
+
+## settings-components — the five sets page 08 was missing
+
+### Badge: the tone that is not a pair
+
+`17:32` is five tones × two sizes, and four of them follow one rule — a
+`*Subtle` fill with the matching text colour. `Neutral` does not: it fills with
+`surfaceRaised` and writes in `textSecondary`, because there is no neutral
+semantic family to be subtle about.
+
+That is why the mapping is written out per tone instead of derived from the
+token names. A convention with one exception is one nobody can rely on, and the
+exception would have been silent — a name-derived lookup would have asked for
+`neutralSubtle`, got nothing, and fallen back to whatever the author chose.
+
+**M1 — swap `Success` and `Danger` fills.** Four tests fail (both sizes of both
+tones). The table asserts the *pair*, so a single swapped fill cannot hide
+behind a correct label colour.
+
+**M2 — make `Neutral` an `infoSubtle` pair.** Three fail, including the one
+named for it: the `Neutral` row asserts `isNot(anyOf(the four subtle fills))`,
+so the specific wrong answer is named rather than left to the table.
+
+A third check guards the table itself — the ten pairs must be ten *distinct*
+pairs. Without it, two tones resolving to the same colours would leave every
+per-tone test passing.
+
+### The dot is not the accessibility cue
+
+`17:32`'s description says *"Never rely on tone alone — pair with the dot or
+with text."* The dot is drawn in the **label's own colour**, so it carries
+nothing a colour-blind or greyscale reader can use; it is a shape, not a second
+channel of information about which tone this is.
+
+So the label is what actually discharges the rule, and it is required and
+asserted non-empty. `''` would satisfy "has a label" while defeating its whole
+purpose. The dot stays a `bool` defaulting to on, matching the Figma property's
+default — it is a boolean *component property*, not a variant axis, and the file
+authors no node for a dotless Success/Sm.

@@ -71,7 +71,7 @@ returns only three pages; `5:9` and `5:10` are not among them.
 | Component | Node | Variants |
 | --- | --- | --- |
 | Button | `13:2` | 45 (5 styles × 3 sizes × 3 states) — **done** |
-| Badge | `17:32` | 10 (5 tones × 2 sizes) |
+| Badge | `17:32` | 10 (5 tones × 2 sizes) — **done** |
 | Chip | `17:65` | 6 (3 types × selected) |
 | IconButton | `20:114` | 18 (3 styles × 3 sizes × 2 states) |
 | FAB | `20:125` | 2 (Standard, Extended) |

@@ -10,7 +10,7 @@ into close-out, where a decorative test would already be committed.
 
 ## 1. Badge
 
-- [ ] 1.1 `MonetaBadge` at all ten authored variants (`17:32`), registered in
+- [x] 1.1 `MonetaBadge` at all ten authored variants (`17:32`), registered in
   the gallery with its describer case and its literal count in
   `test/app/gallery_test.dart`. Tone enum owns both colours per the spec's table
   — `Neutral` is `surfaceRaised` + `textSecondary`, not a subtle pair.
