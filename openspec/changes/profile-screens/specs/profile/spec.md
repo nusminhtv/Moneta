@@ -83,6 +83,14 @@ field, a currency `Select`, and a sticky primary action. Annotation `100:415`:
 - **THEN** that field renders in `MonetaTextFieldState.error`, its helper text
   is the rule's message, and nothing is saved
 
+#### Scenario: The currency control says it cannot act
+- **WHEN** the screen is rendered with no way to pick a currency
+- **THEN** the `Select` is **disabled**, because `08.07` is the screen that
+  chooses one and it is not built
+- **AND** it is enabled exactly when a picker is supplied, so the control is
+  never one that swallows a tap — the standard `08.10`'s call to action is held
+  to, applied one screen over
+
 #### Scenario: An empty email is allowed; an empty name is not
 - **WHEN** the email is cleared and saved
 - **THEN** it saves, because a local-first app with no account does not need one
@@ -101,10 +109,11 @@ field, a currency `Select`, and a sticky primary action. Annotation `100:415`:
   implementation could meet
 - **AND** neither screen reports an overflow
 
-#### Scenario: Every failure reaches the user somewhere
+#### Scenario: Every failure reaches the user somewhere, and the right one takes it
 - **WHEN** a save is refused for any reason, with the name filled or empty
-- **THEN** the message is rendered — on the email field when it is about the
-  email, and above the footer otherwise
+- **THEN** the message is rendered, and **which** renderer takes it is asserted:
+  the email field takes a validation failure raised while the name is filled,
+  and the banner takes every other case
 - **AND** this is asserted as a sweep over the failure kinds rather than a case
   per kind, because what went wrong was the **gap between** two cases: one
   renderer took a validation failure with a filled name and another took a

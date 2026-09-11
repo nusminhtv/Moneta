@@ -38,6 +38,30 @@ void main() {
       expect(find.byType(MonetaSelect<Currency>), findsOneWidget);
     });
 
+    testWidgets('a changed profile reaches the fields', (tester) async {
+      // Found by the failure sweep, which pumps the same widget repeatedly:
+      // `late final` controllers are built once, so without `didUpdateWidget`
+      // the `profile` parameter is a lie after the first build. The currency
+      // already followed the parent; the name and email did not.
+      await pumpEdit(tester, profile: const Profile(name: 'Minh'));
+      expect(find.text('Minh'), findsOneWidget);
+
+      await pumpEdit(tester, profile: const Profile(name: 'Bích'));
+      expect(find.text('Bích'), findsOneWidget);
+      expect(find.text('Minh'), findsNothing);
+    });
+
+    testWidgets('but a rebuild with the same profile keeps what was typed', (
+      tester,
+    ) async {
+      // The other half: syncing on every rebuild would wipe someone's typing.
+      await pumpEdit(tester, profile: const Profile(name: 'Minh'));
+      await tester.enterText(find.byType(EditableText).first, 'Bích Ngọc');
+
+      await pumpEdit(tester, profile: const Profile(name: 'Minh'));
+      expect(find.text('Bích Ngọc'), findsOneWidget);
+    });
+
     testWidgets('the fields start from the profile', (tester) async {
       await pumpEdit(
         tester,
@@ -195,10 +219,21 @@ void main() {
               .evaluate()
               .isNotEmpty;
 
+          // **Which** renderer, not merely that one of them fired.
+          // `change-verifier` pointed out that `onField != null || inBanner`
+          // is analytically true while the banner is the email field's
+          // complement — it would catch the historical gap and nothing else.
+          final expectOnField =
+              kind == FailureKind.validation && name.isNotEmpty;
           expect(
-            onField != null || inBanner,
-            isTrue,
-            reason: '$kind with name "$name" is reported nowhere',
+            onField,
+            expectOnField ? 'Something went wrong' : isNull,
+            reason: '$kind with name "$name": wrong field routing',
+          );
+          expect(
+            inBanner,
+            !expectOnField,
+            reason: '$kind with name "$name": wrong banner routing',
           );
         }
       }

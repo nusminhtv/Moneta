@@ -37,9 +37,15 @@ class EditProfileScreen extends StatefulWidget {
 
   /// Why the last save did not work, or null.
   ///
-  /// A validation failure reaches the email field; a storage failure is shown
-  /// above the footer. Either way **the typed values stay on screen**, because
-  /// discarding someone's typing on a failed save loses their work.
+  /// The email field takes what is **about the email** — a validation failure
+  /// raised while the name is filled — and a banner above the footer takes
+  /// **everything else**, including a validation failure about the name and
+  /// any storage failure. Split that way round, as a rule and its complement,
+  /// so no failure can fall between two lists of cases; an earlier version was
+  /// written as two lists and one kind fell through.
+  ///
+  /// Either way **the typed values stay on screen**, because discarding
+  /// someone's typing on a failed save loses their work.
   final AppFailure? failure;
 
   /// Leaves the screen.
@@ -83,6 +89,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _email = TextEditingController(
     text: widget.profile.email,
   );
+
+  /// Follows a **changed** profile into the fields.
+  ///
+  /// `late final` controllers are built once, so without this the `profile`
+  /// parameter is a lie after the first build: a parent passing a different
+  /// profile would see the old text. The currency already followed the parent
+  /// — it is read from `widget.profile` — so the name and email not following
+  /// was an inconsistency inside one widget.
+  ///
+  /// Guarded on the profile *changing*, not on every rebuild, so a parent
+  /// rebuilding for any other reason cannot wipe what someone is typing.
+  @override
+  void didUpdateWidget(EditProfileScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.profile.name != oldWidget.profile.name) {
+      _name.text = widget.profile.name;
+    }
+    if (widget.profile.email != oldWidget.profile.email) {
+      _email.text = widget.profile.email;
+    }
+  }
 
   /// The currency is **not** state here.
   ///

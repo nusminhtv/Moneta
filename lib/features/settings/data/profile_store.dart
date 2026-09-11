@@ -14,7 +14,12 @@ import 'package:moneta/features/settings/domain/profile.dart';
 /// **Control-scoped**, like every other preference: the store it is given is
 /// the control database's, which the demo toggle never swaps. A ledger-scoped
 /// name would mean turning demo mode on renamed the user.
-final class ProfileStore {
+///
+/// Not `final`, so a test can substitute one. The route handler that saves a
+/// profile was **0 lines covered** because every test overrode the provider
+/// above it with a literal `Profile` — a real store cannot be driven inside
+/// `testWidgets`, where real I/O never completes (CLAUDE.md).
+class ProfileStore {
   /// Creates a store over [preferences].
   const ProfileStore(this.preferences);
 

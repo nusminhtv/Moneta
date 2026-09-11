@@ -1780,3 +1780,40 @@ control is worse than an absent one. The same standard now applies: with no
 picker, the select reads **disabled**. The proposal claimed it "writes the
 preference", which was false — corrected before archiving, because the proposal
 is what gets archived.
+
+### The re-review's follow-ups, and a defect the fix for one of them found
+
+`change-verifier` returned **SHIP with follow-ups** after confirming all three
+blocking fixes by mutation. Four follow-ups, all taken:
+
+**The save handler was still 0 lines covered** — the fix had moved the untested
+line out of the measured function rather than covering it. It is covered now by
+a route test driving the whole handler with a **recording store**: a real store
+cannot be driven inside `testWidgets`, where real I/O never completes, so
+`ProfileStore` stopped being `final` to allow a substitute. Two mutations gate
+it — leaving the screen on a failed save, and deleting the refresh.
+
+The refresh mutation **survived the first version** of that test, because the
+test overrode the very provider the handler invalidates. It now lets the real
+provider run over the fake store, so `08.01` showing the new name is the
+assertion — which is the spec scenario, end to end, for the first time.
+
+**The failure sweep was a tautology.** `onField != null || inBanner` is
+analytically true while the banner is defined as the email field's complement;
+it caught the historical gap and could catch nothing else. It asserts **which**
+renderer takes each kind now, and the misrouting mutation — `_emailError`
+returning the message whatever it is about — fails it.
+
+**And the sweep found a defect in the screen while being strengthened.** Pumping
+the same widget repeatedly is what a sweep does, and the fields did not change:
+`late final` controllers are built once, so the `profile` parameter was a lie
+after the first build. The currency already followed the parent — it is read
+from `widget.profile` — so the name and email not following was an
+inconsistency inside one widget. `didUpdateWidget` syncs them, guarded on the
+profile *changing* rather than on every rebuild, because syncing unconditionally
+would wipe what someone is typing. Both halves are mutation-tested.
+
+Also fixed: a stale doc comment on `EditProfileScreen.failure` describing the
+routing that was replaced — the same defect class the previous commit fixed on
+`saveProfile` and left here — and a spec line for the disabled currency
+`Select`, so the archived spec and the test that pins it agree.
