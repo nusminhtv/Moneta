@@ -128,9 +128,16 @@ returns only three pages; `5:9` and `5:10` are not among them.
 | OtpField | `70:263` | 3 |
 | OnboardingIllustration | `71:59` | themed per slot — **done** |
 
-45 component sets. Seven are implemented. `TransactionRow` is implemented at 2 of
-its 4 authored variants, which `Full variant coverage` in the spec set does not
-allow — recorded as outstanding.
+45 component sets. **This line has said "Seven are implemented" since the day it
+was written and it disagrees with its own table**, which carries far more
+`done` markers than seven — roughly seventeen sets are built and unmarked, from
+`IconButton` and `Avatar` through `ListRow`, `Select`, `Skeleton`,
+`SectionHeader`, `AppBar`, `Banner`, `BottomSheet` and `OtpField`. Counting and
+marking them is outstanding work, named here rather than in a change's task
+list, because a task list is archived and this file is read.
+
+`TransactionRow` is implemented at 2 of its 4 authored variants, which
+`Full variant coverage` in the spec set does not allow — also outstanding.
 
 ## Component sets in Figma
 
@@ -216,6 +223,8 @@ number, consistently applied, wrong.
 | CircularProgress stroke widths 6 (Md) and 10 (Lg) | `moneta_circular_progress.dart` | **not observed — derived**. Figma exports the arcs as SVG assets, so the diameters are readable from the node and the stroke widths are not. The ratio matches the exported arcs by eye; nothing was measured. |
 | CircularProgress stroke width **4 (Sm)** | `moneta_circular_progress.dart` | **not observed — derived**, and it was missing from this table until 2026-09-09 while 6 and 10 were listed. It reaches the painter through `strokeWidth ?? 4`, a default whose null *also* encodes "no label" — so someone who measures Sm's real stroke and writes `sm(48, 4)` would silently give Sm a percentage label it is not meant to have. Worth separating those two meanings before the value is corrected. |
 | Illustration `bandHeight 268`, `haloSize 212`, `ringSize 262`, `glyphSize 72`, the ring/halo/glyph placements (45.5/3, 70.5/28, 140.5/98) and the four dot positions | `onboarding_illustration.dart` | transcribed from the exported SVGs, not re-verified against `71:59` after the rewrite |
+
+| `17:32`, `17:65`, `35:38`, `36:91`, `36:92` | `moneta_badge.dart`, `moneta_chip.dart`, `moneta_search_field.dart`, `numpad.dart` | **read, then unverifiable.** Every value is recorded in the provenance table below, taken from the nodes on 2026-09-11 while the connection was on the Full seat. The `figma-fidelity` pass hours later could not re-read a single one — the seat had flipped to View — so both agents returned UNVERIFIED. A visual re-read of all five nodes on a Full seat is outstanding. |
 
 Listing them is not the same as fixing them. Re-reading these nodes is
 outstanding work.
@@ -483,8 +492,10 @@ them.
   the 50-icon set contains **no backspace or delete glyph**. An observation, not
   a correction.
 - **`36:77` carries `radius/md` on a key with no fill**, and the set has no
-  pressed state to reveal it, so nothing paints inside the rounded box. Kept as
-  a constant and asserted, so the number is recorded rather than lost.
+  pressed state to reveal it, so nothing paints inside the rounded box. The
+  number is recorded **here and nowhere else** — it was briefly a constant
+  asserted by a test, which `figma-fidelity` correctly called dead code guarded
+  by an assertion of the implementation against itself. Both are gone.
 - **`Numpad`'s third-last cell is a parameter** — a deviation from `36:92`,
   which always draws a decimal key. `08.05` reuses the pad for a six-digit PIN
   where a decimal cannot be typed, so the cell is the authored decimal key or an
@@ -684,7 +695,7 @@ and the entry below.
 | # | What | Resolution |
 | --- | --- | --- |
 | 35 | The first-run message drops `52:389`'s opening clause. Figma authors *"Add an account and log one transaction. Moneta needs about a week of data before budgets get useful."* | The second sentence is kept verbatim. The first instructs the user to add an account, which is the one thing they cannot do while Accounts is unbuilt, and it sat directly above a CTA that had been repointed away from that step for the same reason. Reverts with deviation 30 when Accounts lands. |
-| 36 | Home's app bar carries a **bell**, where `52:3` authors one action with an `icon/search` glyph. | Annotation `57:830` says the notification centre is *"reached from the Home app bar"*, and search would leave it unreachable — 5.1 would be dead code. The search glyph is almost certainly `AppBar/LargeTitle`'s default left unoverridden: that component's own sample is titled "Transactions" with a search action, and `52:3` overrides only the title. Home also has nothing to search — `SearchField` (`35:38`) is unbuilt and search belongs to Transactions. **Candidate for the twelve deliberate mistakes.** |
+| 36 | Home's app bar carries a **bell**, where `52:3` authors one action with an `icon/search` glyph. | Annotation `57:830` says the notification centre is *"reached from the Home app bar"*, and search would leave it unreachable — 5.1 would be dead code. The search glyph is almost certainly `AppBar/LargeTitle`'s default left unoverridden: that component's own sample is titled "Transactions" with a search action, and `52:3` overrides only the title. Home also has nothing to search, and search belongs to Transactions. (`SearchField` (`35:38`) was unbuilt when this was recorded and is **built** as of `settings-components`; the deviation is unchanged, because the missing component was never the reason.) **Candidate for the twelve deliberate mistakes.** |
 | 37 | The notification centre is **derived on every read**, not stored. | `home-overview`'s D3 keeps persistence out of this change. The consequence is stated rather than hidden: there is no read/unread state, and an entry disappears when the fact behind it stops being true — a budget brought back under its limit stops being reported. That is a defensible reading of a derived feed and it is **not** what a stored feed does. Durable notifications need their own change. |
 | 38 | Three of the five notification kinds on `57:622` are produced; two are **left out rather than seeded**. | `57:718` is a failed account sync and `57:740` is a goal's funding progress. Accounts and Goals do not exist, so neither fact can be computed. Fabricating them would put fake content in a feed the user is meant to trust, which is worse than a shorter feed. |
 | 39 | The notifications empty state keeps `EmptyState`'s default **`icon/shopping-bag`**, which reads oddly over "You're all caught up". | Both `57:861` and the first-run `52:389` carry the component default with no swap applied, so the file authors a shopping bag in a notification centre. Reproduced rather than corrected, in the same spirit as `BottomNav`'s 23px tab icons — a bell would look better and would also be inventing a glyph the file does not author. **Candidate for the twelve deliberate mistakes.** |

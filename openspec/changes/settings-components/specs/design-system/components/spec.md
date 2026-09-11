@@ -14,8 +14,12 @@ variant" and the literal counts below do not appear to contradict each other.
 #### Scenario: The gallery registers nodes, not property combinations
 - **WHEN** the gallery catalog is inspected
 - **THEN** it holds one entry per authored variant node — ten for `Badge`, six
-  for `Chip`, two for `NumpadKey`, one for `Numpad`, and `SearchField`'s two
-  derived states
+  for `Chip`, two for `NumpadKey`, and `SearchField`'s two derived states
+- **AND** `Numpad`, whose authored set is one variant, is registered **twice**:
+  the authored decimal cell and the empty cell `08.05` needs. The second is not
+  an authored variant, it is this change's own parameter (see the `Numpad`
+  requirement), and it is registered so the deviation is reviewable in the
+  gallery rather than only readable in the map
 - **AND** the boolean properties are exercised by tests rather than by catalog
   entries
 
@@ -366,10 +370,15 @@ types.
 
 This requirement is about the **API surface**, not about internal literals: a
 component-local `static const` carrying an authored number that no token holds —
-`36` for the chip's pill, `56` for a key, `5`/`6` for a dot — is the
+**34** for the chip's pill, `56` for a key, `5`/`6` for a dot — is the
 repository's existing practice (`ListRow.minimumHeight`,
 `MonetaOtpField.boxHeight`, `MonetaCheckbox.boxSize`) and is how these are
 written, each with a row in `figma-map.md`.
+
+It is verified by a **source check over each constructor's parameter block**,
+guarded by a counterfeit, because `tool/check_design_tokens.dart` matches five
+constructs in a file's body and cannot see a parameter list at all. All five
+components have one.
 
 #### Scenario: No colour, style or geometry parameters
 - **WHEN** the public API of each of the five components is inspected

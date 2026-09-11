@@ -135,5 +135,14 @@ into close-out, where a decorative test would already be committed.
   mutations were added. The node re-reads that remain are named in
   `figma-map.md`; the provenance table recorded there is what this pass could
   no longer read for itself.
-- [ ] 5.4 `change-verifier` says ship. Verified by the agent's verdict, not by
-  my own reading of the diff.
+- [x] 5.4 `change-verifier` ran and said **DO NOT SHIP**, on two blocking
+  findings that were both real: the reading-order test derived its expectation
+  from the implementation's own constant (a pad painting `6, 5, 4` passed all
+  1724 tests), and the placeholder colour was never asserted (a placeholder
+  painted expense-red passed its file). Both fixed, both mutations now fail.
+  Its seven follow-ups are done too — the chip's clipped label at large text
+  sizes, three missing API source checks, two unrequested parameters removed,
+  four documentation contradictions, and the stale inventory note moved out of
+  this task list and into `figma-map.md`, which archiving does not hide.
+  A **re-run is outstanding** and is the honest state of this task: the verdict
+  on record is DO NOT SHIP against a tree that has since changed.

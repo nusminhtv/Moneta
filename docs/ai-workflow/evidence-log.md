@@ -1337,9 +1337,11 @@ move. Recorded as a deviation from `36:92`, its cause a reuse the file does not
 anticipate.
 
 `36:77` also carries `radius/md` on a key with **no fill**, and the set has no
-pressed state to reveal it, so nothing paints inside the rounded box. Kept as a
-constant and asserted, so the authored number is recorded rather than quietly
-lost.
+pressed state to reveal it, so nothing paints inside the rounded box. It was
+kept as a constant and asserted by a test — see the fidelity section below,
+which is right that this was dead code guarded by an assertion of the
+implementation against itself. The authored number lives in `figma-map.md`
+instead.
 
 ### The fidelity pass could not run, and found five defects anyway
 
@@ -1411,3 +1413,61 @@ after each pump.
 Same family as the `PendingUndo` and `didExceedMaxLines` mistakes this log
 already records: reading a mutable thing later and believing it says what it
 said earlier.
+
+### change-verifier said DO NOT SHIP, and both blocking findings were real
+
+**1. The reading-order test could not fail.** It iterated
+`Numpad.digitRows` — the implementation's own constant — to build the grid it
+then asserted. The verifier changed the middle row to `['6', '5', '4']` and ran
+the whole suite: **all 1724 tests passed, and the gate passed.** A keypad
+painting 6, 5, 4 across its middle row was shippable.
+
+That is the exact pattern CLAUDE.md forbids, in the change whose log — three
+sections above this one — congratulates itself on catching it elsewhere. Fixed
+with a literal grid; the verifier's mutation now fails.
+
+**2. The placeholder colour was unasserted.** The test named a variable `hint`
+and then read `EditableText.style`, which is the **value's** style, asserting
+`textPrimary`. Nothing read `hintStyle` at all, so a placeholder painted
+expense-red passed the file. Both styles are asserted now, plus that they
+differ — a placeholder that reads like a value is not a placeholder.
+
+**3. And then the first fix for the chip's clipping could not fail either.** The
+verifier showed `MonetaChip.pillHeightIn` ignored the text scaler, so at 2× the
+label wanted a 36px line box inside an 18px one — clipped, with nothing thrown
+and `didExceedMaxLines` false. I fixed the component, wrote a test, and the
+mutation **survived**:
+
+- `getSize(find.text(...))` returns the paragraph's *rendered* size, which is
+  already clamped to the box it was given. It can never report being too tall.
+- and the second assertion compared the pill against `pillHeightIn` — the
+  implementation against itself, again, two hours after reading the verifier's
+  report about doing exactly that.
+
+The working version asserts the pill against **literal** heights per scale
+(34 / 39.4 / 52) and the paragraph's **intrinsic** height — what it actually
+wants — against the room it has.
+
+**Three of the five components had no API source check.** The design-token
+checker matches five constructs in a file's body and cannot see a parameter
+list, so "no raw design values from callers" is a source check or nothing.
+Badge and Chip had one; SearchField, NumpadKey and Numpad did not. They do now.
+
+**Two unrequested parameters were removed rather than tested.**
+`MonetaSearchField` had a `focusNode` (whose replacement branch was the only
+uncovered code in the whole change) and an `onSubmitted`. Neither is in the
+component's requirements. A search field that filters as you type needs no
+submit action, and nothing yet needs to focus one from outside; either can come
+back with a requirement behind it.
+
+**Four documentation contradictions, three of them introduced by this change.**
+The map's deviation 36 still called `SearchField` unbuilt — while the source
+comment *pointing at* that deviation had been corrected in the same sweep that
+missed it. The "kept as a constant and asserted" claim about the key radius
+survived in two files after the constant was deleted. And the spec's own
+closing requirement still said `36` for the chip's pill where the requirement
+230 lines earlier said 34.
+
+The map's wrong "Seven are implemented" line and its ~17 built-but-unmarked
+rows were recorded **only** in this change's `tasks.md`, which archiving moves
+out of sight. They are in `figma-map.md` now, which is the file people read.

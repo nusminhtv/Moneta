@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moneta/design_system/atoms/moneta_icon.dart';
@@ -86,6 +88,33 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    test('neither the key nor the pad takes a raw design value', () {
+      // A source check because the design-token checker cannot see an API.
+      // `change-verifier` found that only two of this change's five
+      // components had one.
+      final source = File(
+        'lib/design_system/molecules/numpad.dart',
+      ).readAsStringSync();
+      for (final entry in {
+        'const NumpadKey({': 'required this.type',
+        'const Numpad({': 'required this.trailing',
+      }.entries) {
+        final start = source.indexOf(entry.key);
+        expect(start, greaterThan(-1), reason: 'no ${entry.key} found');
+        final block = source.substring(
+          source.indexOf('{', start),
+          source.indexOf('}) :', start) == -1
+              ? source.indexOf('});', start)
+              : source.indexOf('}) :', start),
+        );
+        expect(block, isNot(contains('Color')), reason: entry.key);
+        expect(block, isNot(contains('TextStyle')), reason: entry.key);
+        expect(block, isNot(contains('EdgeInsets')), reason: entry.key);
+        // Guard the guard: the slice must be that constructor's parameters.
+        expect(block, contains(entry.value), reason: entry.key);
+      }
+    });
+
     test('two types, and no third', () {
       expect(NumpadKeyType.values, hasLength(2));
       expect(NumpadKeyType.values.map((t) => t.figmaName), [
@@ -101,12 +130,31 @@ void main() {
     ) async {
       await pumpPad(tester);
 
+      // The expected grid is a **literal**, not `Numpad.digitRows`.
+      //
+      // The first version of this test iterated the implementation's own
+      // constant, and `change-verifier` demonstrated what that is worth: a pad
+      // painting `6, 5, 4` across its middle row passed all 1724 tests and the
+      // whole gate. It asserted the implementation back to itself, which is
+      // the one thing CLAUDE.md rules out — in a change whose evidence log
+      // congratulates itself on avoiding exactly that.
+      const expected = [
+        ['1', '2', '3'],
+        ['4', '5', '6'],
+        ['7', '8', '9'],
+      ];
+      expect(
+        Numpad.digitRows,
+        expected,
+        reason: 'the pad lays out 1-9 in reading order',
+      );
+
       // Row by row, by position rather than by tree order.
       final centres = <String, Offset>{};
       for (final digit in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']) {
         centres[digit] = tester.getCenter(find.byKey(Numpad.keyFor(digit)));
       }
-      for (final row in Numpad.digitRows) {
+      for (final row in expected) {
         expect(
           centres[row[0]]!.dy,
           centres[row[1]]!.dy,

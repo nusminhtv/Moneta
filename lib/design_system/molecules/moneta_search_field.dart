@@ -25,10 +25,8 @@ class MonetaSearchField extends StatefulWidget {
   const MonetaSearchField({
     required this.placeholder,
     this.controller,
-    this.focusNode,
     this.enabled = true,
     this.onChanged,
-    this.onSubmitted,
     this.clearSemanticLabel,
     super.key,
   });
@@ -43,8 +41,12 @@ class MonetaSearchField extends StatefulWidget {
   /// the field never disposes it, because the caller may still be using it.
   final TextEditingController? controller;
 
-  /// Focus for the input. Owned and disposed on the same terms as [controller].
-  final FocusNode? focusNode;
+  // No `focusNode` and no `onSubmitted`. Both were here, neither is in this
+  // component's requirements, and the focus-node replacement branch was the
+  // only uncovered code in the change — `change-verifier` named all three.
+  // A search field that filters as you type needs no submit action, and
+  // nothing yet needs to focus one from outside. Either can come back with a
+  // requirement behind it.
 
   /// Whether the field accepts input. A disabled field also offers no clear.
   final bool enabled;
@@ -52,9 +54,6 @@ class MonetaSearchField extends StatefulWidget {
   /// Called on every change, including the one the clear control causes — a
   /// screen filtering a list on this text has to hear that the filter is gone.
   final ValueChanged<String>? onChanged;
-
-  /// Called when the keyboard's action key is pressed.
-  final ValueChanged<String>? onSubmitted;
 
   /// What the clear control is announced as. The `icon/x` glyph has no authored
   /// label, and "x" is not one.
@@ -114,17 +113,13 @@ class MonetaSearchField extends StatefulWidget {
 
 class _MonetaSearchFieldState extends State<MonetaSearchField> {
   late TextEditingController _controller;
-  late FocusNode _focusNode;
   late bool _ownsController;
-  late bool _ownsFocusNode;
 
   @override
   void initState() {
     super.initState();
     _ownsController = widget.controller == null;
     _controller = widget.controller ?? TextEditingController();
-    _ownsFocusNode = widget.focusNode == null;
-    _focusNode = widget.focusNode ?? FocusNode();
     _controller.addListener(_onTextChanged);
   }
 
@@ -141,11 +136,6 @@ class _MonetaSearchFieldState extends State<MonetaSearchField> {
       _controller = widget.controller ?? TextEditingController();
       _controller.addListener(_onTextChanged);
     }
-    if (widget.focusNode != oldWidget.focusNode) {
-      if (_ownsFocusNode) _focusNode.dispose();
-      _ownsFocusNode = widget.focusNode == null;
-      _focusNode = widget.focusNode ?? FocusNode();
-    }
   }
 
   /// Rebuilds so the clear control appears and disappears with the text.
@@ -155,7 +145,6 @@ class _MonetaSearchFieldState extends State<MonetaSearchField> {
   void dispose() {
     _controller.removeListener(_onTextChanged);
     if (_ownsController) _controller.dispose();
-    if (_ownsFocusNode) _focusNode.dispose();
     super.dispose();
   }
 
@@ -208,10 +197,8 @@ class _MonetaSearchFieldState extends State<MonetaSearchField> {
               Expanded(
                 child: TextField(
                   controller: _controller,
-                  focusNode: _focusNode,
                   enabled: widget.enabled,
                   onChanged: widget.onChanged,
-                  onSubmitted: widget.onSubmitted,
                   cursorColor: colors.brand,
                   style: theme.text.bodyLg.copyWith(
                     color: widget.enabled

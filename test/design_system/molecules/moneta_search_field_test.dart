@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart' show TextField;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moneta/design_system/atoms/moneta_icon.dart';
@@ -48,8 +49,22 @@ void main() {
       expect(find.text(placeholder), findsOneWidget);
       expect(find.byKey(MonetaSearchField.clearKey), findsNothing);
 
-      final hint = tester.widget<EditableText>(find.byType(EditableText));
-      expect(hint.style.color, colors.textPrimary);
+      // The **placeholder's** colour, read from `hintStyle`.
+      //
+      // The first version of this read `EditableText.style`, which is the
+      // *value's* style, while naming the variable `hint` — so
+      // `change-verifier` could paint the placeholder expense-red and the file
+      // stayed green. Both styles are asserted now, because they differ and
+      // the test that claimed to check one was checking the other.
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.decoration!.hintText, placeholder);
+      expect(field.decoration!.hintStyle!.color, colors.textTertiary);
+      expect(field.style!.color, colors.textPrimary);
+      expect(
+        field.decoration!.hintStyle!.color,
+        isNot(field.style!.color),
+        reason: 'a placeholder that reads like a value is not a placeholder',
+      );
     });
 
     testWidgets('text shows the value and a clear', (tester) async {
@@ -332,6 +347,28 @@ void main() {
         tester.getSize(find.byKey(MonetaSearchField.clearKey)),
         const Size.square(MonetaLayout.minTouchTarget),
       );
+    });
+
+    test('no colour, style or geometry can be supplied', () {
+      // The design-token checker cannot see an API — it matches five
+      // constructs in the body of a file — so the requirement that callers
+      // pass no raw design values is a source check or nothing. Two of the
+      // five components in this change had one; `change-verifier` pointed out
+      // the other three did not.
+      final source = File(
+        'lib/design_system/molecules/moneta_search_field.dart',
+      ).readAsStringSync();
+      final start = source.indexOf('const MonetaSearchField({');
+      final block = source.substring(
+        source.indexOf('{', start),
+        source.indexOf('});', start),
+      );
+      expect(block, isNot(contains('Color')));
+      expect(block, isNot(contains('TextStyle')));
+      expect(block, isNot(contains('EdgeInsets')));
+      expect(block, isNot(contains('Radius')));
+      // Guard the guard.
+      expect(block, contains('required this.placeholder'));
     });
 
     testWidgets('a field with no callback is silent, not broken', (

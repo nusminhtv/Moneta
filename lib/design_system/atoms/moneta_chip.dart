@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 import 'package:moneta/design_system/atoms/moneta_icon.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
@@ -148,8 +150,16 @@ class MonetaChip extends StatelessWidget {
   /// `Padding` reproduces exactly — the border adds nothing to the box, where
   /// `Container` with `padding:` would inflate it by 2. Recorded in
   /// `docs/design-system/figma-map.md`.
-  static double pillHeightIn(MonetaTypography text) =>
-      (text.labelMd.height! * text.labelMd.fontSize!) + verticalPadding * 2;
+  ///
+  /// Takes the platform's text [scaler], as `MonetaSearchField.heightIn` does.
+  /// Without it the pill stayed 34 at every text size and the label was
+  /// **clipped** at 2× — no overflow thrown, `didExceedMaxLines` false, the
+  /// text simply squeezed into an 18px line box that wanted 36. Found by
+  /// `change-verifier` probing the render tree, not by the overflow test,
+  /// which only ever asserted that nothing threw.
+  static double pillHeightIn(MonetaTypography text, TextScaler scaler) =>
+      scaler.scale(text.labelMd.height! * text.labelMd.fontSize!) +
+      verticalPadding * 2;
 
   @override
   Widget build(BuildContext context) {
@@ -218,7 +228,13 @@ class MonetaChip extends StatelessWidget {
     );
 
     return SizedBox(
-      height: hitHeight,
+      // The occupied box is the touch target, or the pill if a larger text
+      // size has made the pill the taller of the two. A fixed 44 would clip
+      // the pill it exists to contain.
+      height: math.max(
+        hitHeight,
+        pillHeightIn(theme.text, MediaQuery.textScalerOf(context)),
+      ),
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -236,7 +252,10 @@ class MonetaChip extends StatelessWidget {
                 minWidth: type.hasClose ? inputMinimumWidth : 0,
               ),
               child: SizedBox(
-                height: pillHeightIn(theme.text),
+                height: pillHeightIn(
+                  theme.text,
+                  MediaQuery.textScalerOf(context),
+                ),
                 child: pill,
               ),
             ),

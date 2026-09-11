@@ -170,7 +170,7 @@ void main() {
       expect(tester.getSize(find.byType(MonetaChip)).height, 44);
       expect(tester.getSize(find.byKey(MonetaChip.pillKey)).height, 34);
       expect(MonetaChip.hitHeight, MonetaLayout.minTouchTarget);
-      expect(MonetaChip.pillHeightIn(theme.text), 34);
+      expect(MonetaChip.pillHeightIn(theme.text, TextScaler.noScaling), 34);
     });
 
     testWidgets('the two tap areas partition the box', (tester) async {
@@ -416,21 +416,68 @@ void main() {
       expect(close.width, MonetaLayout.minTouchTarget);
     });
 
-    testWidgets('nothing overflows at 1.0, 1.3 and 2.0 platform text', (
+    testWidgets('the label still fits at 1.0, 1.3 and 2.0 platform text', (
       tester,
     ) async {
-      for (final scale in <double>[1, 1.3, 2]) {
+      // Two earlier versions of this could not fail.
+      //
+      // "Nothing threw" passed while the label was **clipped**: the pill stayed
+      // 34 at every text size, so at 2x the glyphs wanted a 36px line box
+      // inside an 18px one, and no overflow is thrown for that.
+      //
+      // Then measuring `getSize(find.text(...))` passed too, because the
+      // paragraph is inside a fixed-height box — its *rendered* size is already
+      // clamped to the space it was given, so it can never report being too
+      // tall. And comparing the pill to `pillHeightIn` asserted the
+      // implementation against itself.
+      //
+      // So: the pill's height against a **literal** per scale, and the
+      // paragraph's **intrinsic** height — what it actually wants — against
+      // the room it has.
+      // A list of pairs, not a map: `double` keys cannot be const map keys.
+      const expectedPillHeight = [
+        [1.0, 34.0],
+        [1.3, 39.4],
+        [2.0, 52.0],
+      ];
+
+      for (final pair in expectedPillHeight) {
+        final scale = pair[0];
+        final expected = pair[1];
         await pumpChip(
           tester,
-          type: MonetaChipType.input,
-          label: 'Bills and utilities',
-          width: 140,
+          type: MonetaChipType.filter,
+          label: 'Bills',
           textScaler: TextScaler.linear(scale),
         );
         expect(
           tester.takeException(),
           isNull,
           reason: 'overflowed at ${scale}x text',
+        );
+
+        final pill = tester.getSize(find.byKey(MonetaChip.pillKey));
+        expect(
+          pill.height,
+          closeTo(expected, 0.01),
+          reason: 'the pill did not grow with ${scale}x text',
+        );
+
+        final paragraph = tester.renderObject<RenderParagraph>(
+          find.text('Bills'),
+        );
+        expect(
+          paragraph.getMaxIntrinsicHeight(double.infinity),
+          lessThanOrEqualTo(
+            pill.height - MonetaChip.verticalPadding * 2 + 0.01,
+          ),
+          reason: 'the label wants more height than the pill gives it',
+        );
+
+        // And the occupied box still contains the pill it exists to hold.
+        expect(
+          tester.getSize(find.byType(MonetaChip)).height,
+          greaterThanOrEqualTo(pill.height),
         );
       }
     });
