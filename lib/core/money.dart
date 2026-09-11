@@ -17,12 +17,32 @@ final class Money extends Equatable implements Comparable<Money> {
   /// Throws [FormatException] when [input] is not a valid decimal or has more
   /// fraction digits than [currency] allows.
   factory Money.parse(String input, Currency currency) {
-    final trimmed = input.trim().replaceAll(',', '');
-    final match = RegExp(r'^(-)?(\d+)(?:\.(\d+))?$').firstMatch(trimmed);
-    if (match == null) {
+    var trimmed = input.trim();
+    final negative = trimmed.startsWith('-');
+    if (negative) trimmed = trimmed.substring(1);
+
+    // Split on the currency's own decimal separator, which is null for a
+    // currency with no decimals — so for VND a `.` can only be a group mark,
+    // and `1.5` fails the grouping check below rather than becoming 15.
+    final decimalSeparator = currency.decimalSeparator;
+    final String whole;
+    final String fraction;
+    if (decimalSeparator == null) {
+      whole = trimmed;
+      fraction = '';
+    } else {
+      final parts = trimmed.split(decimalSeparator);
+      if (parts.length > 2) {
+        throw FormatException('Not a decimal amount', input);
+      }
+      whole = parts.first;
+      fraction = parts.length == 2 ? parts[1] : '';
+    }
+
+    if (!_isWellGrouped(whole, currency.acceptedGroupSeparators) ||
+        (fraction.isNotEmpty && !RegExp(r'^\d+$').hasMatch(fraction))) {
       throw FormatException('Not a decimal amount', input);
     }
-    final fraction = match.group(3) ?? '';
     if (fraction.length > currency.decimals) {
       throw FormatException(
         '${currency.code} allows at most ${currency.decimals} decimals',
@@ -30,10 +50,43 @@ final class Money extends Equatable implements Comparable<Money> {
       );
     }
     final padded = fraction.padRight(currency.decimals, '0');
-    final whole = int.parse(match.group(2)!);
-    final minor =
-        whole * currency.scale + (padded.isEmpty ? 0 : int.parse(padded));
-    return Money(match.group(1) == '-' ? -minor : minor, currency);
+    var digits = whole;
+    for (final separator in currency.acceptedGroupSeparators) {
+      digits = digits.replaceAll(separator, '');
+    }
+
+    final wholeUnits = int.tryParse(digits);
+    final fractionUnits = padded.isEmpty ? 0 : int.parse(padded);
+    // `int.tryParse` returns null past int64, but the **multiply** below wraps
+    // silently — `1,000,000,000,000,000,000.00` USD came back as a positive
+    // 7,766,279,631,452,241,920, which is worse than an exception because the
+    // sheet's `minorUnits <= 0` guard waves it through and stores it. Checked
+    // before multiplying rather than after, since after is too late.
+    const maxMinorUnits = 9223372036854775807;
+    if (wholeUnits == null ||
+        wholeUnits > (maxMinorUnits - fractionUnits) ~/ currency.scale) {
+      throw FormatException('Amount is larger than this app can hold', input);
+    }
+
+    final minor = wholeUnits * currency.scale + fractionUnits;
+    return Money(negative ? -minor : minor, currency);
+  }
+
+  /// Whether [whole] is digits, optionally grouped in threes by [separators].
+  ///
+  /// Grouping is optional; where it appears it must actually separate groups
+  /// of three. That is what refuses `1.50.000` and `1,23,456` — a separator
+  /// somewhere else is a typo, and a money field that turns a typo into a
+  /// plausible wrong number is the worst outcome available.
+  static bool _isWellGrouped(String whole, Set<String> separators) {
+    if (RegExp(r'^\d+$').hasMatch(whole)) return whole.isNotEmpty;
+    for (final separator in separators) {
+      final escaped = RegExp.escape(separator);
+      if (RegExp('^\\d{1,3}(?:$escaped\\d{3})+\$').hasMatch(whole)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /// Amount in the currency's smallest unit (cents, đồng, ...).
@@ -147,6 +200,48 @@ enum Currency {
 
   /// Locale used when no explicit locale is supplied to [Money.format].
   final String defaultLocale;
+
+  /// The character this currency's locale puts between groups of three.
+  ///
+  /// **Derived, not transcribed.** `intl` already knows — a table on this enum
+  /// would be a second source of truth, and it would be wrong the first time a
+  /// currency was added without someone remembering to update it.
+  String get groupSeparator =>
+      NumberFormat.decimalPattern(defaultLocale).symbols.GROUP_SEP;
+
+  /// The character this currency's locale puts before the fraction, or null
+  /// when the currency has none.
+  ///
+  /// A currency with zero decimals cannot have a decimal separator, which is
+  /// what stops `.` being read as one for VND.
+  String? get decimalSeparator => decimals == 0
+      ? null
+      : NumberFormat.decimalPattern(defaultLocale).symbols.DECIMAL_SEP;
+
+  /// Whether [symbol] is written before the number rather than after it.
+  ///
+  /// Asked of [Money.format]'s own output rather than assumed, so the answer
+  /// cannot drift from where the symbol actually lands.
+  bool get symbolLeads => NumberFormat.currency(
+    locale: defaultLocale,
+    symbol: symbol,
+    decimalDigits: decimals,
+  ).format(0).trimLeft().startsWith(symbol);
+
+  /// Every character this currency accepts between groups when parsing.
+  ///
+  /// The locale's own separator, plus a comma: `Money.parse('1,250,000', vnd)`
+  /// has always worked and is a shipped contract, and someone typing on a US
+  /// keyboard is a real thing.
+  ///
+  /// Removing the decimal separator changes nothing for **either currency here**
+  /// — VND has none and USD's is `.`, which was never in the set. It is kept
+  /// for the currency this app does not have yet: in `de_DE` or `fr_FR` the
+  /// decimal separator **is** a comma, and without this line `1,50 €` would
+  /// parse as one hundred and fifty. Unexercised, and stated as such rather
+  /// than left looking load-bearing.
+  Set<String> get acceptedGroupSeparators =>
+      {groupSeparator, ','}..remove(decimalSeparator);
 
   /// Minor units per major unit (10^[decimals]).
   int get scale => switch (decimals) {

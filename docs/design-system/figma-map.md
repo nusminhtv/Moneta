@@ -590,6 +590,30 @@ pill with none of those at 50. `MonetaTextField`'s trailing icon also has a
 in shipped code, recorded here rather than fixed in a change about new
 components.
 
+### The add-transaction sheet is still raw Material — 2026-09-11
+
+`amount-entry` fixed a defect in that sheet's amount field and deliberately did
+not touch its chrome, so the gap is recorded here rather than left in a
+proposal that gets archived.
+
+`lib/features/transactions/presentation/add_transaction_sheet.dart` is built
+from `DropdownButtonFormField`, `InputDecoration`, `ButtonSegment` and bare
+`TextField`s. It does **not** use `AmountInput` (`36:76`), the component this
+project built for amount entry, nor `MonetaSelect` for its category, nor
+`SegmentedControl` (`36:168`) for its direction — all three are built.
+
+Replacing that chrome is a screen change against page 03, which has not been
+read. It is not a fix to a defect in `core`, which is what `amount-entry` was.
+
+**What that change fixed, since it explains a reading here.** `Money.parse` was
+locale-blind — it stripped commas and read `.` as a decimal point, the en-US
+convention — while `Money.format` and `Money.digits` are locale-aware and group
+VND with dots because `vi_VN` does. So `Money.parse(Money(1500000, vnd).digits())`
+**threw**: the two halves of one class disagreed, on the currency almost every
+amount in this app is in, and a grouped VND amount could not be typed in even if
+a field offered it. The parser now takes the currency's own separators, and
+`Currency` derives them from `NumberFormat`'s symbols rather than from a table.
+
 ### Values used with no recorded inspection, added here
 
 | Value | Where | Status |

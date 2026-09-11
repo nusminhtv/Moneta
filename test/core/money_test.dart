@@ -2,6 +2,137 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moneta/core/money.dart';
 
 void main() {
+  group('a currency knows how its locale writes it', () {
+    test("the separators are the locale's", () {
+      expect(Currency.vnd.groupSeparator, '.');
+      expect(Currency.usd.groupSeparator, ',');
+      expect(Currency.usd.decimalSeparator, '.');
+    });
+
+    test('a currency with no decimals has no decimal separator', () {
+      expect(Currency.vnd.decimals, 0);
+      expect(Currency.vnd.decimalSeparator, isNull);
+    });
+
+    test(
+      'the accepted group separators include a comma, never the decimal',
+      () {
+        expect(Currency.vnd.acceptedGroupSeparators, {'.', ','});
+        expect(
+          Currency.usd.acceptedGroupSeparators,
+          {','},
+          reason: "a dot is USD's decimal point, not a group mark",
+        );
+      },
+    );
+
+    test('symbolLeads agrees with where format() puts the symbol', () {
+      // Asserted against `format()`'s own output rather than against a
+      // remembered fact, so the derivation and the formatter cannot drift.
+      for (final currency in Currency.values) {
+        final formatted = Money(123456, currency).format();
+        expect(
+          currency.symbolLeads,
+          formatted.trimLeft().startsWith(currency.symbol),
+          reason: '${currency.code}: "$formatted"',
+        );
+      }
+      // And the two currencies differ, so the loop is comparing something.
+      expect(Currency.usd.symbolLeads, isTrue);
+      expect(Currency.vnd.symbolLeads, isFalse);
+    });
+  });
+
+  group('parse reads what format writes', () {
+    test('every currency round-trips through its own digits', () {
+      // Over `Currency.values`, not over VND: a currency added later is
+      // covered the day it is added. Before this change VND threw here.
+      for (final currency in Currency.values) {
+        for (final minor in [0, 1, 999, 1000, 1500000, 987654321]) {
+          final money = Money(minor, currency);
+          expect(
+            Money.parse(money.digits(), currency),
+            money,
+            reason: '${currency.code} $minor via "${money.digits()}"',
+          );
+        }
+      }
+    });
+
+    test("the locale's own grouping is accepted", () {
+      expect(Money.parse('1.500.000', Currency.vnd).minorUnits, 1500000);
+      expect(Money.parse('1,500.00', Currency.usd).minorUnits, 150000);
+    });
+
+    test('malformed grouping is refused rather than guessed at', () {
+      // A separator that is not separating groups of three is a typo, and a
+      // money field that turns a typo into a plausible wrong number is the
+      // worst outcome available.
+      for (final bad in ['1.50.000', '1,23,456', '.500', '1.500.00']) {
+        expect(
+          () => Money.parse(bad, Currency.vnd),
+          throwsFormatException,
+          reason: '"$bad" should not parse',
+        );
+      }
+    });
+
+    test('an amount too large to hold is refused, not wrapped', () {
+      // Measured by `change-verifier` before the guard existed:
+      //   parse('99999999999999999.99', usd)          -> -8446744073709551617
+      //   parse('1,000,000,000,000,000,000.00', usd)  ->  7766279631452241920
+      // The second is **positive**, so the add sheet's `minorUnits <= 0` guard
+      // waved it through and would have stored it. A wrong number is worse
+      // than an exception, and silently wrong is worst of all.
+      for (final huge in [
+        '99999999999999999.99',
+        '1,000,000,000,000,000,000.00',
+        '9223372036854775808',
+      ]) {
+        expect(
+          () => Money.parse(huge, Currency.usd),
+          throwsFormatException,
+          reason: '"$huge" must not wrap',
+        );
+      }
+    });
+
+    test('but the largest amount that does fit still parses', () {
+      // The boundary, from both sides: one below the cliff works, one above
+      // throws. Without the lower half the guard could reject everything.
+      const maxMinorUnits = 9223372036854775807;
+      final biggestVnd = (maxMinorUnits ~/ Currency.vnd.scale).toString();
+      expect(
+        Money.parse(biggestVnd, Currency.vnd).minorUnits,
+        maxMinorUnits,
+      );
+      expect(
+        () => Money.parse('${maxMinorUnits}0', Currency.vnd),
+        throwsFormatException,
+      );
+    });
+
+    test('a trailing decimal separator is accepted as no fraction', () {
+      // What someone mid-type has on screen, and the field deliberately keeps
+      // it (see `AmountInputFormatter`). Written down because it was
+      // undefined: `5.` was already accepted and nothing said so.
+      expect(Money.parse('5.', Currency.usd).minorUnits, 500);
+      expect(Money.parse('1,500.', Currency.usd).minorUnits, 150000);
+    });
+
+    test('leading zeros are digits like any other', () {
+      expect(Money.parse('007', Currency.vnd).minorUnits, 7);
+      expect(Money.parse('0.000', Currency.vnd).minorUnits, 0);
+    });
+
+    test('two decimal separators are refused', () {
+      expect(
+        () => Money.parse('1.2.3', Currency.usd),
+        throwsFormatException,
+      );
+    });
+  });
+
   group('Money.parse', () {
     test('parses whole VND amounts', () {
       expect(Money.parse('1250000', Currency.vnd).minorUnits, 1250000);

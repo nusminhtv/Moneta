@@ -7,6 +7,7 @@ import 'package:moneta/core/spend_category.dart';
 import 'package:moneta/design_system/molecules/moneta_select.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/features/transactions/domain/transaction.dart';
+import 'package:moneta/features/transactions/presentation/amount_input_formatter.dart';
 import 'package:moneta/features/transactions/presentation/transaction_list_controller.dart';
 import 'package:moneta/features/transactions/presentation/transaction_providers.dart';
 
@@ -199,6 +200,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = context.moneta;
+    final currency = ref.watch(walletCurrencyProvider);
     final colors = theme.colors;
 
     return Padding(
@@ -236,9 +238,20 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
           TextField(
             key: AddTransactionSheet.amountFieldKey,
             controller: _amountController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: TextInputType.numberWithOptions(
+              // A currency with no decimals has no decimal point to offer.
+              decimal: currency.decimals > 0,
+            ),
+            inputFormatters: [AmountInputFormatter(currency)],
             style: theme.text.amountMd.copyWith(color: colors.textPrimary),
-            decoration: const InputDecoration(labelText: 'Amount'),
+            decoration: InputDecoration(
+              labelText: 'Amount',
+              // On the side the locale puts it: `₫` after for VND, `$` before
+              // for USD. Asked of the currency rather than assumed, because
+              // assuming a prefix is wrong for half the world.
+              prefixText: currency.symbolLeads ? '${currency.symbol} ' : null,
+              suffixText: currency.symbolLeads ? null : ' ${currency.symbol}',
+            ),
           ),
           SizedBox(height: theme.spacing.x3l),
           DropdownButtonFormField<SpendCategory>(
