@@ -30,7 +30,17 @@ enum PreferenceKey {
   notifyPeriodEnding('notify_period_ending'),
 
   /// `08.06`: tell me when money comes in.
-  notifyIncome('notify_income');
+  notifyIncome('notify_income'),
+
+  /// `08.02`: the display name `08.01` shows and the avatar derives from.
+  profileName('profile_name'),
+
+  /// `08.02`: the email `08.01` shows. May be empty — a local-first app with
+  /// no account does not need one.
+  profileEmail('profile_email'),
+
+  /// `08.02`: the main currency, shown on `08.03`. Stored as the enum's name.
+  profileCurrency('profile_currency');
 
   const PreferenceKey(this.storedName);
 

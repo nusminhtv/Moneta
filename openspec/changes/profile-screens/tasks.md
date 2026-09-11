@@ -10,7 +10,7 @@ be two-sided.
 
 ## 1. The enablers
 
-- [ ] 1.1 `PreferencesStore.readString`/`writeString` — same table, no
+- [x] 1.1 `PreferencesStore.readString`/`writeString` — same table, no
   migration. Verified by `test/data/preferences_store_test.dart`: round-trip;
   absent is `Ok(null)` while stored-empty is `Ok('')`; a second write replaces
   and leaves one row; a value carrying a quote, a newline, `👨‍👩‍👧` and `Trần`
@@ -19,7 +19,7 @@ be two-sided.
   exception escaping; a `writeBool` key read by `readString` gives the literal
   `'true'`, and a string key read by `readBool` still fails.
   **Mutation:** return `Ok('')` for a missing row → the absence case must fail.
-- [ ] 1.2 Move the address rule to `lib/core/email.dart`;
+- [x] 1.2 Move the address rule to `lib/core/email.dart`;
   `Credentials.isPlausibleEmail` delegates and keeps its API. Verified by
   `test/core/email_test.dart` (accepts `user+tag@sub.domain.co.uk`; rejects
   `minh.tran`, `@example.com`, `a@b`, `a b@c.com`, `''`) **and by

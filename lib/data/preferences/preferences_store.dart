@@ -61,6 +61,63 @@ final class PreferencesStore {
     }
   }
 
+  /// Reads [key] as a string.
+  ///
+  /// Returns `Ok(null)` when nothing is stored, the same way [readBool] does —
+  /// "never chose" and "chose the empty string" are different facts, and a
+  /// store that conflated them would make an unset name indistinguishable from
+  /// a cleared one.
+  ///
+  /// Unlike [readBool] there is nothing to parse, so there is no
+  /// does-not-parse failure: the column is TEXT and whatever is in it is a
+  /// string. A key written by [writeBool] therefore reads back as the literal
+  /// `'true'` rather than as an error, because that is what is in the column.
+  Future<Result<String?>> readString(PreferenceKey key) async {
+    try {
+      final rows = await db.query(
+        table,
+        columns: ['value'],
+        where: 'key = ?',
+        whereArgs: [key.storedName],
+        limit: 1,
+      );
+      if (rows.isEmpty) return const Ok(null);
+      return Ok(rows.single['value'] as String?);
+    } on Object catch (error) {
+      return Err(
+        AppFailure.storage(
+          'Could not read preference "${key.storedName}"',
+          cause: error,
+        ),
+      );
+    }
+  }
+
+  /// Writes [value] for [key], replacing anything already there.
+  ///
+  /// No length limit and no escaping: the value is bound as a parameter, so a
+  /// quote, a newline or a grapheme cluster is stored as given.
+  Future<Result<void>> writeString(
+    PreferenceKey key, {
+    required String value,
+  }) async {
+    try {
+      await db.insert(
+        table,
+        {'key': key.storedName, 'value': value},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      return const Ok(null);
+    } on Object catch (error) {
+      return Err(
+        AppFailure.storage(
+          'Could not save preference "${key.storedName}"',
+          cause: error,
+        ),
+      );
+    }
+  }
+
   /// Writes [value] for [key], replacing anything already there.
   Future<Result<void>> writeBool(
     PreferenceKey key, {

@@ -157,6 +157,32 @@ void main() {
         FailureKind.storage,
       );
     });
+
+    test('and the same for strings, in both directions', () async {
+      // The coverage gate caught these missing: the string accessors' error
+      // paths were the only uncovered lines in the file, and the spec requires
+      // a storage failure rather than a default for both.
+      final (database, store) = await open();
+      await database.close();
+
+      final read = await store.readString(PreferenceKey.profileName);
+      expect(failureOf(read).kind, FailureKind.storage);
+      expect(
+        failureOf(read).message,
+        contains(PreferenceKey.profileName.storedName),
+        reason: 'the failure must name the key',
+      );
+
+      final write = await store.writeString(
+        PreferenceKey.profileName,
+        value: 'Minh',
+      );
+      expect(failureOf(write).kind, FailureKind.storage);
+      expect(
+        failureOf(write).message,
+        contains(PreferenceKey.profileName.storedName),
+      );
+    });
   });
 
   group('declared keys', () {
@@ -230,6 +256,100 @@ void main() {
           reason: '${key.name} leaked into the demo ledger',
         );
       }
+    });
+
+    test('a string round-trips, and replacing leaves one row', () async {
+      final (database, store) = await open();
+      addTearDown(database.close);
+
+      await store.writeString(PreferenceKey.profileName, value: 'Minh');
+      expect(
+        (await store.readString(PreferenceKey.profileName)).valueOrNull,
+        'Minh',
+      );
+
+      await store.writeString(PreferenceKey.profileName, value: 'Trần');
+      expect(
+        (await store.readString(PreferenceKey.profileName)).valueOrNull,
+        'Trần',
+      );
+      final db = (await database.open()).valueOrNull!;
+      final rows = await db.query(
+        PreferencesStore.table,
+        where: 'key = ?',
+        whereArgs: [PreferenceKey.profileName.storedName],
+      );
+      expect(rows, hasLength(1), reason: 'a write must replace, not append');
+    });
+
+    test('nothing stored is not an empty string', () async {
+      final (database, store) = await open();
+      addTearDown(database.close);
+
+      // The distinction the boolean accessors already hold: an unset name and
+      // a cleared one are different facts, and a store that conflated them
+      // would make "never entered" indistinguishable from "deleted".
+      expect(
+        (await store.readString(PreferenceKey.profileName)).valueOrNull,
+        isNull,
+      );
+
+      await store.writeString(PreferenceKey.profileName, value: '');
+      expect(
+        (await store.readString(PreferenceKey.profileName)).valueOrNull,
+        '',
+      );
+    });
+
+    test('strings a careless implementation would break', () async {
+      final (database, store) = await open();
+      addTearDown(database.close);
+
+      // A quote (SQL injection if the value were interpolated), a newline, a
+      // grapheme cluster made of several code points, and a Vietnamese
+      // diacritic.
+      const awkward = "Trần's note\nwith 👨‍👩‍👧 and 'quotes'";
+      await store.writeString(PreferenceKey.profileName, value: awkward);
+      expect(
+        (await store.readString(PreferenceKey.profileName)).valueOrNull,
+        awkward,
+      );
+    });
+
+    test('a very long value is not truncated', () async {
+      final (database, store) = await open();
+      addTearDown(database.close);
+
+      final long = 'a' * 10000;
+      await store.writeString(PreferenceKey.profileEmail, value: long);
+      final read = (await store.readString(
+        PreferenceKey.profileEmail,
+      )).valueOrNull;
+      // The length is asserted as well as the content: a truncating write
+      // would still round-trip a prefix, and `expect(read, long)` alone
+      // reports a diff so large it is unreadable.
+      expect(read, hasLength(10000));
+      expect(read, long);
+    });
+
+    test('a boolean key read as a string gives the literal text', () async {
+      final (database, store) = await open();
+      addTearDown(database.close);
+
+      await store.writeBool(PreferenceKey.demoMode, value: true);
+      expect(
+        (await store.readString(PreferenceKey.demoMode)).valueOrNull,
+        PreferencesStore.trueText,
+        reason: 'the column is TEXT and that is what is in it',
+      );
+
+      // And the reverse is still a failure, which is the existing contract
+      // and is not relaxed by adding string accessors.
+      await store.writeString(PreferenceKey.profileName, value: 'Minh');
+      expect(
+        failureOf(await store.readBool(PreferenceKey.profileName)).kind,
+        FailureKind.storage,
+      );
     });
 
     test(

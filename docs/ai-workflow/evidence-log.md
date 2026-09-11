@@ -1509,3 +1509,65 @@ Four instances of one defect in one change: an expectation taken from the
 implementation's own constant, a colour never asserted, a check that could not
 see the thing it forbade, and a bound with one side missing. Three of the four
 were written **after** reading a report about the first.
+
+## profile-screens — four screens, and the plan that had to be cut first
+
+### The audit removed two screens before a line was written
+
+`spec-auditor` read a six-screen draft and found three claims about the codebase
+that were simply false, each of which had been asserted rather than checked:
+
+- **The PIN scenario failed a correct implementation.** It required that "no
+  substring of `123456` appears in the stored value". A SHA-256 digest is 64
+  characters of `[0-9a-f]` — every digit of that PIN is in the alphabet, so a
+  correct hash fails it with probability ≈1. The "fix" would have been to weaken
+  it to the full string, which is vacuous.
+- **`ListRow` has no `enabled` flag.** The design said *"**Chosen:**
+  `ListRow`'s existing `enabled: false`"*. There is no such parameter and no
+  disabled treatment anywhere in the widget, so `08.04`'s unavailable rows meant
+  a design-system variant — which the same proposal denied with "No
+  `design_system` changes".
+- **Erase all data could not work as drafted.** In real mode
+  `activeDatabaseProvider` returns *the control database object itself*, on
+  purpose, so the file is not opened twice. `deleteFile()` deletes that file,
+  and it holds the `settings` table: "erase the ledger" would have destroyed the
+  profile, `onboarding_complete`, `demo_mode` and every notification preference,
+  and left `preferencesStoreProvider` on a closed connection.
+
+And one finding that was a contradiction rather than an error: the change
+shipped auto-lock **disabled** on the grounds that "storing a number that
+nothing acts on" is the `08.06` defect — while shipping a **PIN that nothing
+reads**. So `08.05` and `08.04` came out. A PIN has to gate something; gating
+needs a lock screen and a router redirect; and `MonetaOtpField` renders the
+characters in the clear anyway, which defeats the one threat a UI PIN addresses.
+
+Three requirements that could not fail were rewritten or dropped: an FAQ answer
+"not contradicting the app" (a test could only assert the constant against
+itself), a chip height expected as `MonetaLayout.minTouchTarget` — the
+implementation's own constant, the `digitRows` defect committed *in a
+requirement* — and a profile "surviving the demo toggle" asserted after toggling
+back, when the two databases are the same object again and a ledger-scoped
+implementation would pass.
+
+### The coverage gate caught what the test file did not
+
+`readString`/`writeString` landed with their happy paths tested and their error
+paths not: 83.3% against a critical minimum of 85%, and the two uncovered blocks
+were exactly the `Err(AppFailure(kind: storage))` returns the spec requires. The
+tests exist now, and they assert the failure **names the key**, which is what
+makes a storage failure diagnosable.
+
+**M1 — a missing row reads as `Ok('')`.** The absence test fails. That
+distinction is the one the boolean accessors already hold: an unset name and a
+cleared one are different facts, and conflating them makes "never entered"
+indistinguishable from "deleted".
+
+### One rule in core, proven by mutating it
+
+`Credentials.isPlausibleEmail` moved to `lib/core/email.dart` because
+`features/settings` may not import `features/auth` and a second address rule is
+a rule that can drift. Two things make this a move rather than a rewrite:
+auth's own tests pass **unmodified**, and **M2** — accepting a domain with no
+dot — fails in **both** `test/core/email_test.dart` and
+`test/features/auth/credentials_test.dart`, which is what proves auth delegates
+to the moved rule instead of carrying a copy.
