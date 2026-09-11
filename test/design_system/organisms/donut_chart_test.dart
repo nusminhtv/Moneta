@@ -41,16 +41,17 @@ void main() {
   const minimumClearance = 2.0;
 
   /// The box that scales the centre total.
-  final centreFittedBox = find.ancestor(
-    of: find.byKey(DonutChart.centreValueKey),
-    matching: find.byType(FittedBox),
-  );
+  ///
+  /// Addressed by key, not as "the FittedBox above the total": there are two
+  /// of them nested now, and each absorbs a different thing.
+  final centreFittedBox = find.byKey(DonutChart.centreValueFitKey);
 
   Future<void> pumpDonut(
     WidgetTester tester,
     List<ChartSeries> categories, {
     String centreLabel = 'Total spent',
     String periodLabel = 'August 2026',
+    TextScaler textScaler = TextScaler.noScaling,
   }) => pumpMonetaWidget(
     tester,
     SizedBox(
@@ -62,6 +63,7 @@ void main() {
       ),
     ),
     surfaceSize: const Size(393, 900),
+    textScaler: textScaler,
   );
 
   group('the ring paints a track and then one arc per segment', () {
@@ -330,6 +332,132 @@ void main() {
 
       final box = tester.widget<FittedBox>(centreFittedBox);
       expect(box.fit, BoxFit.scaleDown);
+    });
+
+    /// The text sizes iOS reports, from `xSmall` through the first
+    /// accessibility size.
+    ///
+    /// `1.0` is the default and the only one the old layout survived. It is
+    /// kept in the list rather than tested alone, because the defect was
+    /// invisible at 1.0 and arrived at the notch above it.
+    ///
+    /// The list stops at 1.786 and the two larger accessibility sizes are
+    /// **excluded deliberately**. What breaks above it is not the centre but
+    /// the legend row: `47:2` pins the percentage and the amount and flexes
+    /// only the label, so once the label is at zero width a 353px row is
+    /// over-subscribed — the same known limit the very-large-amount test
+    /// records. And where exactly that happens is a fact about *glyph widths*,
+    /// which under the placeholder font are `fontSize` apiece and so far wider
+    /// than Inter's: the real cutoff is above 1.786, not at it. Asserting a
+    /// cutoff here would be asserting the test font.
+    const platformTextScales = <double>[
+      0.823,
+      0.882,
+      0.941,
+      1,
+      1.118,
+      1.235,
+      1.353,
+      1.786,
+    ];
+
+    /// Asserts [inner] lies within [outer], with a hair of tolerance for the
+    /// float arithmetic of a scaled transform.
+    void expectWithin(Rect inner, Rect outer, {required String reason}) {
+      const slack = 0.01;
+      expect(
+        inner.top,
+        greaterThanOrEqualTo(outer.top - slack),
+        reason: reason,
+      );
+      expect(
+        inner.bottom,
+        lessThanOrEqualTo(outer.bottom + slack),
+        reason: reason,
+      );
+      expect(
+        inner.left,
+        greaterThanOrEqualTo(outer.left - slack),
+        reason: reason,
+      );
+      expect(
+        inner.right,
+        lessThanOrEqualTo(outer.right + slack),
+        reason: reason,
+      );
+    }
+
+    testWidgets('the centre stays inside its block at every text size', (
+      tester,
+    ) async {
+      // The defect this guards, reported from a device: **2.5 pixels of bottom
+      // overflow** in the centre, with the period line clipped by the banner.
+      //
+      // `47:58`'s authored 62 is exactly the sum of the three authored line
+      // boxes — 16 + 2 + 26 + 2 + 16 — so the block had **zero** slack, and
+      // any line box a fraction taller than nominal pushed the last line out.
+      // The device's own font metrics are one way to inflate a line box and
+      // the platform text size is another; the second is the one a test can
+      // ask for. At 1.118× the two captions gain ~3.8px between them, which is
+      // the same order as the 2.5px reported.
+      //
+      // Every scale is checked, not just a large one: the old layout passed at
+      // 1.0 and failed at the next notch up, so a single-scale guard would
+      // have been written at the one value that could not fail.
+      for (final scale in platformTextScales) {
+        await pumpDonut(
+          tester,
+          authored,
+          periodLabel: 'This month',
+          textScaler: TextScaler.linear(scale),
+        );
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'the centre overflowed at ${scale}x text',
+        );
+
+        final block = tester.getRect(find.byKey(DonutChart.centreBlockKey));
+        for (final line in [
+          find.text('Total spent'),
+          find.byKey(DonutChart.centreValueKey),
+          find.text('This month'),
+        ]) {
+          expectWithin(
+            tester.getRect(line),
+            block,
+            reason: 'a centre line left the block at ${scale}x text',
+          );
+        }
+        // And the block itself still clears the arcs, so scaling the content
+        // has not been achieved by letting the block grow.
+        expect(
+          furthestCornerFromCentre(
+            tester,
+            find.byKey(DonutChart.centreBlockKey),
+          ),
+          lessThan(DonutChart.innerRadius - minimumClearance),
+          reason: 'the block reached the arcs at ${scale}x text',
+        );
+      }
+    });
+
+    testWidgets('the block scales its content down, never up', (tester) async {
+      // `BoxFit.contain` would also stop the overflow — and would blow a short
+      // total up to fill 62px, which no screen authors and `47:58` does not
+      // show. The bound is one-sided on purpose.
+      await pumpDonut(tester, [series('X', 1000, ChartSlot.slot1)]);
+      expect(
+        tester.widget<FittedBox>(find.byKey(DonutChart.centreFitKey)).fit,
+        BoxFit.scaleDown,
+      );
+      expect(
+        tester.getRect(find.byKey(DonutChart.centreValueKey)).height,
+        lessThanOrEqualTo(
+          tester.getSize(find.byKey(DonutChart.centreValueKey)).height + 0.01,
+        ),
+        reason: 'the total was scaled up to fill the block',
+      );
     });
 
     testWidgets('the total stays inside the ring', (tester) async {

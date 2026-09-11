@@ -847,6 +847,35 @@ Both are the same mistake in different clothes: asserting on the wrong object,
 or with the wrong strictness, gives a test that reads like a guarantee and holds
 nothing.
 
+### Deviation 48 — the centre's authored height has no slack at all
+
+| # | What | Resolution |
+| --- | --- | --- |
+| 48 | `47:58`'s height of **62** is exactly the sum of the three authored line boxes it contains: `16 + 2 + 26 + 2 + 16`. The layout is therefore correct only while every line box is exactly its nominal height, and anything that inflates one — the platform's text size, a font whose metrics round up — pushes the period line out of the block. A device reported **2.5px of bottom overflow** with "This month" clipped. |  The block is kept at the authored 62 and its content is scaled into it: one `BoxFit.scaleDown` around the whole three-line column, *uniform* so the lines keep their authored proportions, *scaleDown* so at nominal metrics the scale is 1 and nothing moves. It sits outside the one that already scales the total, and the two absorb different things — that one keeps a long **figure** off the arcs by shrinking only the figure, this one keeps three inflated **line boxes** inside 62. |
+
+Guarded across the platform's text sizes rather than at one of them: the old
+layout was clean at the default and broke at the notch above it, so a guard
+written at a single scale would have been written at the one value that could
+not fail. Three mutations fail — the outer box removed, `scaleDown` widened to
+`contain` (which would blow a short total up to fill 62), and the inner width
+bound replaced.
+
+The scan stops at 1.786× and excludes the two largest accessibility sizes.
+What breaks above it is not the centre but the **legend row**: `47:2` pins the
+percentage and the amount and flexes only the label, so past some width a 353px
+row is over-subscribed — the same limit the very-large-amount test records. Where
+exactly is a fact about glyph widths, and under the placeholder font every glyph
+is `fontSize` wide, so the real cutoff is higher than the test's. Asserting one
+would be asserting the test font.
+
+**The same defect, found once and then looked for.** With the centre fixed, the
+whole suite was re-run at 1.118× — the scale that matches the reported 2.5px —
+and `08.01`'s stat tile overflowed by a pixel for the same reason: `100:61`'s
+authored 66 leaves four pixels of slack around two line boxes. That one is fixed
+the opposite way, because a tile on a scrolling page can grow and a hole in a
+ring cannot: its authored height became a **minimum**. At 1.118× all 1639 tests
+are now clean.
+
 ### `Avatar` built, and a token that was missing — 2026-09-10
 
 | Component | Node | Variants | State |

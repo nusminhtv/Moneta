@@ -125,6 +125,17 @@ class DonutChart extends StatelessWidget {
   /// Key on the centre's total, which a one-category legend row repeats.
   static const Key centreValueKey = Key('DonutChart.centreValue');
 
+  /// Key on the box that scales the **total** to the centre's width.
+  static const Key centreValueFitKey = Key('DonutChart.centreValueFit');
+
+  /// Key on the box that scales the **whole centre block** to its bounds.
+  ///
+  /// Distinct from [centreValueFitKey] because the two absorb different
+  /// things: that one keeps a long figure off the arcs by shrinking only the
+  /// figure, this one keeps three inflated line boxes inside 62 by shrinking
+  /// all of them together. See the comment at its use.
+  static const Key centreFitKey = Key('DonutChart.centreFit');
+
   /// Key on the whole centre block.
   ///
   /// This, not the total's own box, is what can reach the arcs: the total is
@@ -215,49 +226,72 @@ class DonutChart extends StatelessWidget {
                 key: centreBlockKey,
                 width: centreWidth,
                 height: centreHeight,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      centreLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: theme.text.captionMd.copyWith(
-                        color: theme.colors.textTertiary,
-                      ),
-                    ),
-                    const SizedBox(height: centreLineGap),
-                    // Scaled down rather than truncated. The rest of this
-                    // component holds that a clipped amount is a lost amount,
-                    // and that applies most of all to the total: an ellipsis
-                    // here would turn 24.507.822 ₫ into "24.507…". A long
-                    // total gets smaller; it never gets cut off and never
-                    // reaches the arcs.
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        total.format(),
-                        key: centreValueKey,
-                        maxLines: 1,
-                        textAlign: TextAlign.center,
-                        style: theme.text.amountMd.copyWith(
-                          color: theme.colors.textPrimary,
+                // The block is a hard boundary and the lines are scaled to fit
+                // it, because `47:58`'s authored 62 is **exactly** the sum of
+                // the three authored line boxes: 16 + 2 + 26 + 2 + 16. The
+                // layout therefore has zero slack, and anything that inflates
+                // a line box by a fraction of a pixel pushes the period line
+                // out of the block — reported from a device as a 2.5px bottom
+                // overflow with "This month" clipped. Text scaling is the
+                // inflator that reproduces it: at iOS's first size above the
+                // default the two caption lines gain ~3.8px between them.
+                //
+                // Uniform, so the three lines keep their authored proportions;
+                // scaleDown, so at nominal metrics the scale is 1 and nothing
+                // moves. The inner [SizedBox] is what keeps the lines' width
+                // bounded inside an unconstrained [FittedBox], so they still
+                // ellipsise and the total still scales at [centreWidth].
+                child: FittedBox(
+                  key: centreFitKey,
+                  fit: BoxFit.scaleDown,
+                  child: SizedBox(
+                    width: centreWidth,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          centreLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: theme.text.captionMd.copyWith(
+                            color: theme.colors.textTertiary,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: centreLineGap),
+                        // Scaled down rather than truncated. The rest of this
+                        // component holds that a clipped amount is a lost
+                        // amount, and that applies most of all to the total:
+                        // an ellipsis here would turn 24.507.822 ₫ into
+                        // "24.507…". A long total gets smaller; it never gets
+                        // cut off and never reaches the arcs.
+                        FittedBox(
+                          key: centreValueFitKey,
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            total.format(),
+                            key: centreValueKey,
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            style: theme.text.amountMd.copyWith(
+                              color: theme.colors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: centreLineGap),
+                        Text(
+                          periodLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: theme.text.captionMd.copyWith(
+                            color: theme.colors.textTertiary,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: centreLineGap),
-                    Text(
-                      periodLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: theme.text.captionMd.copyWith(
-                        color: theme.colors.textTertiary,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],
