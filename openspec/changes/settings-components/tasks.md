@@ -45,7 +45,7 @@ into close-out, where a decorative test would already be committed.
 
 ## 3. SearchField
 
-- [ ] 3.1 `MonetaSearchField` at both authored states (`35:38`), registered with
+- [x] 3.1 `MonetaSearchField` at both authored states (`35:38`), registered with
   its describer case. State **derived** from the text; 50 tall (`13 + 24 + 13`,
   border painted inside); `bodyLg`; pill shape; the clear control inside a 44px
   hit area. Verified by
@@ -57,14 +57,14 @@ into close-out, where a decorative test would already be committed.
   **M5:** accept a `state` parameter → the source check must fail.
   **M6:** shrink the clear control to its 18px glyph → the hit-area measurement
   must fail.
-- [ ] 3.2 Controller ownership (D5): accept one, or create and dispose one, with
+- [x] 3.2 Controller ownership (D5): accept one, or create and dispose one, with
   replacement through `didUpdateWidget`. Verified by tests asserting that a
   **supplied** controller is still usable after the field is unmounted, that an
   **owned** controller reports itself disposed, and that a replaced controller
   is the one read and reported — not by the absence of an exception, which a
   missed disposal does not produce.
   **M7:** dispose the supplied controller too → the first assertion must fail.
-- [ ] 3.3 Boundaries: disabled accepts nothing and offers no clear; focus
+- [x] 3.3 Boundaries: disabled accepts nothing and offers no clear; focus
   changes nothing; a value longer than the field neither grows it nor hides the
   clear control; a pasted newline does not make it two lines tall. Verified by
   the same test file.

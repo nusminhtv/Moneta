@@ -5,6 +5,7 @@ import 'package:moneta/app/gallery/gallery_catalog.dart';
 import 'package:moneta/design_system/atoms/moneta_avatar.dart';
 import 'package:moneta/design_system/atoms/moneta_badge.dart';
 import 'package:moneta/design_system/atoms/moneta_chip.dart';
+import 'package:moneta/design_system/molecules/moneta_search_field.dart';
 
 /// Gallery sections for 📱 08 Profile & Settings.
 ///
@@ -12,6 +13,26 @@ import 'package:moneta/design_system/atoms/moneta_chip.dart';
 /// are: two agents editing one list collide on every line.
 final List<GallerySection> profileSections = [
   // --- PROFILE: add sections below ---
+  GallerySection(
+    component: 'SearchField',
+    figmaNodeId: '35:38',
+    // Both authored states, reached the way a user reaches them — by there
+    // being text or not. There is no `state` parameter to pass.
+    variants: [
+      GalleryVariant(
+        'State=Empty',
+        (_) => const MonetaSearchField(placeholder: 'Search transactions'),
+      ),
+      GalleryVariant(
+        'State=Filled',
+        (_) => MonetaSearchField(
+          placeholder: 'Search transactions',
+          controller: TextEditingController(text: 'Highlands'),
+          clearSemanticLabel: 'Clear search',
+        ),
+      ),
+    ],
+  ),
   GallerySection(
     component: 'Chip',
     figmaNodeId: '17:65',

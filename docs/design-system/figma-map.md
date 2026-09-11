@@ -92,7 +92,7 @@ returns only three pages; `5:9` and `5:10` are not among them.
 | TextField | `27:44` | 5 states |
 | TransactionRow | `29:70` | 4 types (Expense, Income, **Transfer**, **Pending**) — 2 of 4 done |
 | DateGroupHeader | `29:71` | 1 |
-| SearchField | `35:38` | 2 |
+| SearchField | `35:38` | 2 — **done** |
 | ListRow | `35:113` | 5 (Chevron, Value, Toggle, Badge, None) |
 | StatTile | `35:137` | 3 directions — **done** |
 | EmptyState | `35:166` | 2 (HasAction true/false) |

@@ -145,6 +145,13 @@ void main() {
       expect(button.variants, hasLength(45));
     });
 
+    test('SearchField covers both authored states', () {
+      final field = galleryCatalog.firstWhere(
+        (s) => s.component == 'SearchField',
+      );
+      expect(field.variants, hasLength(2));
+    });
+
     test('Chip covers the full 3 x 2 matrix', () {
       final chip = galleryCatalog.firstWhere((s) => s.component == 'Chip');
       expect(chip.variants, hasLength(MonetaChipType.values.length * 2));

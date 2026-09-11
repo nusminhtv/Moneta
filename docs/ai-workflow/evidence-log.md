@@ -1242,3 +1242,46 @@ the box and adds nothing to it (34.0 for `8 + 18 + 8`), where `Container` with
 these strokes inside the frame, so one rule reproduces both frames exactly —
 and both descriptions are wrong by two, in opposite directions, which is why no
 single fudge could have satisfied them.
+
+### SearchField: a 44px target that ate the authored height
+
+The clear control's glyph is 18, which is not a touch target, so it sits inside
+a `minTouchTarget` box — the decision `BottomSheet`'s close control already
+took. Built content-driven, that 44px box became the tallest thing in the row
+and the field came out **70 tall**: `13 + 44 + 13`. The authored 50 was simply
+gone, and the height test said so on the first run.
+
+So the height is **fixed** — the line box plus the padding either side —
+computed from the platform's `TextScaler` rather than assuming 1.0. Fixed is
+what lets a 44px control sit beside a 24px line without moving the box; taking
+the scaler is what stops fixed from meaning frozen. A test asserts 50 at 1.0 and
+*greater than* 50 at 1.3, with the clear control still 44 at both.
+
+The off-scale **13** is authored, not rounded. `13 + 24 + 13` is the 50 that
+`102:1213` measures; 12 would give the 48 the component's description claims.
+Two sources agree on 13 and one on 12, and the two that agree are the ones that
+were measured.
+
+**M5 — accept a `state` parameter.** The source check fails. It is scoped to the
+constructor's parameter block, because the widget's own `createState` and its
+`State` subclass both contain the word and a whole-file check would fail against
+a *correct* implementation — the guard-the-guard assertions pin the slice.
+
+**M6 — shrink the clear control to its 18px glyph.** Three fail: the target
+measurement and both height tests.
+
+**M7 — dispose the supplied controller too.** The ownership test fails with *"A
+TextEditingController was used after being disposed"*. The assertion is that a
+caller's controller still **works** after the field is unmounted, not that
+nothing threw — a missed disposal throws nothing at all, so "no exception" would
+have passed for either behaviour. The owned direction is checked the other way
+round, by reaching the field's own controller through the `EditableText` it built
+and requiring `addListener` to throw afterwards.
+
+**M8 — honour `enabled` in the decoration but not in the input.** The disabled
+test fails, because it types into the field and asserts the text did not change
+rather than only reading the colour.
+
+`MonetaTextField` has the same clear-control defect this component avoided — its
+trailing icon's `GestureDetector` wraps only the 24px glyph. Out of scope here
+and left as it is; recorded so it is a known defect rather than an unknown one.
