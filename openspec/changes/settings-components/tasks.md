@@ -75,7 +75,7 @@ into close-out, where a decorative test would already be committed.
 
 ## 4. Numpad
 
-- [ ] 4.1 `NumpadKey` at both authored variants (`36:91`), registered with its
+- [x] 4.1 `NumpadKey` at both authored variants (`36:91`), registered with its
   describer case — digit label in `headingH2`, 22px action glyph, 56 tall,
   inert without a callback. Verified by
   `test/design_system/molecules/numpad_test.dart` and a catalog assertion of the
@@ -84,7 +84,7 @@ into close-out, where a decorative test would already be committed.
   catalog variant for it → the literal count must fail while the enum-derived
   count passes. Adding only a catalog entry would fail both and would
   demonstrate nothing, which is the point of the mutation.
-- [ ] 4.2 `Numpad` (`36:92`) registered with its describer case — 3 × 4, rows
+- [x] 4.2 `Numpad` (`36:92`) registered with its describer case — 3 × 4, rows
   filling the given width, digits in reading order, action key reporting a
   delete with the set's `chevronLeft` glyph, nothing thrown with no callbacks.
   Verified by the same file: equal-width keys at 353, 393 **and 200**, every
@@ -94,7 +94,7 @@ into close-out, where a decorative test would already be committed.
   Note: this task lands with the third-last cell already a **required**
   parameter, because 4.3 makes it one and a default added here would have to be
   removed there.
-- [ ] 4.3 The third-last cell as that required parameter (D8): the authored
+- [x] 4.3 The third-last cell as that required parameter (D8): the authored
   decimal key, or an **empty cell** for a PIN, no default. Verified by a test
   that the PIN pad renders one fewer key and can report no decimal, and by the
   amount pad reporting one.

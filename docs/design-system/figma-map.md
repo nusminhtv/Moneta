@@ -97,8 +97,8 @@ returns only three pages; `5:9` and `5:10` are not among them.
 | StatTile | `35:137` | 3 directions — **done** |
 | EmptyState | `35:166` | 2 (HasAction true/false) |
 | AmountInput | `36:76` | 2 — **done** |
-| NumpadKey | `36:91` | 4 |
-| Numpad | `36:92` | 1 |
+| NumpadKey | `36:91` | **2** — the description claims 4, the set has 2; **done** |
+| Numpad | `36:92` | 1 — **done** |
 | SegmentedItem | `36:167` | 2 — **done** |
 | SegmentedControl | `36:168` | 1 — **done** |
 | TabItem | `38:109` | 4 (2 styles × selected) |

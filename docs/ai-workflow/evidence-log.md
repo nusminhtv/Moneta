@@ -1285,3 +1285,58 @@ rather than only reading the colour.
 `MonetaTextField` has the same clear-control defect this component avoided — its
 trailing icon's `GestureDetector` wraps only the 24px glyph. Out of scope here
 and left as it is; recorded so it is a known defect rather than an unknown one.
+
+### Numpad: a keypad that mirrored itself under right-to-left text
+
+The RTL scenario was written expecting to be boring, and it failed on the first
+run: a plain `Row` mirrors under `TextDirection.rtl`, so `1` was painted at the
+top **right** and `3` at the top left.
+
+That is wrong, and not a matter of taste. Every phone dialer and system keypad
+keeps `1` at the top left in right-to-left locales, because a keypad's digits
+are **positional** — a mirrored pad makes a memorised PIN wrong. The rows now
+pin `textDirection: TextDirection.ltr`, with the reason in the code.
+
+The assertion is on **positions**, not tree order: a `Row` reverses what it
+paints without reordering its children, so an order assertion over the widget
+tree would have passed for both the mirrored and the correct pad. That is the
+same class of mistake this log keeps recording — asserting the thing that cannot
+fail.
+
+### The variant count that only a literal could catch
+
+`36:91`'s description claims *"2 types x 2 states"* and this map recorded
+**four**. The set has two: `Type=Digit, State=Default` and `Type=Action,
+State=Default`. Built as authored; the map is corrected rather than the
+component inflated. A candidate for the file's twelve deliberate mistakes.
+
+**M9 — add a `pressed` member to the key-type enum *and* register a catalog
+variant for it.** The literal `hasLength(2)` fails while
+`hasLength(NumpadKeyType.values.length)` **passes**, because the catalog is
+built from the enum. That is the whole argument for pinning counts both ways,
+demonstrated rather than asserted: the enum-derived count is what let a wrong
+number sit in this file.
+
+**M10 — fix the key width at `36:77`'s standalone 109.** All three width cases
+fail, including 200, which is the one that would overflow. `36:92`'s description
+says *"Rows are FILL so the pad always spans the 353px content column"* and
+`08.05` puts it across 393, so neither number is in the code.
+
+### The decimal key a PIN cannot use
+
+`36:92` is authored **for amount entry** and its third-last cell is a decimal
+key. `08.05` reuses the pad for a six-digit PIN. A decimal key there is either
+silently dropped or typed into the PIN, and a key identical to the nine beside
+it that does nothing is a defect — the first bug report would be "the dot key is
+broken".
+
+So the cell is a required parameter with **no default**: the authored decimal
+key, or an empty cell. A test asserts the PIN pad renders eleven keys rather
+than twelve, that nothing can report a decimal, and that the other keys do not
+move. Recorded as a deviation from `36:92`, its cause a reuse the file does not
+anticipate.
+
+`36:77` also carries `radius/md` on a key with **no fill**, and the set has no
+pressed state to reveal it, so nothing paints inside the rounded box. Kept as a
+constant and asserted, so the authored number is recorded rather than quietly
+lost.

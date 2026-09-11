@@ -6,6 +6,7 @@ import 'package:moneta/design_system/atoms/moneta_avatar.dart';
 import 'package:moneta/design_system/atoms/moneta_badge.dart';
 import 'package:moneta/design_system/atoms/moneta_chip.dart';
 import 'package:moneta/design_system/molecules/moneta_search_field.dart';
+import 'package:moneta/design_system/molecules/numpad.dart';
 
 /// Gallery sections for 📱 08 Profile & Settings.
 ///
@@ -13,6 +14,44 @@ import 'package:moneta/design_system/molecules/moneta_search_field.dart';
 /// are: two agents editing one list collide on every line.
 final List<GallerySection> profileSections = [
   // --- PROFILE: add sections below ---
+  GallerySection(
+    component: 'NumpadKey',
+    figmaNodeId: '36:91',
+    // **Two**, which is the whole authored set — its description claims "2
+    // types x 2 states" and this map recorded four. No pressed or disabled
+    // variant is invented to reach that number.
+    variants: [
+      for (final type in NumpadKeyType.values)
+        GalleryVariant(
+          'Type=${type.figmaName}, State=Default',
+          (_) => NumpadKey(
+            type: type,
+            label: type == NumpadKeyType.digit ? '7' : null,
+            glyph: type == NumpadKeyType.action ? Numpad.actionGlyph : null,
+          ),
+        ),
+    ],
+  ),
+  GallerySection(
+    component: 'Numpad',
+    figmaNodeId: '36:92',
+    // One authored variant. Both trailing cells are rendered because the cell
+    // is this implementation's parameter, not Figma's — the deviation is
+    // reviewable here rather than only readable in the map. `DecimalPoint` is
+    // the authored one; `Empty` is what `08.05`'s PIN needs. The labels say
+    // only what the widget can be asked about, because the gallery's label
+    // check compares them against the widget it builds.
+    variants: [
+      GalleryVariant(
+        'Trailing=DecimalPoint',
+        (_) => const Numpad(trailing: NumpadTrailing.decimalPoint),
+      ),
+      GalleryVariant(
+        'Trailing=Empty',
+        (_) => const Numpad(trailing: NumpadTrailing.empty),
+      ),
+    ],
+  ),
   GallerySection(
     component: 'SearchField',
     figmaNodeId: '35:38',

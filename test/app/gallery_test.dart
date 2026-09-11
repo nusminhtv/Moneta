@@ -15,6 +15,7 @@ import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/molecules/budget_status.dart';
 import 'package:moneta/design_system/molecules/category_icon.dart';
 import 'package:moneta/design_system/molecules/chart_series.dart';
+import 'package:moneta/design_system/molecules/numpad.dart';
 import 'package:moneta/design_system/molecules/onboarding_illustration.dart';
 import 'package:moneta/design_system/molecules/pagination_dots.dart';
 import 'package:moneta/design_system/molecules/progress_bar.dart';
@@ -143,6 +144,28 @@ void main() {
         ),
       );
       expect(button.variants, hasLength(45));
+    });
+
+    test(
+      'NumpadKey covers the two authored variants, not the four claimed',
+      () {
+        // A **literal** two beside the enum expression. `36:91`'s description
+        // says "2 types x 2 states" and this repo's own map recorded four; an
+        // enum-derived count alone cannot fail when a member is added, which is
+        // how a wrong count survives. Adding `pressed` to the enum *and*
+        // registering a variant for it passes the expression and fails this.
+        final key = galleryCatalog.firstWhere(
+          (s) => s.component == 'NumpadKey',
+        );
+        expect(key.variants, hasLength(NumpadKeyType.values.length));
+        expect(key.variants, hasLength(2));
+      },
+    );
+
+    test('Numpad renders both trailing cells', () {
+      final pad = galleryCatalog.firstWhere((s) => s.component == 'Numpad');
+      expect(pad.variants, hasLength(NumpadTrailing.values.length));
+      expect(pad.variants, hasLength(2));
     });
 
     test('SearchField covers both authored states', () {

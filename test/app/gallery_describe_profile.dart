@@ -3,6 +3,7 @@ import 'package:moneta/design_system/atoms/moneta_avatar.dart';
 import 'package:moneta/design_system/atoms/moneta_badge.dart';
 import 'package:moneta/design_system/atoms/moneta_chip.dart';
 import 'package:moneta/design_system/molecules/moneta_search_field.dart';
+import 'package:moneta/design_system/molecules/numpad.dart';
 
 /// Describes gallery variants for 📱 08 Profile & Settings.
 ///
@@ -10,6 +11,12 @@ import 'package:moneta/design_system/molecules/moneta_search_field.dart';
 /// chain the describers together.
 String? describeProfile(Widget widget) => switch (widget) {
   // --- PROFILE: add cases below ---
+  // Carries the state word too. There is exactly one authored state and the
+  // catalog labels say so, and the label check requires the description to
+  // name any property a label names.
+  NumpadKey(:final type, :final label, :final glyph) =>
+    'NumpadKey(${type.name},Default,$label,${glyph?.name})',
+  Numpad(:final trailing) => 'Numpad(${trailing.name})',
   // Names the state **and** the text it is derived from. The catalog labels
   // these `State=Empty` and `State=Filled`, and the label check requires the
   // description to carry any property a label names — so the description says
