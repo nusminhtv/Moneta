@@ -74,7 +74,16 @@ class ProfileScreen extends StatelessWidget {
   /// Avatar size, from `100:35`: `Size=56`.
   static const MonetaAvatarSize avatarSize = MonetaAvatarSize.lg;
 
-  /// Height of a stat tile, from `100:61`: 66.
+  /// Height of a stat tile, from `100:61`: 66 — as a **minimum**, not a cap.
+  ///
+  /// Authored 66 holds two authored line boxes (22 + 16) inside 12px of
+  /// padding on each side, which leaves four pixels of slack. That is less
+  /// than the platform's own text size can take: one notch above the default
+  /// the two lines want 42.5px of the 42 available, and the tile overflowed.
+  ///
+  /// A tile is free to grow, so it does. The donut's centre is the opposite
+  /// case — its boundary is a hole in a ring and cannot grow, so there the
+  /// content is scaled to fit instead.
   static const double statHeight = 66;
 
   /// Gap between the tiles, from `100:60`'s 112.33 columns in a 353 row: 8.
@@ -215,8 +224,10 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = context.moneta;
 
-    return SizedBox(
-      height: ProfileScreen.statHeight,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minHeight: ProfileScreen.statHeight,
+      ),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: theme.colors.surfaceRaised,

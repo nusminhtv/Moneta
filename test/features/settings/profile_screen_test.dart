@@ -29,6 +29,7 @@ void main() {
     VoidCallback? onEdit,
     VoidCallback? onOpenSettings,
     String name = 'Minh Tran',
+    TextScaler textScaler = TextScaler.noScaling,
   }) => pumpMonetaWidget(
     tester,
     ProfileScreen(
@@ -40,6 +41,7 @@ void main() {
       onOpenSettings: onOpenSettings,
     ),
     surfaceSize: const Size(393, 1000),
+    textScaler: textScaler,
   );
 
   group('identity', () {
@@ -159,6 +161,69 @@ void main() {
         hasLength(1),
         reason: 'the columns are equal in `100:60`: $widths',
       );
+    });
+  });
+
+  group('a tile grows rather than clipping its own figure', () {
+    /// The text sizes iOS reports, from `xSmall` through the first
+    /// accessibility size.
+    const platformTextScales = <double>[
+      0.823,
+      0.882,
+      0.941,
+      1,
+      1.118,
+      1.235,
+      1.353,
+      1.786,
+    ];
+
+    testWidgets('no tile overflows at any platform text size', (tester) async {
+      // The defect: `100:61`'s authored 66 holds the two authored line boxes
+      // (22 + 16) inside 12px of padding each side — 42 of room for 38 of
+      // text. Four pixels of slack is less than the platform's own text size
+      // can take, and **one notch above the default the tile overflowed by a
+      // pixel**. Found by running the whole suite at that scale after the
+      // donut's centre overflowed on a device for the same reason.
+      //
+      // A tile on a scrolling page can grow, so the fix lets it, and this is
+      // the assertion that says so.
+      for (final scale in platformTextScales) {
+        await pumpProfile(tester, textScaler: TextScaler.linear(scale));
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'a stat tile overflowed at ${scale}x text',
+        );
+
+        final heights = <double>[];
+        for (final stat in stats) {
+          heights.add(
+            tester
+                .getRect(
+                  find
+                      .ancestor(
+                        of: find.text(stat.value),
+                        matching: find.byType(DecoratedBox),
+                      )
+                      .first,
+                )
+                .height,
+          );
+        }
+        expect(
+          heights,
+          everyElement(
+            greaterThanOrEqualTo(ProfileScreen.statHeight - 0.01),
+          ),
+          reason: 'the authored 66 is a floor, and it was breached: $heights',
+        );
+        expect(
+          heights.map((h) => h.round()).toSet(),
+          hasLength(1),
+          reason: 'the three tiles must stay one row, not a staircase',
+        );
+      }
     });
   });
 
