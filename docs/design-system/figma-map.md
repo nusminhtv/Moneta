@@ -1218,3 +1218,40 @@ Fixed, and the existing test that asserted the second behaviour was **replaced**
 rather than worked around: it encoded exactly what the component description
 forbids. A toggle row now has one action, and `onTap` is ignored on it.
 
+
+### `MonetaAvatar.initialsOf` excludes every non-Latin alphabet — 2026-09-11
+
+Found while `home-greeting` was copying its letter class, and recorded here
+rather than fixed, because `Avatar` is a built design-system component with its
+own node (`21:121`), its own variant tests and its own fidelity pass — changing
+it is a design-system change, not a side effect of a Home greeting.
+
+`initialsOf` strips with `RegExp('[^A-Za-zÀ-ỹ]')`. **`À-ỹ` is not a Latin
+range**: it is the contiguous span U+00C0–U+1EF9, which silently swallows
+Greek, Cyrillic, Hebrew, Arabic, Devanagari and Thai along with every symbol
+and combining mark between them, and stops just short of CJK and Hangul. It is
+wrong in both directions, and the first version of this note guessed which
+directions — the table below is measured output, not reasoning about the range:
+
+| Input | `[A-Za-zÀ-ỹ]` gives | `\p{L}` gives |
+| --- | --- | --- |
+| `李小龙` | *(nothing)* | `李` |
+| `김수현` | *(nothing)* | `김` |
+| `× Minh` | `×M` | `M` |
+| `÷` | `÷` | *(nothing)* |
+| `Привет Мир` | `ПМ` | `ПМ` |
+| `Ωμέγα` | `Ω` | `Ω` |
+| `Đặng Thu Thảo` | `ĐT` | `ĐT` |
+
+So a Chinese, Japanese or Korean name renders the **icon** fallback permanently
+— `initialsOf(name).isNotEmpty` at `moneta_avatar.dart:144` is what chooses
+between initials and the icon — while `×` (U+00D7 MULTIPLICATION SIGN) and `÷`
+(U+00F7) are treated as letters and drawn as somebody's initials. Cyrillic and
+Greek happen to work, by accident of falling inside the span rather than by
+intent. Nothing in the component's tests can see any of this: every fixture in
+them is a Latin name.
+
+`Profile.firstName` now uses `RegExp(r'[^\p{L}]', unicode: true)` and holds the
+table above in `test/features/settings/profile_store_test.dart`. The two are
+deliberately no longer the same class, which is a divergence worth closing in a
+`design-system-corrections` task rather than leaving as a coincidence.

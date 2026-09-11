@@ -84,6 +84,22 @@ void main() {
 
       expect(find.text('Hi there'), findsOneWidget);
     });
+
+    testWidgets('and on a stored name that yields nothing', (tester) async {
+      // The profile **exists** here — only its name is useless. Asserted on
+      // the rendered bar and not only on `greetingFor`, because the widget is
+      // free to take a different route to the fallback than the function does:
+      // a `profile == null` check in the build would pass every test above
+      // and render `Hi ` here.
+      await pumpHome(tester, profile: const Profile(name: '123'));
+
+      expect(find.text('Hi there'), findsOneWidget);
+      expect(
+        find.textContaining(RegExp(r'^Hi\s*$')),
+        findsNothing,
+        reason: 'a greeting with nothing after `Hi` reached the screen',
+      );
+    });
   });
 
   testWidgets('every Home state shows the identical greeting', (tester) async {

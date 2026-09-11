@@ -47,12 +47,28 @@ class Profile extends Equatable {
   /// done reliably, and a heuristic that is usually right makes the greeting
   /// unpredictable, which is worse than being consistently one thing.
   ///
-  /// Non-letters are stripped with the same class `MonetaAvatar.initialsOf`
-  /// uses, so `Đặng` survives and `Minh,` becomes `Minh`.
+  /// Non-letters are stripped, so `Minh,` becomes `Minh` and `Đặng` survives.
+  ///
+  /// The first word **that has letters**, not simply the first word: `123 Minh`
+  /// greets Minh rather than nobody. A leading house number or a stray dash is
+  /// not what someone is called.
+  ///
+  /// Uses Unicode's own letter property rather than the `[A-Za-zÀ-ỹ]` range
+  /// `MonetaAvatar.initialsOf` uses. `change-verifier` measured what that range
+  /// does: `李小龙` and `김수현` yield **nothing**, so a Chinese or Korean name
+  /// would be greeted as a stranger forever — while `×` and `÷` (U+00D7,
+  /// U+00F7) and a Devanagari danda fall *inside* it and would be greeted as
+  /// names. `\p{L}` gets both right.
+  ///
+  /// **`MonetaAvatar.initialsOf` still has that range and therefore that
+  /// defect.** It is a design-system component with its own node and its own
+  /// tests; changing it is not this change's to do, and it is recorded rather
+  /// than left to be discovered.
   String get firstName {
+    final letters = RegExp(r'[^\p{L}]', unicode: true);
     for (final word in name.split(RegExp(r'\s+'))) {
-      final letters = word.replaceAll(RegExp('[^A-Za-zÀ-ỹ]'), '');
-      if (letters.isNotEmpty) return letters;
+      final stripped = word.replaceAll(letters, '');
+      if (stripped.isNotEmpty) return stripped;
     }
     return '';
   }

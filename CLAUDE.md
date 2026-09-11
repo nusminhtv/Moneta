@@ -130,6 +130,16 @@ Boundaries are machine-enforced by `tool/check_architecture.dart`:
   measures that font, not the design — so assert font-independent structure
   (a child stays inside its parent, a column respects its cap, nothing overflows)
   and leave real type metrics to goldens run on a fixed platform.
+- **Pumping a second, structurally identical widget tree reuses the first one's
+  `ProviderScope`.** A helper that pumps `ProviderScope(overrides: […], child:
+  MaterialApp(…))` once per case looks like it gives each case its own
+  container; Flutter's element tree reconciles the two and **keeps the first
+  case's overrides**. Every later case then asserts against the first case's
+  data and passes for code that has none of the behaviour. This is how a Home
+  test covering loading / loaded / error passed a mutation that gave the error
+  arm a different greeting. Tear the tree down between cases —
+  `await tester.pumpWidget(const SizedBox.shrink());` — or give each scope a
+  distinct `key`.
 - **Never `await` real I/O inside `testWidgets`.** Its body runs in a `FakeAsync`
   zone, so a real future — `rootBundle.loadString`, a file read, a socket — never
   completes and the test **hangs indefinitely instead of failing**. Use plain

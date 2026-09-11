@@ -1976,3 +1976,56 @@ That is the ninth test this session that could not fail, and the first whose
 cause was the harness rather than the assertion — worth recording separately,
 because "assert across the states" was the right idea and it still proved
 nothing.
+
+### What `change-verifier` found after that: the letter class was a guess
+
+The rule shipped its first draft with `RegExp('[^A-Za-zÀ-ỹ]')`, copied from
+`MonetaAvatar.initialsOf` on the reasoning that one class for names is better
+than two. `change-verifier` asked what that range actually contains. Measured,
+not reasoned about:
+
+| Input | `[A-Za-zÀ-ỹ]` | `\p{L}` |
+| --- | --- | --- |
+| `李小龙` | *(empty)* | `李小龙` |
+| `김수현` | *(empty)* | `김수현` |
+| `× Minh` | `×` | `Minh` |
+| `÷` | `÷` | *(empty)* |
+| `Đặng` | `Đặng` | `Đặng` |
+
+Both directions are wrong. A Chinese or Korean user would be greeted `Hi there`
+forever — not a crash, not a visible defect, just a permanent quiet failure for
+a whole class of names. And `×` is U+00D7 MULTIPLICATION SIGN, which sits inside
+the span and would have been greeted as somebody's name.
+
+`À-ỹ` is not "Latin with diacritics": it is the contiguous span U+00C0–U+1EF9,
+which also contains Greek, Cyrillic, Hebrew, Arabic, Devanagari and Thai — and
+every symbol and combining mark between them — while stopping just short of CJK
+and Hangul. It reads like a range of letters and is a range of code points.
+
+Now `RegExp(r'[^\p{L}]', unicode: true)`, with the table above pinned in
+`test/features/settings/profile_store_test.dart` plus a property loop asserting
+the *rule* — five alphabets are letters, six symbols are not — so a class
+narrowed back to a range fails on the property and not only on the fixtures.
+
+**M4 — narrow the class back to `[A-Za-zÀ-ỹ]`.** Five tests fail.
+**M5 — return the first word instead of the first word with letters.** Three
+fail; `123 Minh` greets nobody.
+**M6 — fall back on `profile == null` in the widget.** Two fail, including the
+new widget-level case. M2 above pinned this on `greetingFor` only; a build is
+free to reach the fallback by its own route, so the stored-`123` profile is now
+asserted on the rendered bar.
+
+`MonetaAvatar.initialsOf` still carries the narrow range and therefore the same
+defect. It is a built design-system component with its own Figma node and its
+own tests, so it is **recorded in `docs/design-system/figma-map.md`, not fixed
+here** — a Home greeting is not the place a design-system atom changes shape.
+
+Two process notes, recorded rather than tidied away:
+
+- Tasks 1.1 and 2.1 went into one commit, against CLAUDE.md rule 3 (one
+  checkpoint per task).
+- The first version of the `figma-map.md` note reasoned about what `À-ỹ`
+  excludes instead of measuring it, and got two of seven rows wrong — it claimed
+  Cyrillic and Greek were excluded when the span contains them. Caught by
+  running the probe before committing the claim. The same mistake as the class
+  itself: a range that reads like a description of letters.

@@ -49,6 +49,20 @@ void main() {
       '  Minh   Tran  ': 'Minh',
       'Minh, Tran': 'Minh',
       "O'Brien Nguyen": 'OBrien',
+      // A leading word with no letters is skipped, not returned. A house
+      // number in front of a name does not make its owner a stranger.
+      '123 Minh': 'Minh',
+      '--- Minh': 'Minh',
+      // Letters outside Latin-1. The first draft used `[A-Za-zÀ-ỹ]`, under
+      // which both of these were empty — a Chinese or Korean user would have
+      // been greeted as a stranger forever, silently.
+      '李小龙': '李小龙',
+      '김수현': '김수현',
+      'Привет Мир': 'Привет',
+      // And the other direction: `×` is U+00D7, inside that same range and
+      // not a letter. Under the first draft this greeted `Hi ×`.
+      '× Minh': 'Minh',
+      '÷': '',
       '👨‍👩‍👧': '',
       '123': '',
       '   ': '',
@@ -60,6 +74,26 @@ void main() {
         expect(Profile(name: entry.key).firstName, entry.value);
       });
     }
+
+    test("the letter class is Unicode's, not a Latin-1 range", () {
+      // The table rows above pass under any class that happens to cover the
+      // exact strings in them. This asserts the property the rows stand for,
+      // so a class narrowed back to a range fails here and not only there.
+      for (final name in const ['李小龙', '김수현', 'Ωμέγα', 'עברית', 'あき']) {
+        expect(
+          Profile(name: name).firstName,
+          name,
+          reason: '$name is letters, whatever alphabet they are from',
+        );
+      }
+      for (final symbol in const ['×', '÷', '।', '§', '°', '\u0301']) {
+        expect(
+          Profile(name: symbol).firstName,
+          '',
+          reason: '$symbol is not a letter, whatever range it sits in',
+        );
+      }
+    });
 
     test('a name in the other order is greeted by surname, as recorded', () {
       // Asserted rather than left as a comment, so the cost of the rule is a
