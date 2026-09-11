@@ -69,12 +69,23 @@
   identity to edit: no accounts feature, no stored profile.
 - [ ] 6.2 `08.04` Security (`100:729`) — every row leads to auth or biometrics
   that do not exist, so the screen would be disabled rows.
-- [ ] 6.3 `08.05` Change PIN (`101:488`) — needs `Numpad` (`36:92`), unbuilt.
+- [ ] 6.3 `08.05` Change PIN (`101:488`) — `Numpad` (`36:92`) and `OtpField`
+  both exist now (`settings-components`, 2026-09-11). What remains is a **PIN
+  store**: somewhere to keep a PIN and something that asks for it.
 - [ ] 6.4 `08.07` Currency & language (`101:863`) — needs multi-currency;
   `walletCurrencyProvider` is a single fixed `Currency.vnd`.
-- [ ] 6.5 `08.08` Manage categories (`101:978`) — needs `Chip` (`17:65`), and
-  categories are a fixed enum in `lib/core`.
-- [ ] 6.6 `08.09` Edit category (`102:794`) — same, plus custom colours.
+- [ ] 6.5 `08.08` Manage categories (`101:978`) — `Chip` (`17:65`) exists now.
+  What remains: categories are a fixed enum in `lib/core`, so rename, reorder
+  and archive have nowhere to persist. The screen's *usage* half — real counts
+  and totals per category, which its Purpose asks for — needs nothing new.
+  Note `Chip` now occupies 44px against the file's 34, so the filter row's
+  layout shifts; recorded in `figma-map.md`.
+- [ ] 6.6 `08.09` Edit category (`102:794`) — same store, plus a colour
+  override that every chart and `CategoryIcon` must read. `SpendCategory`'s
+  `chartSlot` is a fixed enum property, so this is an app-wide resolution layer,
+  not a screen.
 - [ ] 6.7 `08.10` Premium paywall (`102:1044`) — no purchases.
-- [ ] 6.8 `08.11` Help & FAQ (`102:1189`) — needs `SearchField`, unbuilt.
+- [ ] 6.8 `08.11` Help & FAQ (`102:1189`) — `SearchField` exists now, and the
+  answers are static content the annotation says restate the product's own
+  behaviour. **Nothing blocks this screen any more.**
 

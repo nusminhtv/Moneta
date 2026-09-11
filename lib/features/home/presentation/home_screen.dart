@@ -100,8 +100,11 @@ class HomeScreen extends StatelessWidget {
   /// component default left unoverridden: `AppBar/LargeTitle`'s own sample is
   /// titled "Transactions" with a search action, and the instance overrides the
   /// title to "Hi, Minh" without swapping the icon. Reproducing it would leave
-  /// the notification centre with no way in, and Home has nothing to search —
-  /// `SearchField` (`35:38`) is unbuilt and search belongs to Transactions.
+  /// the notification centre with no way in, and Home has nothing to search.
+  /// `SearchField` (`35:38`) is built as of `settings-components`, which does
+  /// not change the deviation: the reason was never the missing component, it
+  /// was that search belongs to Transactions and the bell has nowhere else to
+  /// live.
   /// Deviation recorded in `docs/design-system/figma-map.md`.
   final VoidCallback? onOpenNotifications;
 

@@ -178,8 +178,10 @@ void main() {
     testWidgets('the amount can actually be entered', (tester) async {
       // The bug this guards against has already happened once in this project:
       // a form that demanded a value and gave no way to supply it. Figma pairs
-      // the hero amount with a Numpad this design system does not have, so the
-      // screen carries a hidden field instead.
+      // the hero amount with a Numpad the design system lacked when this screen
+      // shipped, so it carries a hidden field instead. `Numpad` exists now, and
+      // rewiring this screen to it is deferred — this test holds either way,
+      // because it asserts that the amount can be entered, not how.
       final entered = <Money>[];
       await pumpStep2(tester, onAmountChanged: entered.add);
 

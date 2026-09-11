@@ -424,13 +424,87 @@ screens to draw.
   page, `🧩 Components / Charts` (`5:12`), queried on 2026-09-09. Budgets —
   history is still not built, but nothing is missing except the work. It belongs
   with the Insights charts, which come from the same page.
-- **`Numpad`** (`36:92`) and **`NumpadKey`** (`36:91`) exist in Figma and are
-  not built. `04.04` pairs the hero amount with the numpad; the screen uses a
-  hidden `EditableText` behind the figure instead — the same composition the OTP
-  screen already uses. Shipping without either would have repeated the
-  add-transaction bug: a form demanding a value it gives no way to enter.
+- **`Numpad`** (`36:92`) and **`NumpadKey`** (`36:91`) were unbuilt when `04.04`
+  shipped, so that screen uses a hidden `EditableText` behind the figure — the
+  same composition the OTP screen already uses. Shipping without either would
+  have repeated the add-transaction bug: a form demanding a value it gives no way
+  to enter. **Both are built as of `settings-components` (2026-09-11)**, so the
+  reason above is now historical: `04.04` could be rewired to the real pad, and
+  has not been. That is deferred work, not a missing component.
 - **`Snackbar`** (`42:305`) is unbuilt. Create-flow failures land on the amount
   field, which is where the problem is and does not disappear on a timer.
+
+### settings-components — five sets, and what reading them cost — 2026-09-11
+
+`Badge` (`17:32`), `Chip` (`17:65`), `SearchField` (`35:38`), `NumpadKey`
+(`36:91`) and `Numpad` (`36:92`) are built. Five readings are recorded here
+because each is weaker than a transcription, and a later fidelity pass should be
+able to disagree with a recorded number rather than guess at an unrecorded one.
+
+**One stroke convention, and the two descriptions it makes wrong.** Two
+component descriptions state a height their own frame contradicts. Rather than
+settle each by preference, one rule was tested against both frames: Figma draws
+these strokes **inside** the frame, so the frame *is* the padding box, and
+`DecoratedBox` wrapping `Padding` reproduces that exactly — the border paints
+inside and adds nothing. Measured: `DecoratedBox` + `Padding(vertical: 8)` + an
+18px line is **34.0**, where the same content in a `Container` with `padding:`
+is **36.0**.
+
+| | Description | Frame | Padding + line, stroke inside | Built |
+| --- | --- | --- | --- | --- |
+| `Chip` `17:65` | 36 | **34** (`101:1002`) | `8 + 18 + 8` = 34 | 34 |
+| `SearchField` `35:38` | 48 | **50** (`102:1213`) | `13 + 24 + 13` = 50 | 50 |
+
+The alternative convention — strokes outside, the codegen folding them into the
+reported padding — explains `SearchField` (`12 + 24 + 12` + 2 = 50, keeping 12 on
+the spacing scale) and **breaks** `Chip` (`8 + 18 + 8` + 2 = 36 ≠ its 34 frame).
+One rule explains both frames; the other explains one. Both descriptions are
+wrong by two, in opposite directions, which is why no single fudge could satisfy
+them.
+
+- **`SearchField`'s 13px vertical padding is off the spacing scale**, which
+  holds 12 and 16. Authored, not rounded: the codegen reports 13 and the 50px
+  frame confirms it. Rounding to 12 would have produced the 48 the description
+  claims and missed the frame.
+- **`Chip` occupies 44px while painting 34.** Its description makes the touch
+  target the caller's problem (*"must sit inside a >=44px scroll row"*); the
+  component owns it instead, the way `MonetaCheckbox`/`MonetaRadio` already do
+  with `hitSize`. **Consequence for `08.08`:** its filter row becomes 44 tall
+  where the file draws 34, and everything below shifts. A deviation for that
+  screen to record when it is built.
+- **An input chip has a minimum width of two touch targets.** Not authored. The
+  close control takes a 44px square, which on a short label would squeeze the
+  select area below 44. It changes no authored instance — `08.08`'s two chips
+  are `Type=Filter`, which has no close control and no minimum.
+- **`NumpadKey` has two variants, and its description claims four.** The set
+  contains `Type=Digit, State=Default` and `Type=Action, State=Default`. This
+  map recorded 4 until now. **Candidate for the twelve deliberate mistakes.**
+- **The action key wears `icon/chevron-left`** (`10:39`), as authored, because
+  the 50-icon set contains **no backspace or delete glyph**. An observation, not
+  a correction.
+- **`36:77` carries `radius/md` on a key with no fill**, and the set has no
+  pressed state to reveal it, so nothing paints inside the rounded box. Kept as
+  a constant and asserted, so the number is recorded rather than lost.
+- **`Numpad`'s third-last cell is a parameter** — a deviation from `36:92`,
+  which always draws a decimal key. `08.05` reuses the pad for a six-digit PIN
+  where a decimal cannot be typed, so the cell is the authored decimal key or an
+  **empty cell**, with no default. A key identical to its nine neighbours that
+  does nothing is a defect, not a compromise.
+- **A plain `Row` mirrors the keypad under RTL.** Found by test: `1` was painted
+  top-right. The rows pin LTR, because a keypad's digits are positional — every
+  system keypad keeps `1` top-left in right-to-left locales.
+
+`ListRow._RowBadge` is **not** replaced by `MonetaBadge`. It fills `infoSubtle`,
+draws an `info` **border** and uses `captionMd`; the authored `Badge` has no
+border and uses `labelSm`. Unifying them changes a shipped widget with its own
+node (`35:113`), so it is deferred rather than done quietly.
+
+`MonetaSearchField` does **not** compose `MonetaTextField`: `27:44` is a
+`radius/md` rectangle with label, helper and error slots at 52, and `35:38` is a
+pill with none of those at 50. `MonetaTextField`'s trailing icon also has a
+24px tap target where this component gives its clear control 44 — a known defect
+in shipped code, recorded here rather than fixed in a change about new
+components.
 
 ### Values used with no recorded inspection, added here
 

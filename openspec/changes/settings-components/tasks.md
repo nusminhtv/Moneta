@@ -101,7 +101,7 @@ into close-out, where a decorative test would already be committed.
 
 ## 5. Close-out
 
-- [ ] 5.1 Documentation, in one pass. `docs/design-system/figma-map.md`: the
+- [x] 5.1 Documentation, in one pass. `docs/design-system/figma-map.md`: the
   five inventory rows marked done; the `NumpadKey` row corrected from 4 to 2
   with "the description claims 4"; the stroke convention recorded with the table
   from `design.md` (chip 34 against a 36 description, search 50 against a 48
@@ -119,7 +119,7 @@ into close-out, where a decorative test would already be committed.
   Verified by `rg` for the **new** strings — "the description claims 4", the
   stroke-convention heading, "13", "chevron-left", "44px box" — not for the
   component names, which are already in the file today.
-- [ ] 5.2 Full `tool/verify.sh --change settings-components` green with the
+- [x] 5.2 Full `tool/verify.sh --change settings-components` green with the
   evidence file committed, and `docs/ai-workflow/evidence-log.md` carrying
   **ten** mutation records (M1–M10) for this change with their outcomes.
   Verified by the gate's own summary and by `rg -c` over the log.

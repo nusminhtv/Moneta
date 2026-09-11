@@ -19,9 +19,12 @@ import 'package:moneta/features/budgets/presentation/budget_step_indicator.dart'
 /// meaningful."*
 ///
 /// **The amount is typed into a hidden field behind [AmountInput].** Figma
-/// pairs the hero amount with `Numpad` (`36:92`), which this design system does
-/// not have yet. Shipping the screen without either would repeat a bug this
-/// project already had once: a form demanding a value it gives no way to enter.
+/// pairs the hero amount with `Numpad` (`36:92`), which this design system did
+/// not have when this screen shipped. Shipping without either would have
+/// repeated a bug this project already had once: a form demanding a value it
+/// gives no way to enter. `Numpad` **exists now** (`settings-components`), so
+/// this screen could be rewired to it; that is deferred work rather than a
+/// missing component, and is recorded in `docs/design-system/figma-map.md`.
 /// The same hidden-`EditableText` composition is already used and tested by the
 /// OTP screen, so it is a pattern here rather than an invention.
 class CreateBudgetAmountScreen extends StatefulWidget {
