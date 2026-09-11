@@ -1571,3 +1571,46 @@ auth's own tests pass **unmodified**, and **M2** — accepting a domain with no
 dot — fails in **both** `test/core/email_test.dart` and
 `test/features/auth/credentials_test.dart`, which is what proves auth delegates
 to the moved rule instead of carrying a copy.
+
+### 08.11: the copy is written, not transcribed, and it says so
+
+The Figma seat had flipped to View by the time this screen was built, so
+`102:1229` and its siblings could not be read. The five questions are therefore
+**written**, not transcribed — and that is recorded in the code and in
+`figma-map.md` rather than presented as a reading.
+
+It is a smaller loss here than elsewhere, because annotation `102:1297` makes
+the *product* the source of truth for this content: *"the answers restate the
+product's actual behaviour — no cloud, local storage, manual balances — so the
+FAQ cannot drift from the design."* Every answer shipped is a fact about this
+app: the database is local, there is no network code in `lib/`, demo mode swaps
+to a generated ledger, and `SpendCategory` is a fixed enum.
+
+The requirement that "the answers do not contradict the app" was **dropped in
+planning** rather than implemented, because a test could only assert the
+constant against itself.
+
+**M3 — drop the diacritic folding table.** Ten tests fail.
+**M3b — keep only the `a` family.** Four fail, one per family removed. The
+table's rows are asserted as literal pairs rather than generated from the table,
+which is what makes the second mutation catch a partial deletion.
+
+**M4 — point every chevron down.** Two fail, and the one that matters is the
+per-item check: an assertion that "a chevron-up exists somewhere" would have
+passed for a screen where every chevron pointed up. The test also asserts that
+both states are present, so the per-item loop is never vacuously satisfied by an
+all-collapsed screen.
+
+**M5 — keep whatever was open when a search is cleared.** One fails.
+
+### The expansion set is keyed by question, not by index
+
+Filtering renumbers the list. A set of indices would expand a *different*
+question after a search removed one above it — the item at index 0 is not the
+same item it was. Keyed by question text, and there is a test for exactly that
+case.
+
+**M6 — leave `08.03`'s Help row `available: false`.** Two navigation tests fail.
+A third test now runs over both `08.01` and `08.03` asserting that **no row with
+a tap target also says "Not built yet"**, which is the contradiction three rows
+on `08.03` were carrying while `settings-components` cleared their blockers.

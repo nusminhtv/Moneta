@@ -104,6 +104,10 @@ GoRouter buildRouter({String initialLocation = defaultInitialRoute}) {
             builder: (context, state) =>
                 const NotificationSettingsRouteScreen(),
           ),
+          GoRoute(
+            path: SettingsRoutes.help,
+            builder: (context, state) => const HelpRouteScreen(),
+          ),
         ],
       ),
       // First run lives outside the shell: it has no navigation bar, and

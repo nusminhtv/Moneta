@@ -13,6 +13,8 @@ import 'package:moneta/app/notification_preferences.dart';
 import 'package:moneta/data/app_providers.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
+import 'package:moneta/design_system/theme/moneta_theme.dart';
+import 'package:moneta/features/settings/presentation/help_screen.dart';
 import 'package:moneta/features/settings/presentation/notification_settings_screen.dart';
 import 'package:moneta/features/settings/presentation/profile_screen.dart';
 import 'package:moneta/features/settings/presentation/settings_screen.dart';
@@ -29,6 +31,9 @@ class SettingsRoutes {
 
   /// `08.06` Notifications.
   static const String notifications = '/profile/settings/notifications';
+
+  /// `08.11` Help & FAQ.
+  static const String help = '/profile/settings/help';
 }
 
 /// `08.01`, wired.
@@ -65,11 +70,12 @@ class ProfileRouteScreen extends ConsumerWidget {
           accessory: ListRowAccessory.badge,
           badgeLabel: 'TRY FREE',
         ),
-        const ListRow(
+        ListRow(
           title: 'Help & FAQ',
-          subtitle: 'Not built yet',
+          subtitle: 'Answers, and a way to reach a person',
           leadingIcon: MonetaIconName.helpCircle,
-          accessory: ListRowAccessory.none,
+          accessory: ListRowAccessory.chevron,
+          onTap: () => context.push(SettingsRoutes.help),
         ),
         // The only destructive row, and the only label off text/primary.
         const ListRow(
@@ -165,20 +171,18 @@ class SettingsRouteScreen extends ConsumerWidget {
             ),
           ],
         ),
-        const SettingsGroup(
+        SettingsGroup(
           title: 'About',
           rows: [
-            SettingsRow.value(
+            const SettingsRow.value(
               title: 'Version',
               value: '0.1.0',
               icon: MonetaIconName.info,
             ),
             SettingsRow.push(
               title: 'Help & FAQ',
-              subtitle: 'Not built yet',
               icon: MonetaIconName.helpCircle,
-              onTap: null,
-              available: false,
+              onTap: () => context.push(SettingsRoutes.help),
             ),
           ],
         ),
@@ -267,4 +271,37 @@ class NotificationSettingsRouteScreen extends ConsumerWidget {
           );
         },
       );
+}
+
+/// `08.11`, wired.
+///
+/// Stateless and provider-free: the questions are constants and the search is
+/// the screen's own state, so there is nothing for a provider to hold.
+class HelpRouteScreen extends StatelessWidget {
+  /// Creates the route screen.
+  const HelpRouteScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return HelpScreen(
+      onBack: context.pop,
+      // No mail client is opened: `url_launcher` is not a dependency, and a
+      // button that silently fails is worse than one that says what it cannot
+      // do. The address is shown instead, which is a thing the user can act on.
+      onContactSupport: () => _showSupportAddress(context),
+    );
+  }
+
+  void _showSupportAddress(BuildContext context) {
+    final theme = context.moneta;
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        backgroundColor: theme.colors.surfaceRaised,
+        content: Text(
+          'Email support@moneta.app',
+          style: theme.text.bodyMd.copyWith(color: theme.colors.textPrimary),
+        ),
+      ),
+    );
+  }
 }

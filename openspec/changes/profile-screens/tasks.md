@@ -30,14 +30,14 @@ be two-sided.
 
 ## 2. 08.11 Help & FAQ
 
-- [ ] 2.1 `FaqEntry`, the five authored entries, and search with Vietnamese
+- [x] 2.1 `FaqEntry`, the five authored entries, and search with Vietnamese
   diacritic folding — pure, in `features/settings/domain`. Verified by
   `test/features/settings/faq_search_test.dart`: `du lieu` finds `dữ liệu`;
   `DU LIEU` and `Dữ Liệu` give the same result; a query matching neither
   question nor answer returns empty; the folding table is exercised for each
   vowel family it claims to cover.
   **Mutation:** drop the folding table → the `du lieu` case must fail.
-- [ ] 2.2 `08.11` (`102:1189`) — `SearchField`, five accordion items with the
+- [x] 2.2 `08.11` (`102:1189`) — `SearchField`, five accordion items with the
   first expanded, a support `ListRow`, and `EmptyState` with an action when
   nothing matches. Verified by `test/features/settings/help_screen_test.dart`:
   **each** item's chevron asserted against that item's own expanded state;
@@ -46,7 +46,7 @@ be two-sided.
   **Mutation:** point every chevron down → the per-item chevron test must fail
   (a test asserting only "one chevron-up exists" would survive it, which is why
   it is per item).
-- [ ] 2.3 Route it: `SettingsRoutes`, `router.dart`, `08.03`'s Help row loses
+- [x] 2.3 Route it: `SettingsRoutes`, `router.dart`, `08.03`'s Help row loses
   `available: false`, and `08.01`'s Help row gets its chevron and destination.
   Verified by `test/app/settings_route_test.dart` navigating from both entry
   points and back, and by asserting **no row on either screen still reads "Not
