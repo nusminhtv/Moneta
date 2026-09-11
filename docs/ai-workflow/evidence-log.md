@@ -1679,14 +1679,14 @@ not a saving. A negative "saving" on a paywall is a claim nobody should ship.
 error"* — an absent feature is `textDisabled`, not `expense`. The test asserts
 the colour on each of the twelve glyphs and then asserts the two colours
 **differ**, so the loop is comparing something rather than passing vacuously.
-**M14** — colouring the absent features `expense` — fails it.
+**M14 — colour the absent features `expense`.** It fails.
 
 **And the button is honest rather than inert.** There is no purchase plumbing in
 this app. A CTA that silently does nothing is worse than one that says what it
 cannot do, and one that appears to take money is worse than both — so it reports
 the chosen plan and the screen says purchases are unavailable, in the footer,
-without being asked. **M15** — making the CTA a no-op — fails, because the test
-asserts it reports *the selected plan*, not merely that it fires.
+without being asked. **M15 — make the CTA a no-op.** It fails, because the test asserts it
+reports *the selected plan*, not merely that it fires.
 
 **M16 — the Premium row with no destination.** Two routing tests fail. That row
 had no `onTap` at all before this change.
@@ -1699,8 +1699,7 @@ transaction is a property of the transaction, not of its category. **This getter
 is a display hint only.**"* `incomeCategories` is `{salary}` alone, so the
 Income chip would have listed one row and hidden every income-direction `gift`.
 
-The filter reads `TransactionDirection`. **M19** — filtering by
-`SpendCategory.isIncome` — fails the gift case.
+The filter reads `TransactionDirection`. **M19 — filter by `SpendCategory.isIncome`.** The gift case fails.
 
 **M17 — compute the month boundary in UTC.** Three tests fail, including a
 transaction at `2026-08-31T18:00Z`, which is `2026-09-01T01:00` in
@@ -1733,6 +1732,6 @@ The mutation survived, which is how I found out.
 Attempt three asserts the **whole screen's interactive set**: every node with a
 button flag or a tap action, by label, must be exactly
 `{Back, Expenses, Income}`. A fourth interactive thing anywhere — in a row, on
-an icon, behind a variable — fails it. **M20** fails now.
+an icon, behind a variable — fails it. **M20 — a `GestureDetector` on a row's icon.** It fails now.
 
 **M21 — both chips read selected.** The one-selected invariant fails.

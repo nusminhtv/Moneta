@@ -933,21 +933,89 @@ the frame is `chart/1`. Resolved with a `MonetaProgressBar.series` constructor
 taking a `ChartSlot`; recorded as added scope in the change's `tasks.md` group 7
 rather than slipped in.
 
-### 📱 08 Profile & Settings — one of eleven built, 2026-09-10
+### 📱 08 Profile & Settings — seven of eleven built, 2026-09-11
 
 | Screen | Node | State | What blocks it |
 | --- | --- | --- | --- |
 | 08.01 Profile — default | `100:2` | **done** | — |
-| 08.02 Edit profile | `100:276` | deferred | needs `Avatar`; `Select` and `TextField` exist |
+| 08.02 Edit profile | `100:276` | **done** | — |
 | 08.03 Settings — list | `100:428` | **done** | — |
-| 08.04 Settings — security | `100:729` | deferred | no auth or biometrics behind it |
-| 08.05 Change PIN | `101:488` | deferred | `Numpad` and `OtpField` are **built**; needs a PIN store |
+| 08.04 Settings — security | `100:729` | deferred | three blockers found while planning `profile-screens` — see below |
+| 08.05 Change PIN | `101:488` | deferred | components built; a PIN must **gate** something, and nothing locks — see below |
 | 08.06 Settings — notifications | `101:618` | **done** (6 of 7 rows) | the seventh needs a monthly report the app does not produce |
 | 08.07 Currency & language | `101:863` | deferred | needs multi-currency, which the wallet does not have |
-| 08.08 Manage categories | `101:978` | deferred | `Chip` is **built**; categories are a fixed enum, so rename/reorder/archive have nowhere to persist. The usage half needs nothing new. |
+| 08.08 Manage categories | `101:978` | **done** (usage half) | rename/reorder/archive need a category-override layer; see below |
 | 08.09 Edit category | `102:794` | deferred | same, plus custom colours |
-| 08.10 Premium — paywall | `102:1044` | deferred | no purchases |
-| 08.11 Help & FAQ | `102:1189` | deferred | **nothing blocks it** — `SearchField` is built and the answers are static |
+| 08.10 Premium — paywall | `102:1044` | **done** | renders; nothing is purchasable and the screen says so |
+| 08.11 Help & FAQ | `102:1189` | **done** | — |
+
+#### What these four screens ship less of than the file draws — 2026-09-11
+
+- **`08.08` is the usage half only.** Its rows carry real counts and totals and
+  are **not tappable**, and the authored drag handle (`101:1035`) is absent.
+  Rename, reorder and archive need a per-category override layer that
+  `CategoryIcon`, the donut and every chart would have to read, and
+  `SpendCategory` is a fixed enum in `lib/core`. A row that looks tappable and
+  is not, and a handle that does not drag, each promise what the screen cannot
+  deliver. `101:1110`'s plus action is absent for the same reason: `08.09` is
+  the screen it would open.
+- **`08.08`'s filter row is 44 tall where `101:1001` draws 34.** Inherited from
+  `settings-components`, where `Chip` took ownership of its own touch target.
+- **`08.08` filters by `TransactionDirection`, not `SpendCategory.isIncome`.**
+  `lib/core/spend_category.dart` calls that getter *"a display hint only"* and
+  `incomeCategories` is `{salary}` alone, so filtering by it would list one row
+  and hide every income-direction `gift`.
+- **`08.10` sells nothing.** The plan cards, the badge and the comparison table
+  are all there; the call to action reports that purchases are unavailable in
+  this build, and the footer says so without being asked. The badge's 31% is
+  **computed** from the two prices, per `102:1185`.
+- **`08.02`'s photo button is disabled** — `image_picker` is not a dependency —
+  and its currency `Select` opens nothing, because `08.07` is the screen that
+  chooses one and it is not built.
+- **`08.11`'s five questions are written, not transcribed.** The Figma
+  connection had flipped to a View seat by the time the screen was built, so
+  `102:1229` and its siblings could not be read. Annotation `102:1297` makes the
+  *product* the source of truth for this content — *"the answers restate the
+  product's actual behaviour"* — and every answer shipped is a fact about this
+  app. Re-reading the authored strings is outstanding.
+
+#### Why `08.04` and `08.05` are still deferred — three findings, 2026-09-11
+
+They were in `profile-screens`' first draft and came out during the audit. Each
+is a real blocker rather than effort:
+
+1. **`ListRow` has no `enabled` flag.** Its constructor takes `title`,
+   `accessory`, `subtitle`, `leadingIcon`, `value`, `badgeLabel`, `toggled`,
+   `onTap`, `onToggle`, `destructive` — there is no disabled treatment in the
+   widget at all. `08.04`'s unavailable rows need a design-system variant
+   against `35:113`, with a test, a gallery entry, a describer case and a row
+   here.
+2. **`MonetaOtpField` renders the literal characters.** A PIN typed into
+   `08.05` would be shown in the clear, and the component has no masked
+   variant. Shoulder-surfing is the one threat a UI PIN actually addresses.
+3. **"Erase all data" cannot mean what it appears to.** In real mode
+   `activeDatabaseProvider` returns *the control database object itself*,
+   deliberately, so the file is not opened twice — and `deleteFile()` deletes
+   the file holding the `settings` table. Erasing "the ledger" would also
+   destroy the profile, `onboarding_complete`, `demo_mode` and every
+   notification preference, and leave `preferencesStoreProvider` on a closed
+   connection.
+
+And the reason the PIN itself is out: **a PIN that gates nothing is a stored
+value nothing reads** — the same defect `08.06` recorded when a notification
+switch had nothing behind it. Gating needs a lock screen and a router redirect,
+which is its own change.
+
+#### What `08.07` and `08.09` still need
+
+- **`08.07` Currency & language** is a *formatting* screen, not a conversion
+  one — its Purpose is *"formatting settings with a live preview"*. What it
+  needs is a formatter threaded through every amount in the app, because a
+  number format that only changes the preview is a setting that does nothing.
+- **`08.09` Edit category** needs the same category-override layer `08.08`'s
+  editing half does: a name, a glyph and a **colour** that `CategoryIcon`, the
+  donut and every chart read. `SpendCategory.chartSlot` is a fixed enum
+  property, so this is an app-wide resolution layer rather than a screen.
 
 **The Profile tab lands on `08.01`**, as the design has it, since `Avatar`
 landed in `profile-components`. `08.03` is pushed from it — from the row and

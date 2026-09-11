@@ -138,7 +138,7 @@ be two-sided.
 
 ## 6. Close-out
 
-- [ ] 6.1 `docs/design-system/figma-map.md`: page 08's table to **7 of 11**, and
+- [x] 6.1 `docs/design-system/figma-map.md`: page 08's table to **7 of 11**, and
   one row each for what ships less than the file draws — `08.08` without its
   editing half, its row taps or its drag handle, and its 44px filter row against
   the authored 34; `08.10`'s unavailable purchase. Plus the three blockers found
@@ -146,7 +146,7 @@ be two-sided.
   characters in the clear, and "erase all data" in real mode would delete the
   `settings` table — and what `08.07`/`08.09` still need, in their own words.
   Verified by `rg` for each new row's distinctive text.
-- [ ] 6.2 Full `tool/verify.sh --change profile-screens` green with its evidence
+- [x] 6.2 Full `tool/verify.sh --change profile-screens` green with its evidence
   file, and `evidence-log.md` carrying every mutation from tasks 1–5 with its
   outcome. Verified by the gate's summary and by counting the log's entries for
   this change.
