@@ -10,10 +10,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moneta/app/demo/demo_mode_controller.dart';
 import 'package:moneta/app/notification_preferences.dart';
+import 'package:moneta/app/profile_providers.dart';
+import 'package:moneta/core/money.dart';
+import 'package:moneta/core/result.dart';
 import 'package:moneta/data/app_providers.dart';
 import 'package:moneta/design_system/atoms/moneta_icon_name.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
+import 'package:moneta/features/settings/domain/profile.dart';
+import 'package:moneta/features/settings/presentation/edit_profile_screen.dart';
 import 'package:moneta/features/settings/presentation/help_screen.dart';
 import 'package:moneta/features/settings/presentation/notification_settings_screen.dart';
 import 'package:moneta/features/settings/presentation/profile_screen.dart';
@@ -34,6 +39,9 @@ class SettingsRoutes {
 
   /// `08.11` Help & FAQ.
   static const String help = '/profile/settings/help';
+
+  /// `08.02` Edit profile.
+  static const String editProfile = '/profile/edit';
 }
 
 /// `08.01`, wired.
@@ -44,14 +52,16 @@ class ProfileRouteScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final demoActive = ref.watch(demoModeProvider);
+    // The stored profile, which `08.02` writes. Until one is saved the screen
+    // says so rather than showing a name nobody entered — the placeholders
+    // this screen shipped with are gone.
+    final profile = ref.watch(profileProvider).value;
 
     return ProfileScreen(
-      // Placeholders, and named as such: there is no accounts or identity
-      // feature, so `08.01`'s identity block has nothing real to show. The
-      // demo ledger at least makes the figures honest about themselves.
-      name: demoActive ? 'Minh Tran' : 'Moneta user',
-      email: demoActive ? 'minh.tran@example.com' : 'Not signed in',
+      name: profile?.name ?? 'Add your name',
+      email: profile?.email ?? '',
       stats: demoActive ? _demoStats : _emptyStats,
+      onEdit: () => context.push(SettingsRoutes.editProfile),
       onOpenSettings: () => context.push(SettingsRoutes.list),
       rows: [
         ListRow(
@@ -118,22 +128,20 @@ class SettingsRouteScreen extends ConsumerWidget {
     return SettingsScreen(
       onBack: () => context.pop(),
       groups: [
-        const SettingsGroup(
+        SettingsGroup(
           title: 'Account',
           rows: [
-            // Present and unavailable: `08.02` is not built. Hiding it would
-            // make the list look complete; letting it navigate would land on a
-            // blank screen.
             SettingsRow.push(
               title: 'Edit profile',
-              subtitle: 'Not built yet',
               icon: MonetaIconName.user,
-              onTap: null,
-              available: false,
+              onTap: () => context.push(SettingsRoutes.editProfile),
             ),
             SettingsRow.value(
               title: 'Main currency',
-              value: 'VND',
+              // The stored one, not a hard-coded `VND`. `08.02` writes it.
+              value:
+                  (ref.watch(profileProvider).value?.currency ?? Currency.vnd)
+                      .code,
               icon: MonetaIconName.creditCard,
             ),
           ],
@@ -302,6 +310,47 @@ class HelpRouteScreen extends StatelessWidget {
           style: theme.text.bodyMd.copyWith(color: theme.colors.textPrimary),
         ),
       ),
+    );
+  }
+}
+
+/// `08.02`, wired.
+///
+/// Holds the last failure so the screen can render it: a validation failure
+/// lands on the email field and a storage failure above the footer, and in
+/// both cases the typed values stay on screen.
+class EditProfileRouteScreen extends ConsumerStatefulWidget {
+  /// Creates the route screen.
+  const EditProfileRouteScreen({super.key});
+
+  @override
+  ConsumerState<EditProfileRouteScreen> createState() =>
+      _EditProfileRouteScreenState();
+}
+
+class _EditProfileRouteScreenState
+    extends ConsumerState<EditProfileRouteScreen> {
+  AppFailure? _failure;
+
+  @override
+  Widget build(BuildContext context) {
+    final stored = ref.watch(profileProvider).value;
+
+    return EditProfileScreen(
+      profile: stored ?? const Profile(name: ''),
+      failure: _failure,
+      onBack: context.pop,
+      onSave: (edited) async {
+        final failure = await saveProfile(ref, edited);
+        if (!mounted) return;
+        setState(() => _failure = failure);
+        // Only a successful save leaves the screen. A failed one stays, with
+        // the reason and the typed values both still there.
+        if (failure == null && context.mounted) context.pop();
+      },
+      // No currency picker: `08.07` is the screen that chooses one and it is
+      // not built, so the control opens nothing. `onPickCurrency` defaults to
+      // null, which is that.
     );
   }
 }

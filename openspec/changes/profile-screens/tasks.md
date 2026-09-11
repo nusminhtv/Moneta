@@ -55,14 +55,14 @@ be two-sided.
 
 ## 3. 08.02 Edit profile
 
-- [ ] 3.1 `Profile` in `domain` and `ProfileStore` in
+- [x] 3.1 `Profile` in `domain` and `ProfileStore` in
   **`features/settings/data/`** over `PreferencesStore`, control-scoped.
   Verified by `test/features/settings/profile_store_test.dart`: absent on first
   run; save and read back all three fields; an empty or whitespace name refused
   with `AppFailure(kind: validation)`; an empty email accepted; an invalid email
   refused with the rule's message.
   **Mutation:** accept a whitespace-only name → the validation case must fail.
-- [ ] 3.2 `08.02` (`100:276`) — `Avatar`, name and email `TextField`s, currency
+- [x] 3.2 `08.02` (`100:276`) — `Avatar`, name and email `TextField`s, currency
   `Select`, sticky primary action, app-bar check invoking the same callback.
   Verified by `test/features/settings/edit_profile_screen_test.dart`: exactly
   two `TextField`s and one `Select`; both controls invoke one callback; an
@@ -72,7 +72,7 @@ be two-sided.
   measuring a width.
   **Mutation:** make the app-bar action a no-op → the both-controls test must
   fail.
-- [ ] 3.3 `08.01` and `08.03` read the store: name, email, avatar initials, and
+- [x] 3.3 `08.01` and `08.03` read the store: name, email, avatar initials, and
   `08.03`'s `Main currency` row. `08.01`'s Edit button opens `08.02`; `08.03`'s
   Edit profile row loses `available: false`. Verified by
   `test/app/settings_route_test.dart`: saving `Trần Văn Minh` makes `08.01` show

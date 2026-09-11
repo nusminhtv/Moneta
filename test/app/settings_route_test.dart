@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moneta/app/profile_providers.dart';
 import 'package:moneta/app/router.dart';
 import 'package:moneta/app/settings_route_screens.dart';
+import 'package:moneta/core/money.dart';
+import 'package:moneta/design_system/atoms/moneta_avatar.dart';
 import 'package:moneta/design_system/molecules/list_row.dart';
 import 'package:moneta/design_system/theme/moneta_theme.dart';
+import 'package:moneta/features/settings/domain/profile.dart';
+import 'package:moneta/features/settings/presentation/edit_profile_screen.dart';
 import 'package:moneta/features/settings/presentation/help_screen.dart';
 import 'package:moneta/features/transactions/presentation/transaction_providers.dart';
 
@@ -15,7 +20,11 @@ void main() {
 
   setUp(() => repository = FakeTransactionRepository());
 
-  Future<void> pumpAt(WidgetTester tester, String location) async {
+  Future<void> pumpAt(
+    WidgetTester tester,
+    String location, {
+    Profile? profile,
+  }) async {
     await tester.binding.setSurfaceSize(const Size(393, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -23,6 +32,12 @@ void main() {
       ProviderScope(
         overrides: [
           transactionRepositoryProvider.overrideWith((ref) => repository),
+          // The stored profile, faked. The store's real behaviour — including
+          // that it is control-scoped — is tested against a real database in
+          // `profile_store_scope_test.dart`; **real I/O inside `testWidgets`
+          // never completes** under `FakeAsync` (CLAUDE.md), so this harness
+          // fakes the provider and tests the wiring.
+          profileProvider.overrideWith((ref) async => profile),
         ],
         child: MaterialApp.router(
           theme: MonetaTheme.dark().toThemeData(),
@@ -88,5 +103,75 @@ void main() {
         expect(help.single.accessory, ListRowAccessory.chevron);
       });
     }
+  });
+
+  group('the stored profile is what 08.01 and 08.03 show', () {
+    testWidgets('name, email and the avatar initials', (tester) async {
+      await pumpAt(
+        tester,
+        SettingsRoutes.profile,
+        profile: const Profile(
+          name: 'Trần Văn Minh',
+          email: 'minh@example.com',
+        ),
+      );
+
+      expect(find.text('Trần Văn Minh'), findsOneWidget);
+      expect(find.text('minh@example.com'), findsOneWidget);
+      // Initials from the stored name, not from a placeholder.
+      expect(
+        tester.widget<MonetaAvatar>(find.byType(MonetaAvatar)).name,
+        'Trần Văn Minh',
+      );
+      expect(find.text('TM'), findsOneWidget);
+    });
+
+    testWidgets('and with nothing stored it asks rather than inventing', (
+      tester,
+    ) async {
+      await pumpAt(tester, SettingsRoutes.profile);
+
+      expect(find.text('Add your name'), findsOneWidget);
+      // The placeholders this screen shipped with are gone.
+      expect(find.text('Moneta user'), findsNothing);
+      expect(find.text('Not signed in'), findsNothing);
+    });
+
+    testWidgets('08.03 shows the stored currency, not a hard-coded VND', (
+      tester,
+    ) async {
+      await pumpAt(
+        tester,
+        SettingsRoutes.list,
+        profile: const Profile(name: 'Minh', currency: Currency.usd),
+      );
+
+      expect(find.text('USD'), findsOneWidget);
+      expect(find.text('VND'), findsNothing);
+    });
+  });
+
+  group('08.02 is reachable from both screens', () {
+    testWidgets("from 08.01's Edit button", (tester) async {
+      await pumpAt(
+        tester,
+        SettingsRoutes.profile,
+        profile: const Profile(name: 'Minh'),
+      );
+
+      await tester.tap(find.text('Edit'));
+      await tester.pumpAndSettle();
+      expect(find.byType(EditProfileScreen), findsOneWidget);
+      // And it opens on the stored values.
+      expect(find.text('Minh'), findsWidgets);
+    });
+
+    testWidgets("from 08.03's Edit profile row", (tester) async {
+      await pumpAt(tester, SettingsRoutes.list);
+
+      await tester.tap(find.text('Edit profile'));
+      await tester.pumpAndSettle();
+      expect(find.byType(EditProfileScreen), findsOneWidget);
+    });
   });
 }

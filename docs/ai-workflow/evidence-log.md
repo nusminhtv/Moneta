@@ -1614,3 +1614,43 @@ case.
 A third test now runs over both `08.01` and `08.03` asserting that **no row with
 a tap target also says "Not built yet"**, which is the contradiction three rows
 on `08.03` were carrying while `settings-components` cleared their blockers.
+
+### 08.02: the mutation the first spec would have let through
+
+The profile is **control-scoped**, and the audit caught that the original
+scenario could not prove it: it asserted the stored name after demo mode had
+been turned on **and off again**, at which point `activeDatabaseProvider`
+returns the control database *object itself* and a ledger-scoped store reads the
+same rows.
+
+So the assertion is made **while demo mode is on**, and the test first checks
+that the two databases actually differ — without that, it proves nothing.
+
+**M11 — read the profile from `activeDatabaseProvider`.** Both scope tests
+fail. Under the original scenario it would have passed.
+
+**M7 — accept a whitespace-only name.** The validation test fails. A name is
+required because `08.01` and the avatar both have nothing to show without one;
+an email is optional because nothing sends mail to it.
+
+**M8 — write before validating.** The "an invalid profile writes nothing at
+all" test fails. A rejected save must not leave a name without its email: a
+half-written profile is a profile nobody entered.
+
+**M9 — make the app bar's check a no-op.** Annotation `100:415` says the check
+and the footer button *"do the same thing on purpose"*, so the test asserts both
+produce the **same** profile from one callback, not merely that each fires
+something.
+
+**M10 — show every validation message on the email field.** The test that an
+empty *name* does not put the *email* in error fails. The failure that comes
+back from a save is one message; which field it belongs to is the screen's
+judgement, and blaming the wrong field is worse than showing nothing.
+
+### A field the analyzer caught before a user could
+
+`EditProfileScreen` held the currency in its own state, and the analyzer
+reported it could be `final` — because nothing ever assigned it. That was the
+defect, not the lint: picking a currency is the parent's job, so the chosen
+value has to arrive back as a new profile. A copy held in the screen could only
+ever disagree with the one being saved. It reads `widget.profile.currency` now.
