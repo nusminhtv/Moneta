@@ -1735,3 +1735,48 @@ button flag or a tap action, by label, must be exactly
 an icon, behind a variable — fails it. **M20 — a `GestureDetector` on a row's icon.** It fails now.
 
 **M21 — both chips read selected.** The one-selected invariant fails.
+
+### change-verifier: three blocking findings, and the sixth un-failable test
+
+**1. `08.02` failed silently on the first-run path.** Two renderers took
+failures — the email field took `validation`, a banner took `storage` — and a
+**validation failure raised while the name was empty matched neither**. That is
+the default first run: no profile, tap Save, the store refuses, and the screen
+is byte-identical. The primary action appeared broken.
+
+It is exactly what this change's own proposal condemns for `08.10`: *"a paywall
+whose button silently does nothing is worse than one that says so."* And the
+test certified it — `an empty name does not blame the email field` asserted only
+that the email field was **clean**, with no counterpart asserting the message
+appeared anywhere.
+
+The banner is now defined as **what is left**: everything the email field does
+not take. Written that way rather than as a second list of cases, because a
+second list is what produced a gap between two of them. The replacement test
+sweeps every failure kind × filled/empty name and requires each to be reported
+somewhere.
+
+**2. The sixth test that could not fail.** `a 200-character name truncates by
+mechanism` asserted a field's *label* and a widget *count* — both true of every
+render, truncating or not. The verifier deleted `maxLines` and
+`TextOverflow.ellipsis` from `08.01` and **all 1859 tests stayed green**.
+
+And it hid an unmeetable requirement: the spec said *"every widget showing it
+has `maxLines: 1` and `TextOverflow.ellipsis`"*, but `08.02`'s fields are
+`TextField`s, which cannot carry a `TextOverflow`. The scenario is split now —
+`08.01` displays and is asserted for both properties, `08.02` edits and is
+asserted single-line — and the mutation fails.
+
+**3. `saveProfile` was 0 of 9 lines covered.** Every route test overrode
+`profileProvider` with a literal `Profile`, so the save path was dead to the
+suite — which is the hole defect 1 was living in. The cause was a signature:
+it took a `WidgetRef`, tying it to the widget layer for no reason, so a
+`ProviderContainer` could not call it. It takes the **store** now, and four
+tests exercise it against a real database.
+
+**And an inert control one screen over.** `08.02`'s currency `Select` opened
+nothing while `08.10`'s CTA had been made honest on the principle that an inert
+control is worse than an absent one. The same standard now applies: with no
+picker, the select reads **disabled**. The proposal claimed it "writes the
+preference", which was false — corrected before archiving, because the proposal
+is what gets archived.

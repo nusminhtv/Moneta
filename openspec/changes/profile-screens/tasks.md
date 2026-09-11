@@ -150,6 +150,6 @@ be two-sided.
   file, and `evidence-log.md` carrying every mutation from tasks 1–5 with its
   outcome. Verified by the gate's summary and by counting the log's entries for
   this change.
-- [ ] 6.3 `change-verifier`, and its findings **fixed or recorded**. Verified by
+- [x] 6.3 `change-verifier`, and its findings **fixed or recorded**. Verified by
   its verdict. The last four times it ran in this session it was right, and
   twice it found a test that could not fail in the work that had just fixed one.

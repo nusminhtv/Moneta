@@ -69,6 +69,9 @@ class EditProfileScreen extends StatefulWidget {
   /// Key on the footer's save button.
   static const Key footerSaveKey = Key('EditProfileScreen.footerSave');
 
+  /// Key on the message shown for any failure the email field does not take.
+  static const Key failureBannerKey = Key('EditProfileScreen.failureBanner');
+
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
@@ -107,11 +110,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   );
 
   /// The message for the email field, when the failure is about the email.
+  ///
+  /// A validation failure raised while the name is empty is about the **name**,
+  /// so it does not belong here — it goes to [_bannerMessage] instead.
   String? get _emailError {
     final failure = widget.failure;
     if (failure == null || failure.kind != FailureKind.validation) return null;
-    // A validation failure about the name is not the email's error to show.
     return _name.text.trim().isEmpty ? null : failure.message;
+  }
+
+  /// The message shown above the footer: **everything [_emailError] does not
+  /// take**.
+  ///
+  /// Written as "what is left" rather than as a second list of cases, because
+  /// the first version listed `storage` only and a validation failure about
+  /// the name fell between the two and was rendered **nowhere**. That is the
+  /// first-run path — an empty profile, a tap on Save — so the screen's
+  /// primary action appeared broken, which is exactly what `08.10`'s call to
+  /// action was made honest to avoid. Found by `change-verifier`.
+  String? get _bannerMessage {
+    final failure = widget.failure;
+    if (failure == null) return null;
+    return _emailError == null ? failure.message : null;
   }
 
   @override
@@ -194,12 +214,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     labelOf: (currency) =>
                         '${currency.code} (${currency.symbol})',
                     placeholder: 'Choose a currency',
+                    // Disabled when there is nothing to open. `08.10`'s call to
+                    // action was made honest because an inert control is worse
+                    // than an absent one; the same standard applies one screen
+                    // over, and `change-verifier` pointed out it had not been.
+                    enabled: widget.onPickCurrency != null,
                     onTap: widget.onPickCurrency,
                   ),
-                  if (widget.failure?.kind == FailureKind.storage) ...[
+                  if (_bannerMessage != null) ...[
                     const SizedBox(height: EditProfileScreen.fieldGap),
                     Text(
-                      widget.failure!.message,
+                      _bannerMessage!,
+                      key: EditProfileScreen.failureBannerKey,
                       style: theme.text.bodyMd.copyWith(
                         color: theme.colors.expense,
                       ),

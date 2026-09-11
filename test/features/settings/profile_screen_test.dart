@@ -84,6 +84,33 @@ void main() {
     });
   });
 
+  group('a long identity is truncated, by mechanism', () {
+    testWidgets('the name and the email both stay on one line', (
+      tester,
+    ) async {
+      // `change-verifier` deleted `maxLines` and `TextOverflow.ellipsis` from
+      // both of these and **all 1859 tests stayed green**: the only test that
+      // claimed to cover truncation asserted a field's label and a widget
+      // count, neither of which has anything to do with it.
+      //
+      // The mechanism, not a measured width — under the metrics-only test font
+      // a width is a fact about that font (CLAUDE.md).
+      const long = 'Nguyễn Thị Bích Ngọc Trần Văn Minh Hoàng Anh Tuấn Lê';
+      await pumpProfile(tester, name: long);
+      expect(tester.takeException(), isNull);
+
+      for (final text in [long, 'minh.tran@example.com']) {
+        final widget = tester.widget<Text>(find.text(text));
+        expect(widget.maxLines, 1, reason: '"$text" may wrap');
+        expect(
+          widget.overflow,
+          TextOverflow.ellipsis,
+          reason: '"$text" is clipped rather than ellipsised',
+        );
+      }
+    });
+  });
+
   group('the stat tiles are local, not StatTile', () {
     testWidgets('StatTile is not used', (tester) async {
       // Annotation `100:275`: "The stat tiles are local, not StatTile. StatTile

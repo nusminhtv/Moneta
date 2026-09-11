@@ -146,7 +146,14 @@ void main() {
       );
     });
 
-    testWidgets('an empty name does not blame the email field', (tester) async {
+    testWidgets('an empty name is reported somewhere, not nowhere', (
+      tester,
+    ) async {
+      // The first version of this asserted only that the email field was
+      // **clean** — and certified a silence. A validation failure raised while
+      // the name was empty was rendered nowhere at all, which is the first-run
+      // path: an empty profile, a tap on Save, and a screen that does not
+      // change. `change-verifier` found it.
       await pumpEdit(
         tester,
         profile: const Profile(name: ''),
@@ -161,22 +168,67 @@ void main() {
         isNull,
         reason: 'the name is what is missing, not the address',
       );
+      // And it is shown, which is the half that was missing.
+      expect(find.byKey(EditProfileScreen.failureBannerKey), findsOneWidget);
+      expect(find.text('Enter a name'), findsOneWidget);
+    });
+
+    testWidgets('every failure kind reaches the user somehow', (tester) async {
+      // Written as a sweep over the kinds rather than a case per kind,
+      // because what went wrong was a *gap between* two cases: one renderer
+      // took `validation` when the name was filled and another took `storage`,
+      // and a validation failure with an empty name matched neither.
+      for (final kind in FailureKind.values) {
+        for (final name in ['', 'Minh']) {
+          await pumpEdit(
+            tester,
+            profile: Profile(name: name),
+            failure: AppFailure(kind, 'Something went wrong'),
+          );
+
+          final onField = tester
+              .widgetList<MonetaTextField>(find.byType(MonetaTextField))
+              .last
+              .errorText;
+          final inBanner = find
+              .byKey(EditProfileScreen.failureBannerKey)
+              .evaluate()
+              .isNotEmpty;
+
+          expect(
+            onField != null || inBanner,
+            isTrue,
+            reason: '$kind with name "$name" is reported nowhere',
+          );
+        }
+      }
     });
   });
 
   group('boundaries', () {
-    testWidgets('a 200-character name truncates by mechanism', (tester) async {
+    testWidgets('a 200-character name stays on one line', (tester) async {
+      // The previous version of this asserted the field's *label* and the
+      // number of `EditableText`s — both true of every render, truncating or
+      // not. `change-verifier` deleted `maxLines`/`ellipsis` from `08.01` and
+      // all 1859 tests stayed green.
+      //
+      // `08.02`'s fields are `TextField`s, which cannot carry a
+      // `TextOverflow`; single-line is the mechanism they have. `08.01`'s
+      // half — where the name is *displayed* — is asserted in
+      // `profile_screen_test.dart`.
       final long = 'Nguyễn ' * 30;
       await pumpEdit(tester, profile: Profile(name: long));
       expect(tester.takeException(), isNull);
 
-      // The mechanism, not a measured width: under the metrics-only test font
-      // a width is a fact about that font (CLAUDE.md).
-      final field = tester
-          .widgetList<MonetaTextField>(find.byType(MonetaTextField))
-          .first;
-      expect(field.label, 'Name');
-      expect(find.byType(EditableText), findsNWidgets(2));
+      for (final editable in tester.widgetList<EditableText>(
+        find.byType(EditableText),
+      )) {
+        expect(
+          editable.maxLines,
+          1,
+          reason: 'a name field that wraps pushes the rest of the form down',
+        );
+      }
     });
 
     testWidgets('an emoji name still renders an avatar', (tester) async {
@@ -190,8 +242,34 @@ void main() {
       var asked = 0;
       await pumpEdit(tester, onPickCurrency: () => asked++);
 
+      expect(
+        tester
+            .widget<MonetaSelect<Currency>>(
+              find.byType(MonetaSelect<Currency>),
+            )
+            .enabled,
+        isTrue,
+      );
       await tester.tap(find.byType(MonetaSelect<Currency>));
       expect(asked, 1);
+    });
+
+    testWidgets('and reads disabled when there is nothing to open', (
+      tester,
+    ) async {
+      // `08.10`'s call to action was made honest because an inert control is
+      // worse than an absent one. The same standard, one screen over: with no
+      // picker, the select says so rather than swallowing taps.
+      await pumpEdit(tester);
+
+      expect(
+        tester
+            .widget<MonetaSelect<Currency>>(
+              find.byType(MonetaSelect<Currency>),
+            )
+            .enabled,
+        isFalse,
+      );
     });
   });
 }

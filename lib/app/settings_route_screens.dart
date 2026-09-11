@@ -357,7 +357,9 @@ class _EditProfileRouteScreenState
       failure: _failure,
       onBack: context.pop,
       onSave: (edited) async {
-        final failure = await saveProfile(ref, edited);
+        final store = await ref.read(profileStoreProvider.future);
+        final failure = await saveProfile(store, edited);
+        if (failure == null) ref.invalidate(profileProvider);
         if (!mounted) return;
         setState(() => _failure = failure);
         // Only a successful save leaves the screen. A failed one stays, with

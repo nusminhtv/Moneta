@@ -87,11 +87,15 @@ chose, and three dead rows on `08.03` becoming live ones.
   donut and every chart must read, and `SpendCategory.chartSlot` is a fixed enum
   in `lib/core`. `08.08` ships its **usage half**: the counts are real, the rows
   are not tappable, and the authored drag handle is absent.
-- **No currency conversion.** `08.02`'s `Select` offers what `Currency` has and
-  writes the preference; existing amounts keep their own currency, because
-  `Money` carries it. `08.07` stays deferred — a formatting preference has to
-  reach every amount in the app, which is a formatter threaded through every
-  screen, not a settings page.
+- **No currency conversion, and no currency *picker*.** `08.02` shows the
+  stored currency and `08.03` reads it, but the `Select` **opens nothing** and
+  therefore ships **disabled**: choosing one is `08.07`'s job and `08.07` is not
+  built. An inert control is worse than an absent one — the standard this change
+  applies to `08.10`'s call to action — so it reads disabled rather than
+  swallowing taps. Nothing can write `profileCurrency` from the UI yet, which is
+  stated here rather than discovered. `08.07` stays deferred: a formatting
+  preference has to reach every amount in the app, which is a formatter threaded
+  through every screen, not a settings page.
 - **No new components and no design-system changes.** All the components these
   four screens instance are built, and none needs a new variant. (An earlier
   draft of this proposal assumed `ListRow.enabled` existed; it does not, which

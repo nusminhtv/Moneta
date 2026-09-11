@@ -90,12 +90,26 @@ field, a currency `Select`, and a sticky primary action. Annotation `100:415`:
   `AppFailure(kind: validation)`
 
 #### Scenario: A long name truncates by mechanism, not by luck
-- **WHEN** a 200-character name is rendered on `08.02` and on `08.01`
-- **THEN** every widget showing it has `maxLines: 1` and
-  `TextOverflow.ellipsis`, asserted on the widget rather than on a measured
+- **WHEN** a 200-character name is **displayed** on `08.01`
+- **THEN** the widgets showing the name and the email each have `maxLines: 1`
+  and `TextOverflow.ellipsis`, asserted on the widget rather than on a measured
   width, because under the metrics-only test font a width is a fact about that
   font
+- **AND** when the same name is **edited** on `08.02`, its fields are
+  single-line — a `TextField` cannot carry a `TextOverflow`, so single-line is
+  the mechanism it has, and requiring an overflow of it was a requirement no
+  implementation could meet
 - **AND** neither screen reports an overflow
+
+#### Scenario: Every failure reaches the user somewhere
+- **WHEN** a save is refused for any reason, with the name filled or empty
+- **THEN** the message is rendered — on the email field when it is about the
+  email, and above the footer otherwise
+- **AND** this is asserted as a sweep over the failure kinds rather than a case
+  per kind, because what went wrong was the **gap between** two cases: one
+  renderer took a validation failure with a filled name and another took a
+  storage failure, and a validation failure with an empty name — the first-run
+  path — matched neither and was shown nowhere
 
 #### Scenario: A name of diacritics or emoji still yields initials
 - **WHEN** the name is `Trần Văn Minh` or `👨‍👩‍👧 family`
