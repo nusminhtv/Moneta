@@ -58,7 +58,14 @@ void main() {
       // been greeted as a stranger forever, silently.
       '李小龙': '李小龙',
       '김수현': '김수현',
+      // Not evidence for `\p{L}`: Cyrillic sits *inside* U+00C0-U+1EF9 and this
+      // row passes identically under the range being rejected. Kept as
+      // coverage of intent — a name in another script is greeted — and
+      // labelled so it is not mistaken for a discriminating row.
       'Привет Мир': 'Привет',
+      // Promised by the spec in as many words: words are skipped, never
+      // joined, so an initial with a dot on it is still a word with a letter.
+      'J. R. Minh': 'J',
       // And the other direction: `×` is U+00D7, inside that same range and
       // not a letter. Under the first draft this greeted `Hi ×`.
       '× Minh': 'Minh',
@@ -75,18 +82,58 @@ void main() {
       });
     }
 
+    test('decomposed input keeps its accents', () {
+      // Every row above is precomposed (NFC), which is what a Dart source
+      // literal gives you and therefore what the whole table silently assumed.
+      // macOS and several Vietnamese IMEs produce NFD: the same name, the same
+      // pixels, different code points. Under `[^\p{L}]` the marks were stripped
+      // off their base letters and `Trần` was greeted as `Tran` — the same
+      // quiet, permanent, screen-invisible defect as the CJK one, found by
+      // `change-verifier` in the fix for it.
+      const nfd = 'Tra\u0323\u0302n Va\u0306n Minh';
+      const nfdDang = '\u0110a\u0323\u0306ng Thu Tha\u0309o';
+
+      expect(const Profile(name: nfd).firstName, 'Tra\u0323\u0302n');
+      expect(
+        const Profile(name: nfd).firstName,
+        isNot('Tran'),
+        reason: 'the accents were deleted rather than carried',
+      );
+      expect(const Profile(name: nfdDang).firstName, '\u0110a\u0323\u0306ng');
+      expect(const Profile(name: nfdDang).firstName, isNot('Đang'));
+
+      // And the other half of that trade: keeping `\p{M}` must not make a bare
+      // accent a name. A word has to hold a letter, not merely a mark.
+      expect(const Profile(name: '\u0301').firstName, '');
+      expect(const Profile(name: '123\u0301').firstName, '');
+      expect(const Profile(name: '\u0301 Minh').firstName, 'Minh');
+    });
+
     test("the letter class is Unicode's, not a Latin-1 range", () {
       // The table rows above pass under any class that happens to cover the
       // exact strings in them. This asserts the property the rows stand for,
       // so a class narrowed back to a range fails here and not only there.
-      for (final name in const ['李小龙', '김수현', 'Ωμέγα', 'עברית', 'あき']) {
+      // `Ωμέγα` and `עברית` were here and have been removed: Greek and Hebrew
+      // both fall inside U+00C0-U+1EF9, so they passed identically under the
+      // range this rejects. They looked like evidence and were decoration.
+      for (final name in const ['李小龙', '김수현', 'あき', '한글', '漢字']) {
         expect(
           Profile(name: name).firstName,
           name,
           reason: '$name is letters, whatever alphabet they are from',
         );
       }
-      for (final symbol in const ['×', '÷', '।', '§', '°', '\u0301']) {
+      // `§` U+00A7 and `°` U+00B0 were here and have been removed: both sit
+      // *below* U+00C0, so both classes strip them and neither says anything
+      // about this range. Replaced with symbols inside it, which discriminate.
+      for (final symbol in const [
+        '×',
+        '÷',
+        '।',
+        '\u0384',
+        '\u060C',
+        '\u0301',
+      ]) {
         expect(
           Profile(name: symbol).firstName,
           '',

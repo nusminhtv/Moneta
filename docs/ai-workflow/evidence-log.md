@@ -2010,10 +2010,18 @@ narrowed back to a range fails on the property and not only on the fixtures.
 **M4 — narrow the class back to `[A-Za-zÀ-ỹ]`.** Five tests fail.
 **M5 — return the first word instead of the first word with letters.** Three
 fail; `123 Minh` greets nobody.
-**M6 — fall back on `profile == null` in the widget.** Two fail, including the
-new widget-level case. M2 above pinned this on `greetingFor` only; a build is
-free to reach the fallback by its own route, so the stored-`123` profile is now
-asserted on the rendered bar.
+**M6 — fall back on `profile == null` in the widget, leaving `greetingFor`
+correct.** **Exactly one** test fails, across all 280 in `test/app`: the new
+stored-`123` widget case. M2 above pinned this on `greetingFor` only; a build is
+free to reach the fallback by its own route, so it is now asserted on the
+rendered bar.
+
+That count was first written here as "two", from a mutation that also broke
+`greetingFor` and so was not the mutation the sentence described.
+`change-verifier` re-ran the stated one and got one; re-measured here and it is
+one. A mutation count that does not reproduce is a defect in the artifact, in a
+repo whose artifacts are the deliverable — so it is corrected rather than
+quietly dropped.
 
 `MonetaAvatar.initialsOf` still carries the narrow range and therefore the same
 defect. It is a built design-system component with its own Figma node and its
@@ -2029,3 +2037,53 @@ Two process notes, recorded rather than tidied away:
   Cyrillic and Greek were excluded when the span contains them. Caught by
   running the probe before committing the claim. The same mistake as the class
   itself: a range that reads like a description of letters.
+
+### The fix's own boundary, found by re-verifying it: decomposed diacritics
+
+`\p{L}` was still wrong, in a way the `\p{L}`-vs-range table could not see,
+because **every row in it was precomposed**. A Dart source literal gives NFC;
+macOS and several Vietnamese IMEs give NFD. Same name, same pixels, different
+code points — and `\p{L}` excludes `\p{M}`, so a combining mark is stripped off
+its base letter:
+
+| Stored name | `[^\p{L}]` gave | now |
+| --- | --- | --- |
+| `Trần` (NFC, U+1EA7) | `Trần` | `Trần` |
+| `Trần` (NFD, `n` + U+0323 U+0302) | **`Tran`** | `Trần` |
+| `Đặng` (NFD) | **`Đang`** | `Đặng` |
+
+`specs/profile/spec.md` says diacritics survive *"unchanged and unstripped"*.
+For half of all real input it was deleting them, and the suite asserted the
+other half. Now `[^\p{L}\p{M}]`, with a word required to contain a `\p{L}` so
+that keeping marks does not make a bare `\u0301` a name.
+
+**M7 — drop `\p{M}`.** The NFD test fails.
+**M8 — keep `\p{M}` but accept a mark-only word (`isNotEmpty` instead of
+`hasLetter`).** Two fail: `\u0301` and `123\u0301` would be greeted as names.
+
+This is the third time in one change that the class was wrong, and each wrong
+version was **testable and tested**. The table's rows were all chosen by the
+same person who chose the class, from the same mental model of what a letter is
+— so they agreed with it. What caught each one was an outside reader asking what
+the class *contains*, then measuring. Writing more rows would not have found any
+of the three.
+
+### Five rows that looked like evidence and were not
+
+`change-verifier` measured which rows actually discriminate between
+`[A-Za-zÀ-ỹ]` and `\p{L}`. **14 of 18 table rows do not**, which is fine — most
+are there for other properties — but two entries were labelled as if they were
+about this one and were not:
+
+- `Привет Мир` carried a comment implying Cyrillic was a win for `\p{L}`. It is
+  not: `À-ỹ` is U+00C0–U+1EF9 and **contains** Cyrillic, Greek, Hebrew, Arabic,
+  Devanagari and Thai. The row passes identically under the range being
+  rejected. Kept, relabelled as coverage of intent.
+- In the property loop, `Ωμέγα` and `עברית` were inert for the same reason and
+  are replaced with `한글` and `漢字`; `§` U+00A7 and `°` U+00B0 sit *below* the
+  range so neither class says anything about them, and are replaced with `\u0384`
+  and `\u060C`, which are inside it.
+
+The loop was doing real work — `あき`, `।` and `\u0301` catch what no table row
+can — but the log sentence *"five alphabets are letters, six symbols are not"*
+implied all eleven were load-bearing. Six were.

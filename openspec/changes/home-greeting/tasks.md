@@ -12,6 +12,8 @@
   `123 Minh` must fail.
   **Mutation:** narrow the letter class back to `[A-Za-zÀ-ỹ]` → the CJK rows
   and the `× Minh` row must fail.
+  **Mutation:** drop `\p{M}` → the decomposed-input test must fail.
+  **Mutation:** accept a mark-only word → `\u0301` and `123\u0301` must fail.
 
   The class started as `[A-Za-zÀ-ỹ]`, copied from `MonetaAvatar.initialsOf`,
   and `change-verifier` measured what it actually does: `李小龙` and `김수현`

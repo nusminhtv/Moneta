@@ -60,15 +60,23 @@ class Profile extends Equatable {
   /// U+00F7) and a Devanagari danda fall *inside* it and would be greeted as
   /// names. `\p{L}` gets both right.
   ///
+  /// Combining marks (`\p{M}`) are kept, and a word must contain a `\p{L}` to
+  /// count. `\p{L}` alone strips marks off their base letter, so **decomposed**
+  /// input — NFD, which macOS and several Vietnamese IMEs produce, and which is
+  /// indistinguishable on screen from NFC — turned `Trần` into `Tran` and
+  /// `Đặng` into `Đang`. Keeping marks fixes that; requiring a letter keeps a
+  /// bare `\u0301` and `123\u0301` empty rather than greeting an accent.
+  ///
   /// **`MonetaAvatar.initialsOf` still has that range and therefore that
   /// defect.** It is a design-system component with its own node and its own
   /// tests; changing it is not this change's to do, and it is recorded rather
   /// than left to be discovered.
   String get firstName {
-    final letters = RegExp(r'[^\p{L}]', unicode: true);
+    final notLetter = RegExp(r'[^\p{L}\p{M}]', unicode: true);
+    final hasLetter = RegExp(r'\p{L}', unicode: true);
     for (final word in name.split(RegExp(r'\s+'))) {
-      final stripped = word.replaceAll(letters, '');
-      if (stripped.isNotEmpty) return stripped;
+      final stripped = word.replaceAll(notLetter, '');
+      if (hasLetter.hasMatch(stripped)) return stripped;
     }
     return '';
   }

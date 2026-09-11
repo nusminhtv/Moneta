@@ -17,7 +17,7 @@ person called Minh with a house number in front; greeting them as a stranger
 because of it is worse than skipping the number. Words are skipped, never
 joined: `J. R. Minh` greets `J`, because `J` is a word with a letter in it.
 
-**A letter is `\p{L}`, not `[A-Za-z À-ỹ]`.** The narrow range was the first
+**A letter is `\p{L}` or `\p{M}`, not `[A-Za-z À-ỹ]`.** The narrow range was the first
 draft and it is wrong in both directions: `李小龙` and `김수현` contain no
 character inside it, so a Chinese or Korean name would be greeted as a stranger
 permanently, while `×` and `÷` (U+00D7, U+00F7) sit inside it and would be
@@ -26,15 +26,36 @@ therefore the same defect; it is a design-system component with its own node
 and tests, and correcting it is not in this change's scope — it is recorded in
 `docs/design-system/figma-map.md` instead.
 
+Combining marks are kept alongside letters so that decomposed input survives,
+and a word must contain a letter to be picked, so that a bare mark is not a
+name.
+
+**A stated cost: `O'Brien Nguyen` is greeted `Hi OBrien`.** Stripping every
+non-letter is what makes `Minh,` work, and it also removes name-internal
+apostrophes and hyphens — `Anne-Marie` becomes `AnneMarie`. Treating `'` and `-`
+as joiners **between** letters would fix it and is a real change to the rule,
+not a detail; it is named here as a known cost rather than left for a user to
+find, and is not done in this change.
+
 #### Scenario: The first word of a multi-word name
 - **WHEN** the name is `Minh Tran`
 - **THEN** the first name is `Minh`
 - **AND** for `Trần Văn Minh` it is `Trần` — the surname, which is the stated
   cost of this rule
 
-#### Scenario: Diacritics are letters
+#### Scenario: Diacritics are letters, however they are encoded
 - **WHEN** the name is `Đặng Thu Thảo`
 - **THEN** the first name is `Đặng`, unchanged and unstripped
+- **AND** this SHALL hold for **decomposed (NFD)** input as well as precomposed:
+  `Trần` written as `n` + U+0323 + U+0302 yields `Trần`, not `Tran`. macOS and
+  several Vietnamese IMEs produce NFD, and it is indistinguishable on screen
+  from NFC, so a rule that only handles NFC deletes accents for half of real
+  input and looks correct in every test written from a source literal
+
+#### Scenario: A combining mark is not itself a name
+- **WHEN** the name is `\u0301` or `123\u0301`
+- **THEN** the first name is empty — a word must contain a letter, not merely a
+  mark, which is the cost of keeping marks attached above
 
 #### Scenario: A single word is its own first name
 - **WHEN** the name is `Minh`
