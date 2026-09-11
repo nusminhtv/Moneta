@@ -21,6 +21,7 @@ import 'package:moneta/features/settings/domain/profile.dart';
 import 'package:moneta/features/settings/presentation/edit_profile_screen.dart';
 import 'package:moneta/features/settings/presentation/help_screen.dart';
 import 'package:moneta/features/settings/presentation/notification_settings_screen.dart';
+import 'package:moneta/features/settings/presentation/premium_screen.dart';
 import 'package:moneta/features/settings/presentation/profile_screen.dart';
 import 'package:moneta/features/settings/presentation/settings_screen.dart';
 
@@ -42,6 +43,9 @@ class SettingsRoutes {
 
   /// `08.02` Edit profile.
   static const String editProfile = '/profile/edit';
+
+  /// `08.10` Premium.
+  static const String premium = '/profile/premium';
 }
 
 /// `08.01`, wired.
@@ -73,12 +77,13 @@ class ProfileRouteScreen extends ConsumerWidget {
         // `100:269`: "Premium shows a TRY FREE badge; once subscribed the row's
         // Trailing becomes Value with the renewal date." Unsubscribed is the
         // only state this build has, so it is the badge.
-        const ListRow(
+        ListRow(
           title: 'Premium',
           subtitle: 'Unlimited goals, export, widgets',
           leadingIcon: MonetaIconName.award,
           accessory: ListRowAccessory.badge,
           badgeLabel: 'TRY FREE',
+          onTap: () => context.push(SettingsRoutes.premium),
         ),
         ListRow(
           title: 'Help & FAQ',
@@ -351,6 +356,38 @@ class _EditProfileRouteScreenState
       // No currency picker: `08.07` is the screen that chooses one and it is
       // not built, so the control opens nothing. `onPickCurrency` defaults to
       // null, which is that.
+    );
+  }
+}
+
+/// `08.10`, wired.
+///
+/// The purchase attempt is reported and nothing else happens: there is no
+/// purchase plumbing in this app, and the footer already says so. This is the
+/// part that makes the button honest rather than inert.
+class PremiumRouteScreen extends StatelessWidget {
+  /// Creates the route screen.
+  const PremiumRouteScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.moneta;
+
+    return PremiumScreen(
+      onClose: context.pop,
+      onPurchaseAttempt: (plan) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(
+            backgroundColor: theme.colors.surfaceRaised,
+            content: Text(
+              'Purchases are not available in this build.',
+              style: theme.text.bodyMd.copyWith(
+                color: theme.colors.textPrimary,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

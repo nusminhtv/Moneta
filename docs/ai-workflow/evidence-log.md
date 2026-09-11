@@ -1654,3 +1654,39 @@ reported it could be `final` — because nothing ever assigned it. That was the
 defect, not the lint: picking a currency is the parent's job, so the chosen
 value has to arrive back as a new profile. A copy held in the screen could only
 ever disagree with the one being saved. It reads `widget.profile.currency` now.
+
+### 08.10: the one number on the screen that could be wrong while looking right
+
+Annotation `102:1185` is unusually specific: *"59,000 ₫ × 12 = 708,000 ₫
+against 490,000 ₫ yearly, which is the 31% the badge claims. The claim is
+arithmetic, not marketing."* So the badge's percentage is **derived from the two
+prices** and never written down.
+
+The rounding mode is part of the rule, not an implementation detail. The exact
+value is **30.79%**: `round` gives the 31 the badge claims and `floor` gives 30,
+which contradicts it. The test asserts all three — the result, that the exact
+value is 30.79, and that the two modes disagree — so a later edit to "simplify"
+it into truncation fails instead of quietly changing a commercial claim.
+
+**M12 — `floor` instead of `round`.** The 31 case fails.
+**M13 — hard-code 31.** The changed-price case fails.
+
+Degenerate prices return **absent** rather than a number: a zero monthly price
+would divide by zero, and a yearly price at or above twelve monthly payments is
+not a saving. A negative "saving" on a paywall is a claim nobody should ship.
+
+**The negatives are not errors.** `102:1188`: *"the free tier is not an
+error"* — an absent feature is `textDisabled`, not `expense`. The test asserts
+the colour on each of the twelve glyphs and then asserts the two colours
+**differ**, so the loop is comparing something rather than passing vacuously.
+**M14** — colouring the absent features `expense` — fails it.
+
+**And the button is honest rather than inert.** There is no purchase plumbing in
+this app. A CTA that silently does nothing is worse than one that says what it
+cannot do, and one that appears to take money is worse than both — so it reports
+the chosen plan and the screen says purchases are unavailable, in the footer,
+without being asked. **M15** — making the CTA a no-op — fails, because the test
+asserts it reports *the selected plan*, not merely that it fires.
+
+**M16 — the Premium row with no destination.** Two routing tests fail. That row
+had no `onTap` at all before this change.

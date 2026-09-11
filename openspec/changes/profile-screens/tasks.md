@@ -85,7 +85,7 @@ be two-sided.
 
 ## 4. 08.10 Premium paywall
 
-- [ ] 4.1 `PremiumPlan` in `domain` with `Money` prices and a **derived**
+- [x] 4.1 `PremiumPlan` in `domain` with `Money` prices and a **derived**
   saving. Verified by `test/features/settings/premium_plan_test.dart`: the
   authored prices give exactly 31; the intermediate value is 30.79 so `round`
   and `floor` differ and `round` is the one asserted; changing the yearly price
@@ -93,7 +93,7 @@ be two-sided.
   yearly price above twelve monthly payments gives `null`, not a negative.
   **Mutation:** use `floor` → the 31 case must fail (and would pass on a naive
   `closeTo`, which is why it is exact).
-- [ ] 4.2 `08.10` (`102:1044`) — three plan cards, `Badge` on the middle,
+- [x] 4.2 `08.10` (`102:1044`) — three plan cards, `Badge` on the middle,
   `SectionHeader`, comparison table, sticky action and fine print. Verified by
   `test/features/settings/premium_screen_test.dart`: yearly preselected;
   after tapping each card exactly one reads selected; a present feature's glyph
@@ -101,7 +101,7 @@ be two-sided.
   neither to be `expense`; activating the action reports purchases unavailable
   and stores nothing.
   **Mutation:** colour the absent features `expense` → the glyph test must fail.
-- [ ] 4.3 Route it from `08.01`'s Premium row, which has no `onTap` today.
+- [x] 4.3 Route it from `08.01`'s Premium row, which has no `onTap` today.
   Verified by `test/app/settings_route_test.dart`: the row navigates, and the
   screen can be closed by its app-bar action.
   **Mutation:** drop the close action → the closing test must fail.

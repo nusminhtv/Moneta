@@ -11,6 +11,7 @@ import 'package:moneta/design_system/theme/moneta_theme.dart';
 import 'package:moneta/features/settings/domain/profile.dart';
 import 'package:moneta/features/settings/presentation/edit_profile_screen.dart';
 import 'package:moneta/features/settings/presentation/help_screen.dart';
+import 'package:moneta/features/settings/presentation/premium_screen.dart';
 import 'package:moneta/features/transactions/presentation/transaction_providers.dart';
 
 import '../support/fake_transaction_repository.dart';
@@ -148,6 +149,26 @@ void main() {
 
       expect(find.text('USD'), findsOneWidget);
       expect(find.text('VND'), findsNothing);
+    });
+  });
+
+  group('08.10 is reachable and leaveable', () {
+    testWidgets("from 08.01's Premium row", (tester) async {
+      await pumpAt(tester, SettingsRoutes.profile);
+
+      await tester.tap(find.text('Premium'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PremiumScreen), findsOneWidget);
+    });
+
+    testWidgets('and the close action leaves it', (tester) async {
+      await pumpAt(tester, SettingsRoutes.profile);
+      await tester.tap(find.text('Premium'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.bySemanticsLabel('Close'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PremiumScreen), findsNothing);
     });
   });
 
